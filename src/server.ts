@@ -6,12 +6,13 @@ import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { app } from './workflow';
 import { AgentState } from './model/agentState';
 import { PROMPT } from './constants';
+import path from 'path';
 
 const server = express();
 const PORT = 3000;
 
 server.use(bodyParser.json());
-
+server.use(express.static(path.join(__dirname, '..', 'public')));
 server.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
@@ -155,4 +156,6 @@ server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`Chat endpoint: POST http://localhost:${PORT}/chat`);
   console.log(`Health check endpoint: GET http://localhost:${PORT}/health`);
+  console.log(`Static files served from: ${path.join(__dirname, '..', 'public')}`);
+  console.log(`Access your index.html at: http://localhost:${PORT}/index.html`);
 });

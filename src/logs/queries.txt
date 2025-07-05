@@ -1,0 +1,9 @@
+I see incorrect price for the offer 62240d06-821d-495a-bb67-b4d6c924167e in QA environment
+
+I have a problem with campaign 92ab7a5d-f827-4095-913c-bc43a164348e in QA environment
+
+I have a problem with offer 86207335-1a14-43ce-b763-7e535b45f0a7 in QA environment
+
+I have a problem with campaign db54225a-43c3-48ee-8797-894dd7721522 in QA environment
+
+I have a problem with offer ed713ea8-5645-44ed-8de2-b3a557c68a75 in QA environment

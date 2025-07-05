@@ -3,6 +3,7 @@ import { AgentState } from './model/agentState';
 import { BaseMessage, HumanMessage, SystemMessage, AIMessage } from '@langchain/core/messages';
 import { UserQueryExtractionSchema, UserQueryExtraction } from './model/schemas';
 import { DatadogLog } from './model/datadog';
+import { PromptTemplate } from '@langchain/core/prompts';
 import { extractionLLM, summarizerLLM } from './anthropicAgent';
 import {
   getMockDatadogLogsTool,
@@ -12,129 +13,134 @@ import {
 import { getEntityHistoryTool, analyzeEntityHistoryTool } from './tools/entityHistoryTools';
 
 import { EntityHistory } from './model/history';
+import {EXTRACTION_MESSAGE, SUMMARIZATION_MESSAGE, PROMPT} from './constants';
+import { StructuredOutputParser } from '@langchain/core/output_parsers';
 
-function extractEntities(messageContent: string): {
-  ids: string[];
-  timeRange: string;
-  entityType: string;
-} {
-  const idRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
-  const timeRangeRegex = /(last (\d+)(h|m|d))|(\d+(m|h|d) ago)/i; // e.g., "last 2 hours", "30m ago"
-  const campaignKeywords = /(campaign|campaigns)/i;
-  const offerKeywords = /(offer|offers)/i;
-  const productKeywords = /(product|products)/i;
-
-  const ids = Array.from(messageContent.matchAll(idRegex)).map((match) => match[0]);
-  const timeRangeMatch = messageContent.match(timeRangeRegex);
-  let timeRange = timeRangeMatch
-    ? timeRangeMatch[2] + (timeRangeMatch[3] || timeRangeMatch[5])
-    : '1h'; // Default to 1 hour
-
-  let entityType: 'campaign' | 'offer' | 'product' | 'general' = 'general';
-  if (campaignKeywords.test(messageContent)) {
-    entityType = 'campaign';
-  } else if (offerKeywords.test(messageContent)) {
-    entityType = 'offer';
-  } else if (productKeywords.test(messageContent)) {
-    entityType = 'product';
-  }
-
-  return { ids, timeRange, entityType };
-}
 
 // Bind the LLM with the structured output schema
-const structuredExtractionChain = extractionLLM.withStructuredOutput(UserQueryExtractionSchema);
+const structuredOutputParser = StructuredOutputParser.fromZodSchema(UserQueryExtractionSchema);
+// Create the chain that uses the full PROMPT and the structured parser
+const structuredExtractionChain = PromptTemplate.fromTemplate(
+    PROMPT +
+    '\n\n' +
+    'Based on the user query and conversation history, classify the query and extract relevant details. Your response MUST be a JSON object conforming to the following schema:\n' +
+    '{format_instructions}\n\n' +
+    'Conversation History:\n' + // Add history prompt
+    '{history}\n' +
+    'Current User Query: {query}'
+).pipe(extractionLLM).pipe(structuredOutputParser);
 
 export async function parseUserQuery(state: AgentState): Promise<Partial<AgentState>> {
-  console.log('[Node: parseUserQuery] Parsing user query with LLM...');
-  const lastMessage = state.messages[state.messages.length - 1]; // This is the current turn's input
+  console.log('[Node: parseUserQuery] Parsing user query with LLM for categorization and extraction...');
+  const lastMessage = state.messages[state.messages.length - 1];
 
   if (!(lastMessage instanceof HumanMessage)) {
     console.warn('[Node: parseUserQuery] Last message is not a HumanMessage. Cannot parse.');
     return state;
   }
 
-  // The content of the *current* user query (e.g., "production")
   const currentUserQueryContent = lastMessage.content;
+  let extractedData: UserQueryExtraction = { // Initialize with safe defaults
+    category: 'UNKNOWN_CATEGORY',
+    entityIds: [],
+    entityType: 'unknown',
+    environment: 'unknown',
+    timeRange: '24h',
+    initialResponse: "I'm currently processing your request.", // Default processing message
+  };
 
-  let extractedData: UserQueryExtraction;
-  let clarificationMessage = '';
+  let agentResponseContent: string = extractedData.initialResponse; // Initialize from default extractedData
 
   try {
-    // --- REAL LLM CALL HERE ---
-    // The SystemMessage is now updated to tell the LLM to consider the entire history.
-    const extractionSystemMessage = new SystemMessage(EXTRACTION_MESSAGE);
+    // Prepare the conversation history for the LLM
+    // Filter out any SystemMessages that might be in the state if not needed by your LLM/model
+    const historyMessages = state.messages
+        .filter(msg => !(msg instanceof SystemMessage)) // Keep only Human and AI messages
+        .map(msg => `${msg instanceof HumanMessage ? 'Human' : 'AI'}: ${msg.content}`)
+        .join('\n');
 
-    // Pass the ENTIRE RELEVANT CONVERSATION HISTORY to the LLM for context.
-    // Important: Filter out any existing SystemMessages from `state.messages`
-    // if your `structuredExtractionChain` already prepends its own SystemMessage
-    // or if you're using Anthropic models that only allow SystemMessage as the first.
-    const messagesForLLMExtraction: BaseMessage[] = [
-      extractionSystemMessage,
-      // Pass all Human and AI messages from the state's history.
-      // This is crucial for the LLM to understand conversational context.
-      ...state.messages.filter((msg) => !(msg instanceof SystemMessage)), // Remove previous SystemMessages if necessary
-      // If the last message is already in state.messages, you don't need to add it again here.
-      // However, if `state.messages` only includes previous turns and the current one is meant to be added for this LLM call,
-      // then `new HumanMessage(currentUserQueryContent)` would go here.
-      // Given your current setup, `state.messages` already includes the latest user query when passed to this node.
-    ];
+    // Invoke the structured extraction chain
+    extractedData = await structuredExtractionChain.invoke({
+      query: currentUserQueryContent,
+      history: historyMessages, // Pass the formatted history
+      format_instructions: structuredOutputParser.getFormatInstructions(),
+    });
 
-    extractedData = await structuredExtractionChain.invoke(messagesForLLMExtraction);
     console.log('[Node: parseUserQuery] LLM Extracted Data:', extractedData);
 
-    // LangChain's structured output should handle environment validation,
-    // but we'll add a final check and clarification message logic based on 'unknown'
-    if (extractedData.environment === 'unknown') {
-      clarificationMessage =
-        'Which environment (production, staging, or development) is this entity in?';
+    // The initialResponse from LLM directly becomes the first part of the AI's message
+    agentResponseContent = extractedData.initialResponse;
+
+    // --- RE-INTEGRATED EXPLICIT CLARIFICATION LOGIC ---
+    // Only ask for environment if category is not UNKNOWN or GENERAL_QUESTION,
+    // AND environment is unknown, AND the LLM's initial response doesn't already ask for it.
+    if (
+        extractedData.environment === 'unknown' &&
+        extractedData.category !== 'UNKNOWN_CATEGORY' &&
+        extractedData.category !== 'GENERAL_QUESTION' &&
+        !agentResponseContent.toLowerCase().includes('environment') && // Simple check to avoid redundancy
+        !agentResponseContent.toLowerCase().includes('prod') && // More robust check
+        !agentResponseContent.toLowerCase().includes('qa') &&
+        !agentResponseContent.toLowerCase().includes('staging') &&
+        !agentResponseContent.toLowerCase().includes('dev') &&
+        !agentResponseContent.toLowerCase().includes('development')
+    ) {
+      const clarificationMsg = ' Which environment (production, staging, or development) is this in?';
+      // Append to the LLM's generated response
+      agentResponseContent += clarificationMsg;
     }
+
   } catch (error) {
-    console.error('[Node: parseUserQuery] Error during LLM extraction:', error);
-    // Fallback if LLM extraction fails (e.g., API error, invalid JSON from LLM)
-    clarificationMessage =
-      'I had trouble understanding your request. Could you please rephrase it, ensuring to include the entity ID, type, and environment?';
+    console.error('[Node: parseUserQuery] Error during LLM extraction or parsing. Falling back to UNKNOWN_CATEGORY:', error);
     extractedData = {
-      // Default to unknown if extraction fails
+      category: 'UNKNOWN_CATEGORY',
       entityIds: [],
       entityType: 'unknown',
       environment: 'unknown',
-      timeRange: '24h', // Default time range
+      timeRange: '24h',
+      initialResponse: "I apologize, I had trouble understanding your request. Could you please rephrase it or provide more details?",
     };
-  }
-
-  const newMessages: BaseMessage[] = [];
-  if (clarificationMessage) {
-    newMessages.push(new AIMessage(clarificationMessage));
+    agentResponseContent = extractedData.initialResponse;
   }
 
   // --- MERGING LOGIC FOR CONTEXT RETENTION ---
-  // If the LLM didn't extract new entityIds, retain the ones from the previous state.
+  // Ensure default values are handled if LLM doesn't provide them,
+  // or if they are explicitly 'unknown' and we have previous state.
+
   const finalEntityIds =
-    extractedData.entityIds && extractedData.entityIds.length > 0
-      ? extractedData.entityIds
-      : state.entityIds;
+      (extractedData.entityIds && extractedData.entityIds.length > 0)
+          ? extractedData.entityIds
+          : state.entityIds; // Retain from previous state if no new IDs extracted
 
-  // If the LLM didn't extract a new entityType, retain the one from the previous state.
   const finalEntityType =
-    extractedData.entityType !== 'unknown' ? extractedData.entityType : state.entityType;
+      extractedData.entityType && extractedData.entityType !== 'unknown'
+          ? extractedData.entityType
+          : state.entityType; // Retain from previous state
 
-  // If the LLM extracted a valid environment in this turn, use it. Otherwise, keep the existing one.
   const finalEnvironment =
-    extractedData.environment !== 'unknown' ? extractedData.environment : state.environment;
+      extractedData.environment && extractedData.environment !== 'unknown'
+          ? extractedData.environment
+          : state.environment; // Retain from previous state
 
-  // Retain timeRange if not newly specified
-  const finalTimeRange = extractedData.timeRange || state.timeRange || '24h';
+  const finalTimeRange = extractedData.timeRange || state.timeRange || '24h'; // Default '24h'
+
+  // Construct new messages to add to the state history
+  // The LLM's generated `initialResponse` (potentially modified) is now the agent's first message for this turn.
+  console.log('Final agentResponseContent for AIMessage:', agentResponseContent);
+  const newMessages: BaseMessage[] = [
+    new AIMessage({
+      content: agentResponseContent,
+      additional_kwargs: {}, // Explicitly provide an empty object
+    })
+  ];
 
   return {
+    messages: [...state.messages, ...newMessages], // Append LLM's response to history
+    queryCategory: extractedData.category,
     entityIds: finalEntityIds,
     entityType: finalEntityType,
     environment: finalEnvironment,
     timeRange: finalTimeRange,
-    // Ensure the message history is correctly appended.
-    // `state.messages` already contains all previous messages PLUS the current user's input.
-    // We then append any new clarification messages from this node.
-    messages: [...state.messages, ...newMessages],
   };
 }
 
@@ -302,13 +308,7 @@ export async function summarizeFindings(state: AgentState): Promise<Partial<Agen
 
   // Define the SystemMessage specifically for the summarization task.
   // This will be the FIRST message sent to the Anthropic LLM for this call.
-  const summarizationSystemMessage = new SystemMessage(
-    'You are an AI assistant tasked with summarizing diagnostic findings. ' +
-      'Review the provided conversation history, Datadog logs, entity history, and any analysis results. ' +
-      'Synthesize this information into a concise, clear, and actionable final summary for the user. ' +
-      '**Always format your summary using Markdown, including headings, lists, bold text, and code blocks where appropriate.** ' +
-      'Highlight the identified problem, evidence, and any next steps or recommendations.',
-  );
+  const summarizationSystemMessage = new SystemMessage(SUMMARIZATION_MESSAGE);
 
   // Craft the content of the HumanMessage that will provide the data to be summarized.
   // We'll try to get the initial user query from messages, falling back to userQuery string if needed.
@@ -343,6 +343,7 @@ export async function summarizeFindings(state: AgentState): Promise<Partial<Agen
   ];
 
   try {
+    console.log('Messages being sent to LLM:', JSON.stringify(messagesForLLMCall, null, 2));
     const response = await summarizerLLM.invoke(messagesForLLMCall); // Invoke the LLM with the correctly structured messages
     const finalSummaryText = response.content;
 

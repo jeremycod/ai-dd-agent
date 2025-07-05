@@ -20,5 +20,16 @@ export const AgentStateAnnotation = Annotation.Root({
   }>(),
   runParallelAnalysis: Annotation<boolean>(),
   finalSummary: Annotation<string | undefined>(),
+  queryCategory: Annotation<
+      | 'ENTITY_STATUS'
+      | 'UI_ISSUE'
+      | 'DATA_INCONSISTENCY'
+      | 'DATA_MAPPING'
+      | 'ENTITY_CONFIGURATION'
+      | 'SYSTEM_BEHAVIOR'
+      | 'GENERAL_QUESTION'
+      | 'UNKNOWN_CATEGORY'
+      | 'unclassified' // Initial state before parsing
+  >(),
 });
 export type AgentState = typeof AgentStateAnnotation.lc_graph_state;
