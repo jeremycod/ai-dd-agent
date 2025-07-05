@@ -1,15 +1,12 @@
 import { z } from 'zod';
 import { StateGraph, END } from '@langchain/langgraph';
-import { AgentStateAnnotation } from './model/agentState';
-import {
-  parseUserQuery,
-  ask_environment_clarification,
-  runParallelAnalysisTools,
-  summarizeFindings,
-  respondToUser,
-  fetchParallelData,
-} from './nodes';
-
+import {AgentState, AgentStateAnnotation} from './model/agentState';
+import { parseUserQuery } from './nodes/parseUserQuery';
+import { ask_environment_clarification } from './nodes/askEnvironmentClarification';
+import { fetchParallelData } from './nodes/fetchParallelData';
+import { respondToUser } from './nodes/respondToUser';
+import { summarizeFindings } from './nodes/summarizeFindings';
+import { runParallelAnalysisTools } from './nodes/runParallelAnalysisTools';
 // --- Define the Graph ---
 const workflow = new StateGraph(AgentStateAnnotation)
   .addNode('parse_user_query', parseUserQuery)

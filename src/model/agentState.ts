@@ -32,4 +32,4 @@ export const AgentStateAnnotation = Annotation.Root({
       | 'unclassified' // Initial state before parsing
   >(),
 });
-export type AgentState = typeof AgentStateAnnotation.lc_graph_state;
+export type AgentState = typeof AgentStateAnnotation.type;
