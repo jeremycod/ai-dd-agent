@@ -20,9 +20,9 @@ This project is an AI-powered diagnostic assistant designed for a streaming plat
 5. **Analyze Findings**: Synthesize data to identify patterns, anomalies, or errors.
 6. **Provide Clear Diagnosis**: Explain the root cause or suggest further steps if the issue cannot be pinpointed.
 
-
 ## Installation
 
 1. Clone the repository:
    ```bash
    git clone git@github.com:jeremycod/ai-dd-agent.git
+   ```

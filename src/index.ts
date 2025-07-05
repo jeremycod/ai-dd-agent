@@ -1,13 +1,7 @@
-import {
-  BaseMessage,
-  ToolMessage,
-  HumanMessage,
-  AIMessage,
-  SystemMessage,
-} from '@langchain/core/messages';
+import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { app } from './workflow';
-import { AgentStateAnnotation } from './model/agentState';
 import { PROMPT } from './constants';
+import { AgentState } from './model/agentState';
 
 // --- Example Usage ---
 (async () => {
@@ -15,7 +9,7 @@ import { PROMPT } from './constants';
     92ab7a5d-f827-4095-913c-bc43a164348e
     65ca4675-5129-439c-bba1-19a5f9e412ab
     198187c7-3b59-4c76-4c76-a4e7-5bb242e79378`; // Fixed a typo in the last ID if it was wrong
-  const userQuery = `I am having trouble with the following offer 62240d06-821d-495a-bb67-b4d6c924167e`;
+  const userQuery = `I am having trouble with the following offer 62240d06-821d-495a-bb67-b4d6c924167e in staging environment.`;
   if (!app || typeof app !== 'object') {
     throw new Error('The `app` object is not initialized or is invalid.');
   }
@@ -38,9 +32,6 @@ import { PROMPT } from './constants';
     finalSummary: undefined,
   };
 
-  // let finalState: AgentState | undefined;
-  // Invoke
-  // consider using `app.stream` if you want to handle streaming responses
   const stream = await app.invoke(initialState);
   const finalState = stream;
 
