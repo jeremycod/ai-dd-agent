@@ -1,46 +1,43 @@
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { DataManagerHistoryClient } from '../clients/DataManagerHistoryClient';
 import { z } from 'zod';
+import {EnvironmentType, ENVIRONMENT_TYPE_VALUES, ENTITY_TYPE_VALUES, Version} from '../model/types';
+import {
+  GetEntityHistoryToolSchema,
+  GetEntityHistoryToolSchemaInput,
+  AnalyzeEntityHistoryToolInputSchema,
+  AnalyzeEntityHistoryToolInputSchemaInput
+} from "../model/schemas";
 
 export const getEntityHistoryTool = new DynamicStructuredTool({
   name: 'getEntityHistoryTool',
   description:
     'Fetches history from Data Manager based on a query, environment, entity type, and specific entity ID (campaign, offer, sku). ',
-  schema: z.object({
-    ids: z
-      .array(z.string())
-      .describe('IDs of specific entity (campaign, offer, or sku IDs) to retrieve history by.'),
-    environment: z
-      .enum(['production', 'staging', 'development'])
-      .describe(
-        "Environment for which we are to retrieve entity history (e.g. 'production' or 'prod', 'staging' or 'qa', 'development' or 'dev'.",
-      ),
-    entityType: z
-      .enum(['campaign', 'offer', 'sku'])
-      .describe("The type of entity being investigated (e.g., 'campaign', 'offer', 'sku' )."),
-    limit: z.number().optional().default(10).describe('The maximum history records (default: 10).'),
-  }),
-  func: async ({ ids, environment, entityType, limit }) => {
+  schema: GetEntityHistoryToolSchema as any,
+  func: async (
+      { ids, environment, entityType, limit }: GetEntityHistoryToolSchemaInput,
+  ) => {
     console.log(
       `Executing getEntityHistoryTool for ${entityType} ID: ${ids} for entity ${entityType} in environment ${environment} with limit ${limit}`,
     );
 
     try {
       const environmentMap: Record<
-        'production' | 'staging' | 'development',
+        EnvironmentType,
         'prod' | 'qa' | 'dev'
       > = {
         production: 'prod',
         staging: 'qa',
         development: 'dev',
+        unknown: 'prod'
       };
 
       const mappedEnvironment = environmentMap[environment];
       const client = new DataManagerHistoryClient(mappedEnvironment); // Initialize the client with the environment
-      const response = await client.fetchEntityHistory(entityType, ids[0], limit); // Replace with the correct method
+      const response: Version[] = await client.fetchEntityHistory(entityType, ids[0], limit); // Replace with the correct method
       return {
-        history: response.versions || [],
-        message: `Successfully retrieved ${response.data?.length || 0} history records for ${entityType} IDs: ${ids.join(', ')}.`,
+        history: response || [],
+        message: `Successfully retrieved ${response?.length || 0} history records for ${entityType} IDs: ${ids.join(', ')}.`,
       };
     } catch (error) {
       console.error('Error fetching entity history:', error);
@@ -52,45 +49,6 @@ export const getEntityHistoryTool = new DynamicStructuredTool({
   },
 });
 
-// Define the schema for a single difference object within a history record
-const DifferenceSchema = z.object({
-  fieldName: z
-    .string()
-    .describe("The name of the field that was changed, e.g., 'attributes -> startDate'"),
-  oldValue: z
-    .string()
-    .nullable()
-    .describe('The old value of the field before the change. Can be null or empty string.'),
-  newValue: z
-    .string()
-    .nullable()
-    .describe('The new value of the field after the change. Can be null or empty string.'),
-});
-
-// Define the schema for a single entity history record
-const EntityHistoryRecordSchema = z.object({
-  fromVersion: z.number().describe('The version number before the change.'),
-  toVersion: z.number().describe('The version number after the change.'),
-  author: z.string().describe('The author who made the change.'),
-  datetime: z.string().datetime().describe('ISO 8601 timestamp of when the change occurred.'),
-  differences: z
-    .array(DifferenceSchema)
-    .describe('An array of specific differences in this version change.'),
-});
-
-// Define the schema for the tool's input
-const AnalyzeEntityHistoryToolInputSchema = z.object({
-  entityHistory: z
-    .array(EntityHistoryRecordSchema)
-    .describe('An array of entity history records to analyze.'),
-  currentTime: z
-    .string()
-    .datetime()
-    .optional()
-    .describe(
-      "The current timestamp in ISO 8601 format (e.g., '2025-07-04T16:00:00Z'). Defaults to current time if not provided. Useful for determining if dates are in the past/future relative to a reference.",
-    ),
-});
 
 // Export the tool definition
 export const analyzeEntityHistoryTool = new DynamicStructuredTool({
@@ -101,8 +59,8 @@ export const analyzeEntityHistoryTool = new DynamicStructuredTool({
     "and deletions of fields, while explicitly excluding certain fields (e.g., 'legacy' fields). " +
     'The tool will return a summary of detected critical changes or confirm if no critical changes were found. ' +
     'Provide the full array of entity history records.',
-  schema: AnalyzeEntityHistoryToolInputSchema,
-  func: async ({ entityHistory, currentTime }) => {
+  schema: AnalyzeEntityHistoryToolInputSchema as any,
+  func: async ({ entityHistory, currentTime }: AnalyzeEntityHistoryToolInputSchemaInput) => {
     console.log(
       'DEBUG: analyzeEntityHistoryTool received history:',
       JSON.stringify(entityHistory, null, 2),

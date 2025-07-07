@@ -1,9 +1,9 @@
-import {AgentState} from "../model/agentState";
+import {AgentStateData} from "../model/agentState";
 import {AIMessage, BaseMessage, HumanMessage, SystemMessage} from "@langchain/core/messages";
 import {SUMMARIZATION_MESSAGE} from "../constants";
 import {summarizerLLM} from "../anthropicAgent";
 
-export async function summarizeFindings(state: AgentState): Promise<Partial<AgentState>> {
+export async function summarizeFindings(state: AgentStateData): Promise<Partial<AgentStateData>> {
     console.log('[Node: summarizeFindings] Entering...');
     const { messages, userQuery, analysisResults, entityIds, entityType } = state;
 
@@ -14,7 +14,7 @@ export async function summarizeFindings(state: AgentState): Promise<Partial<Agen
     // Craft the content of the HumanMessage that will provide the data to be summarized.
     // We'll try to get the initial user query from messages, falling back to userQuery string if needed.
     const initialUserQueryContent =
-        messages.find((msg) => msg instanceof HumanMessage)?.content || userQuery;
+        messages.find((msg: BaseMessage) => msg instanceof HumanMessage)?.content || userQuery;
 
     const dataForSummaryPrompt = `
     Based on the following user query and the subsequent analysis results, provide a concise summary of the problems found and potential next steps.
@@ -33,7 +33,7 @@ export async function summarizeFindings(state: AgentState): Promise<Partial<Agen
     // This is crucial because Anthropic only allows one SystemMessage, and it must be the first.
     // We are explicitly providing the summarizationSystemMessage as the first message for this call.
     const relevantHistoryWithoutSystemMessages = messages.filter(
-        (msg) => !(msg instanceof SystemMessage),
+        (msg: BaseMessage) => !(msg instanceof SystemMessage),
     );
 
     // Construct the final array of messages to send to the Anthropic LLM for this specific invocation.

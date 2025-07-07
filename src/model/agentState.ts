@@ -1,35 +1,80 @@
-import { ChatCompletionMessageParam } from '@langchain/core/messages'; // Use LangChain's message types
+import {BaseMessage, MessageContent} from '@langchain/core/messages'; // Use LangChain's message types
 
-import { Annotation } from '@langchain/langgraph';
-import { DatadogLog } from './datadog';
+import { Annotation, LastValue } from '@langchain/langgraph';
+import { DatadogLog} from "./datadog";
+import { QueryCategory, EnvironmentType, EntityType, Version} from "./types";
 
-// Define the shape of our graph's state
-export const AgentStateAnnotation = Annotation.Root({
-  messages: Annotation<ChatCompletionMessageParam[]>(),
-  entityIds: Annotation<string[]>(),
-  entityType: Annotation<'campaign' | 'offer' | 'product' | 'sku' | 'unknown'>(),
-  environment: Annotation<'production' | 'staging' | 'development'>(),
-  timeRange: Annotation<string>(),
-  datadogLogs: Annotation<DatadogLog[]>(),
-  entityHistory: Annotation<string[]>(),
-  analysisResults: Annotation<{
+
+// Define the core types for specific fields to avoid repetition
+
+
+// Placeholder for DatadogLog - ensure this matches your actual definition
+/*export type DatadogLog = {
+  timestamp: string;
+  level: string;
+  message: string;
+  [key: string]: any;
+};*/
+
+// --- Base Agent State Data Definition ---
+
+/**
+ * AgentStateData defines the actual *data shape* of your state.
+ * This is the type that your nodes (tools) and application logic will directly interact with.
+ * It contains the unwrapped values (e.g., `BaseMessage[]`, `string[]`).
+ */
+
+export type AgentStateData = {
+  messages: BaseMessage[];
+  userQuery?: string;
+  entityIds: string[];
+  entityType: EntityType; // Reusing defined type
+  environment: EnvironmentType; // Reusing defined type
+  timeRange: string;
+  datadogLogs: DatadogLog[];
+  entityHistory: Version[];
+  analysisResults: {
     datadogWarnings?: string;
     datadogErrors?: string;
     entityHistory?: string;
-    internalMetricsAnomalies?: string;
-  }>(),
-  runParallelAnalysis: Annotation<boolean>(),
-  finalSummary: Annotation<string | undefined>(),
-  queryCategory: Annotation<
-      | 'ENTITY_STATUS'
-      | 'UI_ISSUE'
-      | 'DATA_INCONSISTENCY'
-      | 'DATA_MAPPING'
-      | 'ENTITY_CONFIGURATION'
-      | 'SYSTEM_BEHAVIOR'
-      | 'GENERAL_QUESTION'
-      | 'UNKNOWN_CATEGORY'
-      | 'unclassified' // Initial state before parsing
-  >(),
+  };
+  runParallelAnalysis: boolean;
+  finalSummary?: MessageContent;
+  queryCategory?: QueryCategory; // Reusing defined type
+};
+
+
+// --- Derived Agent State Channel Definition ---
+
+/**
+ * AgentStateChannels defines the *channel types* for LangGraph's internal StateGraph.
+ * Each field is wrapped with a LangGraph Channel type (like LastValue).
+ * This type is used as the generic parameter for Annotation.Root.
+ *
+ * We use a Mapped Type here to automatically wrap each property of AgentStateData with LastValue.
+ */
+export type AgentStateChannels = {
+  [K in keyof AgentStateData]: LastValue<AgentStateData[K]>;
+};
+
+// --- Final Agent State Type for Node Functions ---
+export const AgentStateAnnotation = Annotation.Root<AgentStateChannels>({
+  messages: Annotation(),
+  userQuery: Annotation(),
+  entityIds: Annotation(),
+  entityType: Annotation(),
+  environment: Annotation(),
+  timeRange: Annotation(),
+  datadogLogs: Annotation(),
+  entityHistory: Annotation(),
+  analysisResults: Annotation(),
+  runParallelAnalysis: Annotation(),
+  finalSummary: Annotation(),
+  queryCategory: Annotation(),
 });
-export type AgentState = typeof AgentStateAnnotation.type;
+/**
+ * AgentState is the convenience type for nodes and application logic.
+ * It is derived from AgentStateAnnotation.State, which correctly unwraps the channels
+ * to give you AgentStateData.
+ */
+export type AgentState = typeof AgentStateAnnotation.State;

@@ -1,9 +1,9 @@
-import {AgentState} from "../model/agentState";
+import {AgentStateData} from "../model/agentState";
 import {AIMessage} from "@langchain/core/messages";
 import {analyzeDatadogErrorsTool, analyzeDatadogWarningsTool} from "../tools/datadogLogsTool";
 import {analyzeEntityHistoryTool} from "../tools/entityHistoryTools";
 
-export async function runParallelAnalysisTools(state: AgentState): Promise<Partial<AgentState>> {
+export async function runParallelAnalysisTools(state: AgentStateData): Promise<Partial<AgentStateData>> {
     console.log('[Node: runParallelAnalysisTools] Entering...');
     const { datadogLogs, entityIds, timeRange, messages, entityHistory } = state;
 

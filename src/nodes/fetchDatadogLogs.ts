@@ -1,11 +1,11 @@
-import {AgentState} from "../model/agentState";
+import {AgentStateData} from "../model/agentState";
 import {AIMessage} from "@langchain/core/messages";
 import {getMockDatadogLogsTool} from "../tools/datadogLogsTool";
 import {DatadogLog} from "../model/datadog";
 
 export async function fetchDatadogLogs(
-    state: AgentStateAnnotation.State,
-): Promise<Partial<AgentState>> {
+    state: AgentStateData,
+): Promise<Partial<AgentStateData>> {
     console.log('[Node: fetchDatadogLogs] Entering...');
     const { entityIds, entityType, timeRange, messages } = state;
 
@@ -30,7 +30,7 @@ export async function fetchDatadogLogs(
     // LangGraph expects `messages` to be appended and the next step can use it
     // For this pattern, we want to store the actual logs separately for analysis.
     return {
-        datadogLogs: (toolCallResult as { logs: DatadogLog[] }).logs,
+        datadogLogs: (toolCallResult as { datadogLogs: DatadogLog[] }).datadogLogs,
         messages: [
             ...messages,
             new AIMessage('Fetched Datadog Logs. Proceeding to parallel analysis.'),

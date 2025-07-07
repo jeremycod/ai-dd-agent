@@ -2,8 +2,18 @@ import dotenv from 'dotenv';
 import { z } from 'zod';
 import { client } from '@datadog/datadog-api-client';
 import { v2 } from '@datadog/datadog-api-client';
+
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { MockLogsApi } from '../mock/MockLogsApi';
+import {ENTITY_TYPE_VALUES} from "../model/types";
+import {
+  AnalyzeDatadogErrorsToolSchema, AnalyzeDatadogErrorsToolSchemaInput,
+  AnalyzeDatadogWarningsToolSchema, AnalyzeDatadogWarningsToolSchemaInput,
+  GetDataDogLogsToolSchema,
+  GetDataDogLogsToolSchemaInput, MockDatadogLogsToolSchema, MockDatadogLogsToolSchemaInput
+} from "../model/schemas";
+import {TIMESTAMP_ASCENDING} from "@datadog/datadog-api-client/dist/packages/datadog-api-client-v2/models/RUMSort";
+import {BaseServerConfiguration} from "@datadog/datadog-api-client/dist/packages/datadog-api-client-common";
 const { LogsApi } = v2;
 
 const DATADOG_API_KEY = process.env.DATADOG_API_KEY;
@@ -21,9 +31,8 @@ const configuration = client.createConfiguration({
     apiKeyAuth: DATADOG_API_KEY,
     appKeyAuth: DATADOG_APP_KEY,
   },
-  serverVariables: {
-    site: DATADOG_SITE,
-  },
+  baseServer: new BaseServerConfiguration( DATADOG_SITE, {}),
+
 });
 
 const logsApi = new LogsApi(configuration);
@@ -53,39 +62,16 @@ function parseTimeRange(timeRange: string): { fromMs: number; toMs: number } {
   return { fromMs, toMs };
 }
 
-export type DatadogLog = datadogV2.Log;
+export type DatadogLog = v2.Log;
 // --- Tool 1: Get Datadog Logs ---
 export const getDatadogLogsTool = new DynamicStructuredTool({
   name: 'getDatadogLogs',
   description:
     "Fetches logs from Datadog based on a query, time range, and specific entity IDs (campaigns, offers, products). Prioritize 'status:error OR status:warn' in the query.",
-  schema: z.object({
-    ids: z
-      .array(z.string())
-      .describe('An array of specific IDs (campaign, offer, or product IDs) to filter logs by.'),
-    entityType: z
-      .enum(['campaign', 'offer', 'product', 'general'])
-      .describe(
-        "The type of entity being investigated (e.g., 'campaign', 'offer', 'product', or 'general' if not specific).",
-      ),
-    timeRange: z
-      .string()
-      .describe(
-        "The time range for the query (e.g., '1h' for last hour, '24h' for last 24 hours, '5m' for 5 minutes).",
-      ),
-    additionalQuery: z
-      .string()
-      .optional()
-      .describe(
-        "Any additional Datadog log search query string (e.g., 'service:my-app', 'message:\"failed to connect\"').",
-      ),
-    limit: z
-      .number()
-      .optional()
-      .default(1000)
-      .describe('The maximum number of logs to retrieve (default: 1000).'),
-  }),
-  func: async ({ ids, entityType, timeRange, additionalQuery, limit }) => {
+  schema:  GetDataDogLogsToolSchema as any,
+  func: async (
+      { ids, entityType, timeRange, additionalQuery, limit }: GetDataDogLogsToolSchemaInput
+  ) => {
     console.log(
       `Executing getDatadogLogsTool for ${entityType} IDs: ${ids.join(', ')} in ${timeRange}`,
     );
@@ -98,7 +84,7 @@ export const getDatadogLogsTool = new DynamicStructuredTool({
     }
 
     try {
-      const response = await logsApi.searchLogs({
+      const response = await logsApi.listLogs({
         body: {
           filter: {
             query: ddQuery,
@@ -108,7 +94,7 @@ export const getDatadogLogsTool = new DynamicStructuredTool({
           page: {
             limit: limit,
           },
-          sort: datadogV2.LogsSort.TIMESTAMP_ASCENDING,
+          sort: TIMESTAMP_ASCENDING,
         },
       });
       return {
@@ -118,7 +104,7 @@ export const getDatadogLogsTool = new DynamicStructuredTool({
     } catch (error) {
       console.error('Error fetching Datadog logs:', error);
       return {
-        logs: [],
+        datadogLogs: [],
         message: `Error fetching Datadog logs: ${error instanceof Error ? error.message : String(error)}`,
       };
     }
@@ -131,33 +117,8 @@ export const getMockDatadogLogsTool = new DynamicStructuredTool({
   name: 'getMockDatadogLogs',
   description:
     "Fetches logs from Datadog based on a query, time range, and specific entity IDs (campaigns, offers, products). Prioritize 'status:error OR status:warn' in the query.",
-  schema: z.object({
-    ids: z
-      .array(z.string())
-      .describe('An array of specific IDs (campaign, offer, or product IDs) to filter logs by.'),
-    entityType: z
-      .enum(['campaign', 'offer', 'product', 'general'])
-      .describe(
-        "The type of entity being investigated (e.g., 'campaign', 'offer', 'product', or 'general' if not specific).",
-      ),
-    timeRange: z
-      .string()
-      .describe(
-        "The time range for the query (e.g., '1h' for last hour, '24h' for last 24 hours, '5m' for 5 minutes).",
-      ),
-    additionalQuery: z
-      .string()
-      .optional()
-      .describe(
-        "Any additional Datadog log search query string (e.g., 'service:my-app', 'message:\"failed to connect\"').",
-      ),
-    limit: z
-      .number()
-      .optional()
-      .default(1000)
-      .describe('The maximum number of logs to retrieve (default: 1000).'),
-  }),
-  func: async ({ ids, entityType, timeRange, additionalQuery, limit }) => {
+  schema: MockDatadogLogsToolSchema as any,
+  func: async ({ ids, entityType, timeRange, additionalQuery, limit }: MockDatadogLogsToolSchemaInput) => {
     console.log(
       `Executing getDatadogLogsTool for ${entityType} IDs: ${ids.join(', ')} in ${timeRange}`,
     );
@@ -172,13 +133,13 @@ export const getMockDatadogLogsTool = new DynamicStructuredTool({
     try {
       const response = await mockLogsApi.searchLogs(ids[0]);
       return {
-        logs: response.data || [],
+        datadogLogs: response.data || [],
         message: `Successfully retrieved ${response.data?.length || 0} logs for ${entityType} IDs: ${ids.join(', ')}.`,
       };
     } catch (error) {
       console.error('Error fetching Datadog logs:', error);
       return {
-        logs: [],
+        datadogLogs: [],
         message: `Error fetching Datadog logs: ${error instanceof Error ? error.message : String(error)}`,
       };
     }
@@ -190,10 +151,8 @@ export const analyzeDatadogErrorsTool = new DynamicStructuredTool({
   name: 'analyzeDatadogErrors',
   description:
     'Analyzes a list of Datadog logs to specifically identify and summarize error patterns. Focus on unique error messages, their counts, and affected services/components.',
-  schema: z.object({
-    logs: z.array(z.any()).describe('An array of Datadog log objects to analyze.'),
-  }),
-  func: async ({ logs }) => {
+  schema: AnalyzeDatadogErrorsToolSchema as any,
+  func: async ({ logs }: AnalyzeDatadogErrorsToolSchemaInput) => {
     if (logs.length === 0) {
       return 'No error logs provided for analysis.';
     }
@@ -250,10 +209,8 @@ export const analyzeDatadogWarningsTool = new DynamicStructuredTool({
   name: 'analyzeDatadogWarnings',
   description:
     'Analyzes a list of Datadog logs to identify and summarize warning patterns. Focus on unique warning messages, their counts, and affected services/components.',
-  schema: z.object({
-    logs: z.array(z.any()).describe('An array of Datadog log objects to analyze.'),
-  }),
-  func: async ({ logs }) => {
+  schema: AnalyzeDatadogWarningsToolSchema as any,
+  func: async ({ logs }: AnalyzeDatadogWarningsToolSchemaInput ) => {
     if (logs.length === 0) {
       return 'No warning logs provided for analysis.';
     }

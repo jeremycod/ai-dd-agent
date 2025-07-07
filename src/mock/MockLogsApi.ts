@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { mockDataDogLogs } from './mock-logs';
+import {DatadogLog, DataDogResponse} from "../model/datadog";
 export class MockLogsApi {
   async searchLogs(id: string): Promise<DataDogResponse> {
     try {

@@ -1,11 +1,11 @@
-import {AgentState} from "../model/agentState";
+import {AgentStateData} from "../model/agentState";
 import {AIMessage} from "@langchain/core/messages";
 import {getEntityHistoryTool} from "../tools/entityHistoryTools";
-import {EntityHistory} from "../model/history";
+import {Version} from "../model/types";
 
 export async function fetchEntityHistory(
-    state: AgentStateAnnotation.State,
-): Promise<Partial<AgentState>> {
+    state: AgentStateData,
+): Promise<Partial<AgentStateData>> {
     console.log('[Node: fetchEntityHistory] Fetching entity history...');
     const { entityIds, entityType, environment, messages } = state;
     if (entityIds.length === 0) {
@@ -29,7 +29,7 @@ export async function fetchEntityHistory(
     // LangGraph expects `messages` to be appended and the next step can use it
     // For this pattern, we want to store the actual logs separately for analysis.
     return {
-        entityHistory: (toolCallResult as { history: EntityHistory[] }).history,
+        entityHistory: (toolCallResult as { history: Version[] }).history,
         messages: [
             ...messages,
             new AIMessage('Fetched Entity History. Proceeding to parallel analysis.'),

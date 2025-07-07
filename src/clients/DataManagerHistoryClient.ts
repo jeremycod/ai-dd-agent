@@ -1,4 +1,5 @@
 import axios from 'axios';
+import {EntityType, EntityHistoryResponse, Version} from "../model/types";
 
 export class DataManagerHistoryClient {
   private baseUrl: string;
@@ -7,43 +8,70 @@ export class DataManagerHistoryClient {
     this.baseUrl = `http://genie-datamanager-${environment}.us-east-1.dpegrid.net/history`;
   }
   async fetchEntityHistory(
-    entityType: 'campaign' | 'offer' | 'sku',
-    id: string,
-    limit: number,
-  ): Promise<any> {
+      entityType: EntityType,
+      id: string,
+      limit: number,
+  ): Promise<Version[]> {
+    let response: EntityHistoryResponse;
+
     switch (entityType) {
       case 'campaign':
-        return this.getCampaign(id);
+        response = await this.getCampaign(id);
+        break;
       case 'offer':
-        return this.getOffer(id);
+        response = await this.getOffer(id);
+        break;
       case 'sku':
-        return this.getSku(id);
+        response = await this.getSku(id);
+        break;
+      case 'product':
+        // If you have a getProduct method, call it here.
+        // response = await this.getProduct(id);
+        throw new Error(`Product history not yet implemented for DataManagerHistoryClient`);
+      case 'general':
+      case 'unknown':
+        throw new Error(`Unsupported entityType for direct history fetch: ${entityType}. Requires specific ID.`);
       default:
-        throw new Error(`Unsupported entityType: ${entityType}`);
+        const exhaustiveCheck: never = entityType;
+        throw new Error(`Unhandled entityType: ${exhaustiveCheck}`);
     }
+
+    // Directly return the versions array, applying limit
+    // Ensure response.versions is an array before slicing
+    if (response && Array.isArray(response.versions)) {
+      return response.versions.slice(0, limit);
+    }
+
+    console.warn(`No 'versions' array found in history response for ${entityType} ${id}`);
+    return []; // Return empty array if no versions found
   }
-  async getCampaign(campaignId: string): Promise<any> {
+
+  async getCampaign(campaignId: string): Promise<EntityHistoryResponse> {
     const url = `${this.baseUrl}/campaign?campaignId=${campaignId}`;
-    return this.makeRequest(url);
+    return this.makeRequest<EntityHistoryResponse>(url);
   }
 
-  async getOffer(offerId: string): Promise<any> {
+  async getOffer(offerId: string): Promise<EntityHistoryResponse> {
     const url = `${this.baseUrl}/offer?offerId=${offerId}`;
-    const response = this.makeRequest(url);
-    return response;
+    return this.makeRequest<EntityHistoryResponse>(url);
   }
 
-  async getSku(skuId: string): Promise<any> {
+  async getSku(skuId: string): Promise<EntityHistoryResponse> {
     const url = `${this.baseUrl}/sku?skuId=${skuId}`;
-    return this.makeRequest(url);
+    return this.makeRequest<EntityHistoryResponse>(url);
   }
 
-  private async makeRequest(url: string): Promise<any> {
+  private async makeRequest<T>(url: string): Promise<T> {
+    console.log(`Making request to: ${url}`);
     try {
-      const response = await axios.get(url);
-      return response.data;
+      const response = await fetch(url); // Or axios, etc.
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! Status: ${response.status}, Details: ${errorText}`);
+      }
+      return await response.json() as T; // Cast to expected type T
     } catch (error) {
-      console.error(`Error making request to ${url}:`, error);
+      console.error(`Request to ${url} failed:`, error);
       throw error;
     }
   }

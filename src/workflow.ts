@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { StateGraph, END } from '@langchain/langgraph';
-import {AgentState, AgentStateAnnotation} from './model/agentState';
+import {AgentStateData, AgentState, AgentStateAnnotation} from './model/agentState';
 import { parseUserQuery } from './nodes/parseUserQuery';
 import { ask_environment_clarification } from './nodes/askEnvironmentClarification';
 import { fetchParallelData } from './nodes/fetchParallelData';
@@ -23,7 +23,7 @@ workflow.setEntryPoint('parse_user_query');
 // --- CRITICAL CONDITIONAL EDGE ---
 workflow.addConditionalEdges(
   'parse_user_query', // From this node
-  (state: AgentState) => {
+  (state: AgentStateData) => {
     // This is the gatekeeper.
     // If the environment is 'unknown', we go to the clarification step.
     if (state.environment === 'unknown') {
@@ -46,5 +46,4 @@ workflow.addEdge('respond_to_user', END);
 workflow.addEdge('ask_environment_clarification', END);
 
 // Compile the graph
-workflow.compile();
 export const app = workflow.compile();

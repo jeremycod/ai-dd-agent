@@ -1,27 +1,17 @@
-import {AgentState} from "../model/agentState";
+import {AgentStateData} from "../model/agentState";
 import {AIMessage, BaseMessage, HumanMessage, SystemMessage} from "@langchain/core/messages";
 import {UserQueryExtraction} from "../model/schemas";
 // Helper function to extract IDs and time range from a message
-import { AgentState } from '../model/agentState';
-import { BaseMessage, HumanMessage, SystemMessage, AIMessage } from '@langchain/core/messages';
 import { UserQueryExtractionSchema } from '../model/schemas';
-import { DatadogLog } from './model/datadog';
 import { PromptTemplate } from '@langchain/core/prompts';
-import { extractionLLM, summarizerLLM } from '../anthropicAgent';
-import {
-    getMockDatadogLogsTool,
-    analyzeDatadogWarningsTool,
-    analyzeDatadogErrorsTool,
-} from './tools/datadogLogsTool';
-import { getEntityHistoryTool, analyzeEntityHistoryTool } from './tools/entityHistoryTools';
-
-import { EntityHistory } from './model/history';
-import {EXTRACTION_MESSAGE, SUMMARIZATION_MESSAGE, PROMPT} from '../constants';
+import { extractionLLM } from '../anthropicAgent';
+import {PROMPT} from '../constants';
 import { StructuredOutputParser } from '@langchain/core/output_parsers';
 
 
+
 // Bind the LLM with the structured output schema
-const structuredOutputParser = StructuredOutputParser.fromZodSchema(UserQueryExtractionSchema);
+const structuredOutputParser = StructuredOutputParser.fromZodSchema(UserQueryExtractionSchema as any) as any;
 // Create the chain that uses the full PROMPT and the structured parser
 const structuredExtractionChain = PromptTemplate.fromTemplate(
     PROMPT +
@@ -35,7 +25,7 @@ const structuredExtractionChain = PromptTemplate.fromTemplate(
 
 
 
-export async function parseUserQuery(state: AgentState): Promise<Partial<AgentState>> {
+export async function parseUserQuery(state: AgentStateData): Promise<Partial<AgentStateData>> {
     console.log('[Node: parseUserQuery] Parsing user query with LLM for categorization and extraction...');
     const lastMessage = state.messages[state.messages.length - 1];
 
@@ -60,16 +50,16 @@ export async function parseUserQuery(state: AgentState): Promise<Partial<AgentSt
         // Prepare the conversation history for the LLM
         // Filter out any SystemMessages that might be in the state if not needed by your LLM/model
         const historyMessages = state.messages
-            .filter(msg => !(msg instanceof SystemMessage)) // Keep only Human and AI messages
+            .filter((msg: BaseMessage) => !(msg instanceof SystemMessage)) // Keep only Human and AI messages
             .map(msg => `${msg instanceof HumanMessage ? 'Human' : 'AI'}: ${msg.content}`)
             .join('\n');
 
         // Invoke the structured extraction chain
-        extractedData = await structuredExtractionChain.invoke({
+        extractedData = (await structuredExtractionChain.invoke({
             query: currentUserQueryContent,
             history: historyMessages, // Pass the formatted history
             format_instructions: structuredOutputParser.getFormatInstructions(),
-        });
+        })) as UserQueryExtraction;
 
         console.log('[Node: parseUserQuery] LLM Extracted Data:', extractedData);
 

@@ -1,12 +1,12 @@
-import { AgentState } from '../model/agentState';
+import {AgentState, AgentStateData} from '../model/agentState';
 import { fetchEntityHistory } from './fetchEntityHistory';
 import { fetchDatadogLogs } from './fetchDatadogLogs';
 
 
 // --- NEW Parallel Node Orchestrator ---
 export async function fetchParallelData(
-    state: AgentState, // Use your defined AgentState type
-): Promise<Partial<AgentState>> {
+    state: AgentStateData, // Use your defined AgentState type
+): Promise<Partial<AgentStateData>> {
     console.log('[Node: fetchParallelData] Starting parallel data fetching...');
 
     // Create promises for both data fetches

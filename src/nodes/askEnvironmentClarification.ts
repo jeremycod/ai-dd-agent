@@ -1,5 +1,5 @@
 // Helper function to extract IDs and time range from a message
-import { AgentState } from '../model/agentState';
+import { AgentStateData } from '../model/agentState';
 
 /**
  * Node: ask_environment_clarification
@@ -9,8 +9,8 @@ import { AgentState } from '../model/agentState';
  * This node ensures the graph ends and the message is returned to the user.
  */
 export async function ask_environment_clarification(
-    state: AgentState,
-): Promise<Partial<AgentState>> {
+    state: AgentStateData,
+): Promise<Partial<AgentStateData>> {
     console.log(
         '[Node: ask_environment_clarification] Environment needs clarification. Signaling graph end.',
     );
