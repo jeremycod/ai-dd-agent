@@ -13,6 +13,10 @@ This project is an AI-powered diagnostic assistant designed for a streaming plat
 
 ## Diagnostic Workflow
 
+![Workflow Diagram](doc/workflow.png)
+
+The workflow follows these steps:
+
 1. **Understand the User's Problem**: Listen to the user's description of the suspected issue.
 2. **Identify Key Information**: Extract relevant details such as entity IDs, entity type, and timeframes.
 3. **Strategize Tool Use**: Determine the best tools for investigation based on the gathered information.
@@ -25,4 +29,3 @@ This project is an AI-powered diagnostic assistant designed for a streaming plat
 1. Clone the repository:
    ```bash
    git clone git@github.com:jeremycod/ai-dd-agent.git
-   ```
