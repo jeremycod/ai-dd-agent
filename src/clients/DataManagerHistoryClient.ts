@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {EntityType, EntityHistoryResponse, Version} from "../model/types";
+import { EntityType, EntityHistoryResponse, Version } from '../model/types';
 
 export class DataManagerHistoryClient {
   private baseUrl: string;
@@ -7,11 +7,7 @@ export class DataManagerHistoryClient {
   constructor(environment: 'prod' | 'qa' | 'dev') {
     this.baseUrl = `http://genie-datamanager-${environment}.us-east-1.dpegrid.net/history`;
   }
-  async fetchEntityHistory(
-      entityType: EntityType,
-      id: string,
-      limit: number,
-  ): Promise<Version[]> {
+  async fetchEntityHistory(entityType: EntityType, id: string, limit: number): Promise<Version[]> {
     let response: EntityHistoryResponse;
 
     switch (entityType) {
@@ -30,7 +26,9 @@ export class DataManagerHistoryClient {
         throw new Error(`Product history not yet implemented for DataManagerHistoryClient`);
       case 'general':
       case 'unknown':
-        throw new Error(`Unsupported entityType for direct history fetch: ${entityType}. Requires specific ID.`);
+        throw new Error(
+          `Unsupported entityType for direct history fetch: ${entityType}. Requires specific ID.`,
+        );
       default:
         const exhaustiveCheck: never = entityType;
         throw new Error(`Unhandled entityType: ${exhaustiveCheck}`);
@@ -69,7 +67,7 @@ export class DataManagerHistoryClient {
         const errorText = await response.text();
         throw new Error(`HTTP error! Status: ${response.status}, Details: ${errorText}`);
       }
-      return await response.json() as T; // Cast to expected type T
+      return (await response.json()) as T; // Cast to expected type T
     } catch (error) {
       console.error(`Request to ${url} failed:`, error);
       throw error;

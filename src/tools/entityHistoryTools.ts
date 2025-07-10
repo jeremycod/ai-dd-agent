@@ -1,35 +1,35 @@
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { DataManagerHistoryClient } from '../clients/DataManagerHistoryClient';
 import { z } from 'zod';
-import {EnvironmentType, ENVIRONMENT_TYPE_VALUES, ENTITY_TYPE_VALUES, Version} from '../model/types';
+import {
+  EnvironmentType,
+  ENVIRONMENT_TYPE_VALUES,
+  ENTITY_TYPE_VALUES,
+  Version,
+} from '../model/types';
 import {
   GetEntityHistoryToolSchema,
   GetEntityHistoryToolSchemaInput,
   AnalyzeEntityHistoryToolInputSchema,
-  AnalyzeEntityHistoryToolInputSchemaInput
-} from "../model/schemas";
+  AnalyzeEntityHistoryToolInputSchemaInput,
+} from '../model/schemas';
 
 export const getEntityHistoryTool = new DynamicStructuredTool({
   name: 'getEntityHistoryTool',
   description:
     'Fetches history from Data Manager based on a query, environment, entity type, and specific entity ID (campaign, offer, sku). ',
   schema: GetEntityHistoryToolSchema as any,
-  func: async (
-      { ids, environment, entityType, limit }: GetEntityHistoryToolSchemaInput,
-  ) => {
+  func: async ({ ids, environment, entityType, limit }: GetEntityHistoryToolSchemaInput) => {
     console.log(
       `Executing getEntityHistoryTool for ${entityType} ID: ${ids} for entity ${entityType} in environment ${environment} with limit ${limit}`,
     );
 
     try {
-      const environmentMap: Record<
-        EnvironmentType,
-        'prod' | 'qa' | 'dev'
-      > = {
+      const environmentMap: Record<EnvironmentType, 'prod' | 'qa' | 'dev'> = {
         production: 'prod',
         staging: 'qa',
         development: 'dev',
-        unknown: 'prod'
+        unknown: 'prod',
       };
 
       const mappedEnvironment = environmentMap[environment];
@@ -48,7 +48,6 @@ export const getEntityHistoryTool = new DynamicStructuredTool({
     }
   },
 });
-
 
 // Export the tool definition
 export const analyzeEntityHistoryTool = new DynamicStructuredTool({

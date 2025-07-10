@@ -4,16 +4,16 @@ import { client } from '@datadog/datadog-api-client';
 import { v2 } from '@datadog/datadog-api-client';
 
 import { DynamicStructuredTool } from '@langchain/core/tools';
-import { MockLogsApi } from '../mock/MockLogsApi';
-import {ENTITY_TYPE_VALUES} from "../model/types";
 import {
-  AnalyzeDatadogErrorsToolSchema, AnalyzeDatadogErrorsToolSchemaInput,
-  AnalyzeDatadogWarningsToolSchema, AnalyzeDatadogWarningsToolSchemaInput,
+  AnalyzeDatadogErrorsToolSchema,
+  AnalyzeDatadogErrorsToolSchemaInput,
+  AnalyzeDatadogWarningsToolSchema,
+  AnalyzeDatadogWarningsToolSchemaInput,
   GetDataDogLogsToolSchema,
-  GetDataDogLogsToolSchemaInput, MockDatadogLogsToolSchema, MockDatadogLogsToolSchemaInput
-} from "../model/schemas";
-import {TIMESTAMP_ASCENDING} from "@datadog/datadog-api-client/dist/packages/datadog-api-client-v2/models/RUMSort";
-import {BaseServerConfiguration} from "@datadog/datadog-api-client/dist/packages/datadog-api-client-common";
+  GetDataDogLogsToolSchemaInput,
+} from '../model/schemas';
+import { TIMESTAMP_ASCENDING } from '@datadog/datadog-api-client/dist/packages/datadog-api-client-v2/models/RUMSort';
+import { BaseServerConfiguration } from '@datadog/datadog-api-client/dist/packages/datadog-api-client-common';
 const { LogsApi } = v2;
 
 const DATADOG_API_KEY = process.env.DATADOG_API_KEY;
@@ -31,8 +31,7 @@ const configuration = client.createConfiguration({
     apiKeyAuth: DATADOG_API_KEY,
     appKeyAuth: DATADOG_APP_KEY,
   },
-  baseServer: new BaseServerConfiguration( DATADOG_SITE, {}),
-
+  baseServer: new BaseServerConfiguration(DATADOG_SITE, {}),
 });
 
 const logsApi = new LogsApi(configuration);
@@ -68,17 +67,21 @@ export const getDatadogLogsTool = new DynamicStructuredTool({
   name: 'getDatadogLogs',
   description:
     "Fetches logs from Datadog based on a query, time range, and specific entity IDs (campaigns, offers, products). Prioritize 'status:error OR status:warn' in the query.",
-  schema:  GetDataDogLogsToolSchema as any,
-  func: async (
-      { ids, entityType, timeRange, additionalQuery, limit }: GetDataDogLogsToolSchemaInput
-  ) => {
+  schema: GetDataDogLogsToolSchema as any,
+  func: async ({
+    ids,
+    entityType,
+    timeRange,
+    additionalQuery,
+    limit,
+  }: GetDataDogLogsToolSchemaInput) => {
     console.log(
       `Executing getDatadogLogsTool for ${entityType} IDs: ${ids.join(', ')} in ${timeRange}`,
     );
     const { fromMs, toMs } = parseTimeRange(timeRange);
 
     // Build the Datadog query string
-    let ddQuery = `status:(error OR warn) ${entityType}.id:(${ids.join(' OR ')})`;
+    let ddQuery = `(${ids.join(' OR ')})`;
     if (additionalQuery) {
       ddQuery += ` ${additionalQuery}`;
     }
@@ -97,41 +100,6 @@ export const getDatadogLogsTool = new DynamicStructuredTool({
           sort: TIMESTAMP_ASCENDING,
         },
       });
-      return {
-        logs: response.data || [],
-        message: `Successfully retrieved ${response.data?.length || 0} logs for ${entityType} IDs: ${ids.join(', ')}.`,
-      };
-    } catch (error) {
-      console.error('Error fetching Datadog logs:', error);
-      return {
-        datadogLogs: [],
-        message: `Error fetching Datadog logs: ${error instanceof Error ? error.message : String(error)}`,
-      };
-    }
-  },
-});
-
-const mockLogsApi = new MockLogsApi();
-// --- Tool 1: Get Mock Datadog Logs ---
-export const getMockDatadogLogsTool = new DynamicStructuredTool({
-  name: 'getMockDatadogLogs',
-  description:
-    "Fetches logs from Datadog based on a query, time range, and specific entity IDs (campaigns, offers, products). Prioritize 'status:error OR status:warn' in the query.",
-  schema: MockDatadogLogsToolSchema as any,
-  func: async ({ ids, entityType, timeRange, additionalQuery, limit }: MockDatadogLogsToolSchemaInput) => {
-    console.log(
-      `Executing getDatadogLogsTool for ${entityType} IDs: ${ids.join(', ')} in ${timeRange}`,
-    );
-    const { fromMs, toMs } = parseTimeRange(timeRange);
-
-    // Build the Datadog query string
-    let ddQuery = `status:(error OR warn) ${entityType}.id:(${ids.join(' OR ')})`;
-    if (additionalQuery) {
-      ddQuery += ` ${additionalQuery}`;
-    }
-
-    try {
-      const response = await mockLogsApi.searchLogs(ids[0]);
       return {
         datadogLogs: response.data || [],
         message: `Successfully retrieved ${response.data?.length || 0} logs for ${entityType} IDs: ${ids.join(', ')}.`,
@@ -210,7 +178,7 @@ export const analyzeDatadogWarningsTool = new DynamicStructuredTool({
   description:
     'Analyzes a list of Datadog logs to identify and summarize warning patterns. Focus on unique warning messages, their counts, and affected services/components.',
   schema: AnalyzeDatadogWarningsToolSchema as any,
-  func: async ({ logs }: AnalyzeDatadogWarningsToolSchemaInput ) => {
+  func: async ({ logs }: AnalyzeDatadogWarningsToolSchemaInput) => {
     if (logs.length === 0) {
       return 'No warning logs provided for analysis.';
     }

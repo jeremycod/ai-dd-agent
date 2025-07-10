@@ -1,26 +1,22 @@
-export type DatadogLog<T = Record<string, any>> = {
-  attributes: {
-    status: string;
-    service: string;
-    tags?: string[] | null;
-    timestamp: string;
-    host: string;
-    attributes: T; // This 'attributes' key will hold the specific log attributes
-    message: string;
-    exception: string;
-  };
-  type: string;
-  id: string;
+export type DatadogLogAttributes = {
+  status: string;
+  service: string;
+  tags?: string[] | null;
+  timestamp: string;
+  host: string;
+  message: string;
+  exception: string; // The specific field you need
+  // This 'additionalAttributes' field will capture any other dynamic properties
+  // from the Datadog log's 'attributes' that aren't explicitly typed above.
+  additionalAttributes: Record<string, any>;
 };
 
-export type DataDogResponse<T = Record<string, any>> = {
-  meta?: {
-    page: {
-      after: string;
-    };
-  };
-  data: DatadogLog<T>[]; // Here's the change: data is now an array of DatadogLog
-  links?: {
-    next: string;
-  };
+// This is your main DatadogLog type
+export type DatadogLog = {
+  id?: string; // Optional, as it might not always be needed or present
+  type?: string; // e.g., 'log', optional
+  // The 'attributes' field of your DatadogLog will conform to DatadogLogAttributes
+  attributes: DatadogLogAttributes;
+  // Any other top-level properties from v2.Log if needed, e.g.,
+  // content?: string; // If you want the raw log content here
 };

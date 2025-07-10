@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { StateGraph, END } from '@langchain/langgraph';
-import {AgentStateData, AgentState, AgentStateAnnotation} from './model/agentState';
+import { AgentStateData, AgentState, AgentStateAnnotation } from './model/agentState';
 import { parseUserQuery } from './nodes/parseUserQuery';
 import { ask_environment_clarification } from './nodes/askEnvironmentClarification';
 import { fetchParallelData } from './nodes/fetchParallelData';

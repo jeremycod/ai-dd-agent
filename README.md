@@ -7,7 +7,7 @@ This project is an AI-powered diagnostic assistant designed for a streaming plat
 ## Features
 
 - **Entity Diagnostics**: Analyze issues with offers, campaigns, products, and packages.
-- **Log Analysis**: Utilize tools like `getMockDatadogLogs` for detailed log investigation.
+- **Log Analysis**: Utilize tools like `getDatadogLogs` for detailed log investigation.
 - **Workflow Automation**: Execute diagnostic workflows to identify root causes efficiently.
 - **Clear Explanations**: Provide concise and actionable insights to users.
 
@@ -29,3 +29,4 @@ The workflow follows these steps:
 1. Clone the repository:
    ```bash
    git clone git@github.com:jeremycod/ai-dd-agent.git
+   ```

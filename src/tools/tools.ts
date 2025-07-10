@@ -1,3 +1,3 @@
-import { analyzeDatadogErrorsTool, getMockDatadogLogsTool } from './datadogLogsTool';
+import { analyzeDatadogErrorsTool, getDatadogLogsTool } from './datadogLogsTool';
 
-export const allTools = [getMockDatadogLogsTool, analyzeDatadogErrorsTool];
+export const allTools = [getDatadogLogsTool, analyzeDatadogErrorsTool];

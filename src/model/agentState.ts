@@ -1,12 +1,10 @@
-import {BaseMessage, MessageContent} from '@langchain/core/messages'; // Use LangChain's message types
+import { BaseMessage, MessageContent } from '@langchain/core/messages'; // Use LangChain's message types
 
 import { Annotation, LastValue } from '@langchain/langgraph';
-import { DatadogLog} from "./datadog";
-import { QueryCategory, EnvironmentType, EntityType, Version} from "./types";
-
+import { DatadogLog } from './datadog';
+import { QueryCategory, EnvironmentType, EntityType, Version } from './types';
 
 // Define the core types for specific fields to avoid repetition
-
 
 // Placeholder for DatadogLog - ensure this matches your actual definition
 /*export type DatadogLog = {
@@ -42,7 +40,6 @@ export type AgentStateData = {
   finalSummary?: MessageContent;
   queryCategory?: QueryCategory; // Reusing defined type
 };
-
 
 // --- Derived Agent State Channel Definition ---
 

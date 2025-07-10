@@ -9,12 +9,12 @@ import { AgentStateData } from '../model/agentState';
  * This node ensures the graph ends and the message is returned to the user.
  */
 export async function ask_environment_clarification(
-    state: AgentStateData,
+  state: AgentStateData,
 ): Promise<Partial<AgentStateData>> {
-    console.log(
-        '[Node: ask_environment_clarification] Environment needs clarification. Signaling graph end.',
-    );
-    // No complex logic needed here, as parseUserQuery already added the message.
-    // We just return the current state, and the graph will typically END after this node.
-    return state;
+  console.log(
+    '[Node: ask_environment_clarification] Environment needs clarification. Signaling graph end.',
+  );
+  // No complex logic needed here, as parseUserQuery already added the message.
+  // We just return the current state, and the graph will typically END after this node.
+  return state;
 }
