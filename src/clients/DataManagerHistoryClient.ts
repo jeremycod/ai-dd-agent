@@ -1,5 +1,4 @@
-
-import { EntityType, EntityHistoryResponse, Version } from '../model/types';
+import {EntityHistoryResponse, EntityType, Version} from '../model/types';
 
 export class DataManagerHistoryClient {
   private readonly baseUrl: string;
@@ -30,8 +29,7 @@ export class DataManagerHistoryClient {
           `Unsupported entityType for direct history fetch: ${entityType}. Requires specific ID.`,
         );
       default:
-        const exhaustiveCheck: never = entityType;
-        throw new Error(`Unhandled entityType: ${exhaustiveCheck}`);
+        throw new Error(`Unhandled entityType: ${entityType}`);
     }
 
     // Directly return the versions array, applying limit
@@ -70,7 +68,8 @@ export class DataManagerHistoryClient {
       return (await response.json()) as T; // Cast to expected type T
     } catch (error) {
       console.error(`Request to ${url} failed:`, error);
-      throw error;
+      // Optionally handle the error here instead of re-throwing
+      throw new Error(`Failed to fetch data from ${url}: ${error.message}`);
     }
   }
 }

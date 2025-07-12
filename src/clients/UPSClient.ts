@@ -1,5 +1,4 @@
-
-import { OfferPriceResponse } from '../model/types'; // Assuming this path is correct
+import {OfferPriceResponse} from '../model/types'; // Assuming this path is correct
 
 export class UPSClient {
     private readonly baseUrl: string;
@@ -27,11 +26,10 @@ export class UPSClient {
                 throw new Error(`HTTP error! Status: ${response.status}, Body: ${errorBody}`);
             }
 
-            const data: OfferPriceResponse = await response.json();
-            return data;
+            return await response.json();
         } catch (error) {
             console.error(`Error fetching offer price for ${offerId}:`, error); // Added offerId for better logging
-            throw error;
+            throw new Error(`Error fetching offer price for ${offerId}:`, error);
         }
     }
 }

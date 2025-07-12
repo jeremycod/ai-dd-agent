@@ -147,7 +147,7 @@ export class OfferServiceClient {
             return data;
         } catch (error) {
             console.error('Error fetching offer data:', error);
-            throw error; // Re-throw to allow the caller to handle it
+            throw new Error('Error fetching offer data:', error);// Re-throw to allow the caller to handle it
         }
     }
 }
