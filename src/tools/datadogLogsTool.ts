@@ -1,5 +1,4 @@
-import dotenv from 'dotenv';
-import { z } from 'zod';
+
 import { client } from '@datadog/datadog-api-client';
 import { v2 } from '@datadog/datadog-api-client';
 

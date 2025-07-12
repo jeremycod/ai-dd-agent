@@ -1,23 +1,15 @@
 import { AgentStateData } from '../model/agentState';
 import { AIMessage, BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { UserQueryExtraction } from '../model/schemas';
-// Helper function to extract IDs and time range from a message
-//import { UserQueryExtractionSchema } from '../model/schemas';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { extractionLLM } from '../anthropicAgent';
-import {EXTRACTION_PROMPT_TEMPLATE, PROMPT} from '../constants';
-//import { StructuredOutputParser } from '@langchain/core/output_parsers';
+import {EXTRACTION_PROMPT_TEMPLATE} from '../constants';
 
-// Bind the LLM with the structured output schema
-/*const structuredOutputParser = StructuredOutputParser.fromZodSchema(
-  UserQueryExtractionSchema as any,
-) as any;*/
 // Create the chain that uses the full PROMPT and the structured parser
 const structuredExtractionChain = PromptTemplate.fromTemplate(
   EXTRACTION_PROMPT_TEMPLATE
 )
   .pipe(extractionLLM)
-  //.pipe(structuredOutputParser);
 
 export async function parseUserQuery(state: AgentStateData): Promise<Partial<AgentStateData>> {
   console.log(
@@ -54,7 +46,7 @@ export async function parseUserQuery(state: AgentStateData): Promise<Partial<Age
     // Invoke the structured extraction chain
     extractedData = (await structuredExtractionChain.invoke({
       query: currentUserQueryContent,
-      history: historyMessages, // Pass the formatted history
+      history: historyMessages,
       //format_instructions: structuredOutputParser.getFormatInstructions(),
     })) as UserQueryExtraction;
 

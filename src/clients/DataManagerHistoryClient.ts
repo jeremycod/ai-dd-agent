@@ -1,4 +1,4 @@
-import axios from 'axios';
+
 import { EntityType, EntityHistoryResponse, Version } from '../model/types';
 
 export class DataManagerHistoryClient {

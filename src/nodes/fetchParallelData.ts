@@ -1,4 +1,4 @@
-import { AgentState, AgentStateData } from '../model/agentState';
+import { AgentStateData } from '../model/agentState';
 import { fetchEntityHistory } from './fetchEntityHistory';
 import { fetchDatadogLogs } from './fetchDatadogLogs';
 import { fetchUPCOfferPrice } from './fetchUPCOfferPrice';

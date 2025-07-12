@@ -1,8 +1,6 @@
-// src/clients/UPSClient.ts (assuming this is the file)
 
-import axios from 'axios'; // Note: You're using 'fetch' in your code, not 'axios'. 'axios' import is redundant if not used.
 import { OfferPriceResponse } from '../model/types'; // Assuming this path is correct
-const DSS_CALLER_CLIENT_ID = process.env.DSS_CALLER_CLIENT_ID || 'your-default-ai-agent-client-id';
+
 export class UPSClient {
     private readonly baseUrl: string;
     private readonly callerClientId: string; // <--- Add this property

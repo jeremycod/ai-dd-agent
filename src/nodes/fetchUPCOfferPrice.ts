@@ -1,5 +1,3 @@
-// src/nodes/fetchUPCOfferPrice.ts
-
 import { AgentStateData } from '../model/agentState';
 import { OfferPriceResponse } from '../model/types'; // Ensure this correctly defines your types
 import { AIMessage, BaseMessage } from '@langchain/core/messages';

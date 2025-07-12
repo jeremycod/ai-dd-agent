@@ -1,5 +1,4 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
-import { z } from "zod";
 import { UPSClient } from '../clients/UPSClient';
 import { OfferPriceResponse } from '../model/types';
 import { GetUPCOfferPriceToolSchema, GetUPCOfferPriceToolSchemaInput } from '../model/schemas';
