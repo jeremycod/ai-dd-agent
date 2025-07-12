@@ -3,8 +3,6 @@ import { DataManagerHistoryClient } from '../clients/DataManagerHistoryClient';
 import { z } from 'zod';
 import {
   EnvironmentType,
-  ENVIRONMENT_TYPE_VALUES,
-  ENTITY_TYPE_VALUES,
   Version,
 } from '../model/types';
 import {

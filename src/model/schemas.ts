@@ -136,6 +136,7 @@ export const GetUPCOfferPriceToolSchema = z.object({
   offerId: z.string().describe("The unique identifier of the offer."),
   environment: z.enum(['production', 'staging', 'development']).describe("The environment."),
 });
+
 export type GetUPCOfferPriceToolSchemaInput = z.infer<typeof GetUPCOfferPriceToolSchema>;
 
 // Output schema for the tool (this is where it *might* be causing a circular issue)
@@ -150,3 +151,12 @@ export const OfferPriceOutputSchema = z.object({
   // Or is OfferPriceResponse (from types.ts) causing a loop?
 });
 export type OfferPriceOutput = z.infer<typeof OfferPriceOutputSchema>;
+
+export const AnalyzeUPCOfferPriceToolInputSchema = z.object({
+  offerPriceDetails: z.array(z.any()) // Use z.any() if OfferPriceResponse isn't fully defined as a Zod schema.
+  // Ideally, it would be z.array(OfferPriceResponseSchema)
+  // if you have a Zod schema for OfferPriceResponse.
+  // For now, if it's an interface, z.any() is a pragmatic choice.
+});
+
+export type AnalyzeUPCOfferPriceToolInput = z.infer<typeof AnalyzeUPCOfferPriceToolInputSchema>;

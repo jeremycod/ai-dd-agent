@@ -32,7 +32,7 @@ export type AgentStateData = {
   runParallelAnalysis: boolean;
   finalSummary?: MessageContent;
   queryCategory?: QueryCategory;
-  offerPriceDetails?: OfferPriceResponse;
+  offerPriceDetails?: OfferPriceResponse[];
 };
 
 // --- Derived Agent State Channel Definition ---

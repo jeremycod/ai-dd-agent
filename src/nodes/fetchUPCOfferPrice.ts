@@ -1,60 +1,72 @@
 // src/nodes/fetchUPCOfferPrice.ts
 
-import { AIMessage } from '@langchain/core/messages';
-import { AgentState } from '../model/agentState';
-import { upcOfferPriceTool } from '../tools/offerServiceTools';
-import { OfferPriceResponse } from '../model/types'; // Import the full OfferPriceResponse type
+import { AgentStateData } from '../model/agentState';
+import { OfferPriceResponse } from '../model/types'; // Ensure this correctly defines your types
+import { AIMessage, BaseMessage } from '@langchain/core/messages';
+import { upcOfferPriceTool } from '../tools/offerServiceTools'; // Import your tool instance
 
-export async function fetchUPCOfferPrice(state: AgentState): Promise<Partial<AgentState>> {
+
+export async function fetchUPCOfferPrice(state: AgentStateData): Promise<Partial<AgentStateData>> {
     console.log('[Node: fetchUPCOfferPrice] Attempting to fetch UPC Offer Price...');
-    const { entityIds, entityType, environment, messages } = state;
 
-    if (entityIds.length === 0 || entityType !== 'offer' || environment === 'unknown') {
-        const skipMessage = 'Skipping UPC Offer Price fetch: No offer ID, not an offer, or environment unknown.';
-        console.warn(`[Node: fetchUPCOfferPrice] ${skipMessage}`);
+    const { environment, entityIds, messages } = state;
+
+    if (!environment || environment === 'unknown') {
         return {
-            messages: [...messages, new AIMessage(skipMessage)],
-            offerPriceDetails: undefined, // Explicitly set to undefined if skipped
+            messages: [...messages, new AIMessage("Environment not specified for fetching UPC offer price.")],
+            offerPriceDetails: undefined
         };
     }
 
-    const offerId = entityIds[0]; // Assuming your tool is called with a single offerId
+    if (!entityIds || entityIds.length === 0) {
+        return {
+            messages: [...messages, new AIMessage("No offer IDs provided to fetch UPC offer price.")],
+            offerPriceDetails: undefined
+        };
+    }
 
-    try {
-        // toolCallResult will be the full OfferPriceResponse object
-        const toolCallResult: OfferPriceResponse | string = await upcOfferPriceTool.invoke({
-            offerId: offerId, // The tool takes a single offerId
-            environment: environment,
-        });
+    const offerPrices: OfferPriceResponse[] = [];
+    const newMessages: BaseMessage[] = [];
+    const failedFetches: string[] = [];
 
-        if (typeof toolCallResult === 'string') {
-            console.error(`[Node: fetchUPCOfferPrice] Tool returned an error: ${toolCallResult}`);
-            return {
-                messages: [
-                    ...messages,
-                    new AIMessage(`Failed to fetch offer price for ${offerId}: ${toolCallResult}`),
-                ],
-                offerPriceDetails: undefined, // Indicate failure
-            };
-        } else {
-            // --- CRUCIAL CHANGE: Store the entire OfferPriceResponse object ---
-            console.log(`[Node: fetchUPCOfferPrice] Successfully fetched full price details for offer ID: ${offerId}.`);
-            return {
-                offerPriceDetails: toolCallResult, // Store the entire response object
-                messages: [
-                    ...messages,
-                    new AIMessage(`Fetched UPC Offer Price details for offer ID \`${offerId}\`.`),
-                ],
-            };
+    // Loop through each entityId and invoke the tool for each one
+    for (const offerId of entityIds) {
+        try {
+            // Invoke the tool for a single offerId and environment
+            // The tool returns OfferPriceResponse directly or an error string
+            const toolCallResult: OfferPriceResponse | string = await upcOfferPriceTool.invoke({
+                offerId: offerId,
+                environment: environment,
+            });
+
+            if (typeof toolCallResult === 'string') {
+                // If the tool returns a string, it indicates an error or summary
+                newMessages.push(new AIMessage(`Tool output for offer ${offerId}: ${toolCallResult}`));
+                failedFetches.push(offerId);
+            } else {
+                // If it returns an OfferPriceResponse object, it's a success
+                offerPrices.push(toolCallResult);
+                newMessages.push(new AIMessage(`Successfully fetched price details for offer \`${offerId}\`.`));
+            }
+        } catch (error: any) {
+            console.error(`[Node: fetchUPCOfferPrice] Error invoking tool for offer ${offerId}:`, error);
+            newMessages.push(new AIMessage(`Failed to retrieve price for offer \`${offerId}\` due to an unexpected error. Error: ${error.message}`));
+            failedFetches.push(offerId);
         }
-    } catch (error: any) {
-        console.error(`[Node: fetchUPCOfferPrice] Error invoking upcOfferPriceTool for ${offerId}:`, error);
-        return {
-            messages: [
-                ...messages,
-                new AIMessage(`An error occurred while trying to fetch the offer price for ${offerId}. Error: ${error.message}`),
-            ],
-            offerPriceDetails: undefined, // Indicate failure
-        };
     }
+
+    let summaryMessage = `UPC Offer Price fetching completed for ${entityIds.length} offers.`;
+    if (offerPrices.length > 0) {
+        summaryMessage += ` Successfully retrieved ${offerPrices.length}.`;
+    }
+    if (failedFetches.length > 0) {
+        summaryMessage += ` Failed for ${failedFetches.length} offers: ${failedFetches.join(', ')}.`;
+    }
+
+    newMessages.push(new AIMessage(summaryMessage));
+
+    return {
+        messages: [...messages, ...newMessages],
+        offerPriceDetails: offerPrices.length > 0 ? offerPrices : undefined,
+    };
 }
