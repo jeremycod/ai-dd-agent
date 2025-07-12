@@ -2,7 +2,7 @@ import axios from 'axios';
 import { EntityType, EntityHistoryResponse, Version } from '../model/types';
 
 export class DataManagerHistoryClient {
-  private baseUrl: string;
+  private readonly baseUrl: string;
 
   constructor(environment: 'prod' | 'qa' | 'dev') {
     this.baseUrl = `http://genie-datamanager-${environment}.us-east-1.dpegrid.net/history`;

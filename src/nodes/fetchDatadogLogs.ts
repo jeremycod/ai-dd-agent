@@ -10,8 +10,10 @@ function mapEnvironmentToTag(environment: string): string {
     staging: 'env:qa',
     development: 'env:dev',
   };
-
   return environmentMap[environment] || 'env:unknown';
+}
+function generateServiceSubquery(services: string[]): string {
+  return `(${services.map(service => `service:${service}`).join(' OR ')})`;
 }
 
 export async function fetchDatadogLogs(state: AgentStateData): Promise<Partial<AgentStateData>> {
@@ -28,9 +30,11 @@ export async function fetchDatadogLogs(state: AgentStateData): Promise<Partial<A
       ],
     };
   }
-
+  const services = ['genie', 'genieserver'];
+  const subquery = generateServiceSubquery(services);
   // --- MISSING PART: Invoke the tool to get toolCallResult ---
-  const additionalQuery = mapEnvironmentToTag(state.environment || 'production'); // Assuming 'environment' is on AgentStateData
+  const environmentQuery = mapEnvironmentToTag(state.environment || 'production'); // Assuming 'environment' is on AgentStateData
+  const additionalQuery = `${subquery} ${environmentQuery}`;
   const toolCallResult = await getDatadogLogsTool.invoke({
     ids: entityIds,
     entityType: entityType,

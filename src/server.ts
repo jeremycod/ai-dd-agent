@@ -93,18 +93,6 @@ server.post('/chat', async (req: Request, res: Response) => {
     // console.log(`[Session: ${sessionId}] Newly initialized state:`, JSON.stringify(currentAgentState, null, 2)); // DEBUG
   }
 
-  // --- Crucial Debugging Step: Log state *immediately before* invoking LangGraph ---
-  console.log(
-    `[Session: ${sessionId}] State PASSED TO app.invoke():`,
-    JSON.stringify(currentAgentState, null, 2),
-  );
-  console.log(
-    `[Session: ${sessionId}] Type of messages array before invoke: ${typeof currentAgentState.messages}`,
-  );
-  console.log(
-    `[Session: ${sessionId}] Messages array length before invoke: ${currentAgentState.messages?.length}`,
-  );
-
   try {
     console.log(`[Session: ${sessionId}] Invoking agent with current state...`);
     const finalState = await app.invoke(currentAgentState); // This line is the key interaction
@@ -117,14 +105,6 @@ server.post('/chat', async (req: Request, res: Response) => {
 
     let agentResponse: string = 'Agent finished without a clear summary.';
 
-    // --- Debugging Final State ---
-    console.log(
-      'DEBUG: finalState received from agent (after invoke):',
-      JSON.stringify(finalState, null, 2),
-    );
-    console.log('DEBUG: finalState.messages type (after invoke):', typeof finalState.messages);
-    console.log('DEBUG: finalState.messages content (after invoke):', finalState.messages);
-    console.log('DEBUG: finalState.userQuery (after invoke):', finalState.userQuery);
 
     // --- Response Generation Logic ---
     if (finalState && finalState.finalSummary) {

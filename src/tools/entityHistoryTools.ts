@@ -60,10 +60,7 @@ export const analyzeEntityHistoryTool = new DynamicStructuredTool({
     'Provide the full array of entity history records.',
   schema: AnalyzeEntityHistoryToolInputSchema as any,
   func: async ({ entityHistory, currentTime }: AnalyzeEntityHistoryToolInputSchemaInput) => {
-    console.log(
-      'DEBUG: analyzeEntityHistoryTool received history:',
-      JSON.stringify(entityHistory, null, 2),
-    );
+
 
     if (!entityHistory || entityHistory.length === 0) {
       return 'No entity history records provided for analysis.';

@@ -44,7 +44,6 @@ export async function summarizeFindings(state: AgentStateData): Promise<Partial<
   ];
 
   try {
-    console.log('Messages being sent to LLM:', JSON.stringify(messagesForLLMCall, null, 2));
     const response = await summarizerLLM.invoke(messagesForLLMCall); // Invoke the LLM with the correctly structured messages
     const finalSummaryText = response.content;
 

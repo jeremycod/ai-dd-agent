@@ -2,28 +2,22 @@ import { AgentStateData } from '../model/agentState';
 import { AIMessage, BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { UserQueryExtraction } from '../model/schemas';
 // Helper function to extract IDs and time range from a message
-import { UserQueryExtractionSchema } from '../model/schemas';
+//import { UserQueryExtractionSchema } from '../model/schemas';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { extractionLLM } from '../anthropicAgent';
-import { PROMPT } from '../constants';
-import { StructuredOutputParser } from '@langchain/core/output_parsers';
+import {EXTRACTION_PROMPT_TEMPLATE, PROMPT} from '../constants';
+//import { StructuredOutputParser } from '@langchain/core/output_parsers';
 
 // Bind the LLM with the structured output schema
-const structuredOutputParser = StructuredOutputParser.fromZodSchema(
+/*const structuredOutputParser = StructuredOutputParser.fromZodSchema(
   UserQueryExtractionSchema as any,
-) as any;
+) as any;*/
 // Create the chain that uses the full PROMPT and the structured parser
 const structuredExtractionChain = PromptTemplate.fromTemplate(
-  PROMPT +
-    '\n\n' +
-    'Based on the user query and conversation history, classify the query and extract relevant details. Your response MUST be a JSON object conforming to the following schema:\n' +
-    '{format_instructions}\n\n' +
-    'Conversation History:\n' + // Add history prompt
-    '{history}\n' +
-    'Current User Query: {query}',
+  EXTRACTION_PROMPT_TEMPLATE
 )
   .pipe(extractionLLM)
-  .pipe(structuredOutputParser);
+  //.pipe(structuredOutputParser);
 
 export async function parseUserQuery(state: AgentStateData): Promise<Partial<AgentStateData>> {
   console.log(
@@ -61,10 +55,10 @@ export async function parseUserQuery(state: AgentStateData): Promise<Partial<Age
     extractedData = (await structuredExtractionChain.invoke({
       query: currentUserQueryContent,
       history: historyMessages, // Pass the formatted history
-      format_instructions: structuredOutputParser.getFormatInstructions(),
+      //format_instructions: structuredOutputParser.getFormatInstructions(),
     })) as UserQueryExtraction;
 
-    console.log('[Node: parseUserQuery] LLM Extracted Data:', extractedData);
+    //console.log('[Node: parseUserQuery] LLM Extracted Data:', extractedData);
 
     // The initialResponse from LLM directly becomes the first part of the AI's message
     agentResponseContent = extractedData.initialResponse;

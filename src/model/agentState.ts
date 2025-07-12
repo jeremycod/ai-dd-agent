@@ -3,16 +3,8 @@ import { BaseMessage, MessageContent } from '@langchain/core/messages'; // Use L
 import { Annotation, LastValue } from '@langchain/langgraph';
 import { DatadogLog } from './datadog';
 import { QueryCategory, EnvironmentType, EntityType, Version } from './types';
-
+import { OfferPriceResponse } from './types'; // Import the full OfferPriceResponse type
 // Define the core types for specific fields to avoid repetition
-
-// Placeholder for DatadogLog - ensure this matches your actual definition
-/*export type DatadogLog = {
-  timestamp: string;
-  level: string;
-  message: string;
-  [key: string]: any;
-};*/
 
 // --- Base Agent State Data Definition ---
 
@@ -35,10 +27,12 @@ export type AgentStateData = {
     datadogWarnings?: string;
     datadogErrors?: string;
     entityHistory?: string;
+    upcOfferPrice?: string;
   };
   runParallelAnalysis: boolean;
   finalSummary?: MessageContent;
-  queryCategory?: QueryCategory; // Reusing defined type
+  queryCategory?: QueryCategory;
+  offerPriceDetails?: OfferPriceResponse;
 };
 
 // --- Derived Agent State Channel Definition ---
@@ -68,6 +62,7 @@ export const AgentStateAnnotation = Annotation.Root<AgentStateChannels>({
   runParallelAnalysis: Annotation(),
   finalSummary: Annotation(),
   queryCategory: Annotation(),
+  offerPriceDetails: Annotation(),
 });
 /**
  * AgentState is the convenience type for nodes and application logic.

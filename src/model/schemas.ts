@@ -130,3 +130,23 @@ export const AnalyzeEntityHistoryToolInputSchema = z.object({
 export type AnalyzeEntityHistoryToolInputSchemaInput = z.infer<
   typeof AnalyzeEntityHistoryToolInputSchema
 >;
+
+// Input schema for the tool
+export const GetUPCOfferPriceToolSchema = z.object({
+  offerId: z.string().describe("The unique identifier of the offer."),
+  environment: z.enum(['production', 'staging', 'development']).describe("The environment."),
+});
+export type GetUPCOfferPriceToolSchemaInput = z.infer<typeof GetUPCOfferPriceToolSchema>;
+
+// Output schema for the tool (this is where it *might* be causing a circular issue)
+export const OfferPriceOutputSchema = z.object({
+  offerId: z.string(),
+  price: z.object({
+    amount: z.number(),
+    currency: z.string(),
+  }),
+  // ... potentially other fields ...
+  // Is there anything here that directly or indirectly references GetUPCOfferPriceToolSchema?
+  // Or is OfferPriceResponse (from types.ts) causing a loop?
+});
+export type OfferPriceOutput = z.infer<typeof OfferPriceOutputSchema>;
