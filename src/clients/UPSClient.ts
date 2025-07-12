@@ -23,13 +23,13 @@ export class UPSClient {
 
             if (!response.ok) {
                 const errorBody = await response.text();
-                throw new Error(`HTTP error! Status: ${response.status}, Body: ${errorBody}`);
+                return { error: `HTTP error! Status: ${response.status}, Body: ${errorBody}`, success: false } as OfferPriceResponse;
             }
 
             return await response.json();
         } catch (error) {
-            console.error(`Error fetching offer price for ${offerId}:`, error); // Added offerId for better logging
-            throw new Error(`Error fetching offer price for ${offerId}:`, error);
+            console.error(`Error fetching offer price for ${offerId}:`, error);
+            throw new Error(`Error fetching offer price for ${offerId}: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 }

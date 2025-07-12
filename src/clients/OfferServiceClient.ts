@@ -125,9 +125,8 @@ export class OfferServiceClient {
             });
 
             if (!response.ok) {
-                // Handle HTTP errors (e.g., 401, 403, 500)
-                const errorText = await response.text();
-                throw new Error(`HTTP error! Status: ${response.status}, Body: ${errorText}`);
+                const errorBody = await response.text();
+                return { error: `HTTP error! Status: ${response.status}, Body: ${errorBody}`, success: false } as OfferServiceResponse;
             }
 
             const data: OfferServiceResponse = await response.json();
@@ -138,16 +137,16 @@ export class OfferServiceClient {
                 const errorData: any = data; // Cast to any to access potential errors field
                 if (errorData.errors && Array.isArray(errorData.errors)) {
                     const graphQLErrors = errorData.errors.map((err: any) => err.message).join(', ');
-                    throw new Error(`GraphQL errors: ${graphQLErrors}`);
+                    return { error: `HTTP error! Status: ${response.status}, GraphQL errors: ${graphQLErrors}`, success: false } as OfferServiceResponse;
                 }
-                throw new Error("GraphQL response 'data' field is null or 'offers' is null.");
+                return { error: `GraphQL response 'data' field is null or 'offers' is null.`, success: false } as OfferServiceResponse;
             }
 
 
             return data;
         } catch (error) {
             console.error('Error fetching offer data:', error);
-            throw new Error('Error fetching offer data:', error);// Re-throw to allow the caller to handle it
+            throw new Error(`Error fetching offer data: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 }

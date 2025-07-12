@@ -80,6 +80,9 @@ export interface OfferPriceResponse {
   promotionalPrices: PromotionalPrice[];
   destinationPrices: CurrencyAmount[];
   packagePrices: PackagePrice[];
+  error?: string;
+  success?: boolean;
+  errors?: Array<{ message: string; locations?: any[]; path?: string[] }>;
 }
 
 
@@ -203,4 +206,9 @@ export interface OfferServiceResponse {
   data: {
     offers: Offer[];
   };
+  error?: string;
+  // You might also want to add a 'success' boolean to make it clearer
+  success?: boolean;
+  // For GraphQL errors, maybe a specific errors array
+  errors?: Array<{ message: string; locations?: any[]; path?: string[] }>;
 }

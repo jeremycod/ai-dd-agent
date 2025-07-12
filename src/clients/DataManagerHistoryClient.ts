@@ -1,4 +1,12 @@
-import {EntityHistoryResponse, EntityType, Version} from '../model/types';
+import { EntityHistoryResponse, EntityType, Version } from '../model/types';
+
+// Define a custom error class for HTTP-related errors
+export class HttpDataManagerError extends Error {
+  constructor(message: string, public status: number, public body: string) {
+    super(message);
+    this.name = 'HttpDataManagerError'; // Custom name for easier identification
+  }
+}
 
 export class DataManagerHistoryClient {
   private readonly baseUrl: string;
@@ -6,6 +14,7 @@ export class DataManagerHistoryClient {
   constructor(environment: 'prod' | 'qa' | 'dev') {
     this.baseUrl = `http://genie-datamanager-${environment}.us-east-1.dpegrid.net/history`;
   }
+
   async fetchEntityHistory(entityType: EntityType, id: string, limit: number): Promise<Version[]> {
     let response: EntityHistoryResponse;
 
@@ -26,7 +35,7 @@ export class DataManagerHistoryClient {
       case 'general':
       case 'unknown':
         throw new Error(
-          `Unsupported entityType for direct history fetch: ${entityType}. Requires specific ID.`,
+            `Unsupported entityType for direct history fetch: ${entityType}. Requires specific ID.`,
         );
       default:
         throw new Error(`Unhandled entityType: ${entityType}`);
@@ -60,16 +69,30 @@ export class DataManagerHistoryClient {
   private async makeRequest<T>(url: string): Promise<T> {
     console.log(`Making request to: ${url}`);
     try {
-      const response = await fetch(url); // Or axios, etc.
+      const response = await fetch(url);
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP error! Status: ${response.status}, Details: ${errorText}`);
+        const errorBody = await response.text();
+        // THROW an error here, do not return an object with an 'error' property
+        throw new HttpDataManagerError(
+            `HTTP error! Status: ${response.status}, Body: ${errorBody}`,
+            response.status,
+            errorBody,
+        );
       }
       return (await response.json()) as T; // Cast to expected type T
     } catch (error) {
       console.error(`Request to ${url} failed:`, error);
-      // Optionally handle the error here instead of re-throwing
-      throw new Error(`Failed to fetch data from ${url}: ${error.message}`);
+      // Re-throw a new Error, ensuring 'error.message' is safely accessed
+      // If 'error' is already an HttpDataManagerError, re-throw it directly
+      if (error instanceof HttpDataManagerError) {
+        throw error; // Re-throw the specific HTTP error
+      } else if (error instanceof Error) {
+        // If it's a generic Error (e.g., network error, JSON parse error)
+        throw new Error(`Failed to fetch data from ${url}: ${error.message}`);
+      } else {
+        // Fallback for truly unknown error types
+        throw new Error(`Failed to fetch data from ${url}: An unknown error occurred: ${String(error)}`);
+      }
     }
   }
 }
