@@ -1,92 +1,6 @@
-export const ENTITY_TYPE_VALUES = [
-  'campaign',
-  'offer',
-  'product',
-  'sku',
-  'general',
-  'unknown',
-] as const;
-export const ENVIRONMENT_TYPE_VALUES = ['production', 'staging', 'development', 'unknown'] as const;
-export const QUERY_CATEGORY_VALUES = [
-  'ENTITY_STATUS',
-  'UI_ISSUE',
-  'DATA_INCONSISTENCY',
-  'DATA_MAPPING',
-  'ENTITY_CONFIGURATION',
-    'OFFER_PRICE',
-  'SYSTEM_BEHAVIOR',
-  'GENERAL_QUESTION',
-  'UNKNOWN_CATEGORY',
-  'unclassified',
-] as const;
-
-export type EntityType = (typeof ENTITY_TYPE_VALUES)[number]; // "campaign" | "offer" | ...
-export type EnvironmentType = (typeof ENVIRONMENT_TYPE_VALUES)[number]; // "production" | "staging" | ...
-export type QueryCategory = (typeof QUERY_CATEGORY_VALUES)[number]; // "ENTITY_STATUS" | "UI_ISSUE" | ...
-
-export type Difference = {
-  fieldName: string;
-  oldValue: string | null;
-  newValue: string | null;
-};
-
-export type Version = {
-  fromVersion: number;
-  toVersion: number;
-  author: string;
-  datetime: string; // ISO 8601 date string
-  differences: Difference[];
-};
-
-export type EntityHistoryResponse = {
-  // Renamed from EntityHistory to avoid confusion with AgentState property
-  versions: Version[];
-};
-
-/// UPS client types
-export type BillingPeriod = 'MONTH' | 'YEAR' | 'WEEK' | 'DAY';
-export type PhaseType = 'PREPAID' | 'RECURRING' | 'TRIAL';
-export type DurationUnit = 'MONTH' | 'YEAR' | 'WEEK' | 'DAY';
-export interface CurrencyAmount {
-  amount: number;
-  isoFormattedCurrency: string;
-  billingPeriod: BillingPeriod | null; // Use the defined type
-}
-
-export interface DiscountDuration {
-  unit: DurationUnit | null; // Use the defined type
-  length: number;
-  isoFormatted: string | null;
-}
-
-export interface PromotionalPrice {
-  amount: number;
-  isoFormattedCurrency: string;
-  billingPeriod: BillingPeriod | null; // Use the defined type
-  phaseType: PhaseType | null; // Use the defined type
-  discountDuration: DiscountDuration | null;
-  billingFrequency: number;
-}
-
-export interface PackagePrice {
-  packageId: string;
-  retailPrice: CurrencyAmount;
-  promotionalPrices: PromotionalPrice[];
-  destinationPrices: CurrencyAmount[];
-}
-
-export interface OfferPriceResponse {
-  retailPrice: CurrencyAmount;
-  promotionalPrices: PromotionalPrice[];
-  destinationPrices: CurrencyAmount[];
-  packagePrices: PackagePrice[];
-  error?: string;
-  success?: boolean;
-  errors?: Array<{ message: string; locations?: any[]; path?: string[] }>;
-}
-
-
 // Offer service client types
+import { DurationUnit, PhaseType } from './UPS';
+
 export type OfferType = 'STANDARD_TIER' | 'PROMOTIONAL_OFFER' | 'TRIAL_OFFER' | 'MIGRATION_OFFER'; // Extend as needed
 export type OfferProductType = 'MONTHLY' | 'ANNUAL' | 'ONE_TIME' | 'WEEKLY' | 'DAILY'; // Extend as needed
 //export type PhaseType = 'FULL_PRICE' | 'DISCOUNT' | 'TRIAL'; // Extend as needed
@@ -141,7 +55,7 @@ export interface OfferEligibility {
 export interface Availability {
   isActive: boolean;
   startDate: string; // ISO 8601 Date string
-  endDate: string;   // ISO 8601 Date string
+  endDate: string; // ISO 8601 Date string
 }
 
 export interface DiscountPrice {

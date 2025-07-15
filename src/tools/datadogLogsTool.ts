@@ -1,4 +1,3 @@
-
 import { client } from '@datadog/datadog-api-client';
 import { v2 } from '@datadog/datadog-api-client';
 

@@ -1,7 +1,5 @@
-
 import { ChatAnthropic } from '@langchain/anthropic';
 import { UserQueryExtractionSchema, UserQueryExtraction } from './model/schemas';
-
 
 export const extractionLLM = new ChatAnthropic({
   model: 'claude-3-5-sonnet-latest',

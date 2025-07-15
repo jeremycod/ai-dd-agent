@@ -3,13 +3,12 @@ import { AIMessage, BaseMessage, HumanMessage, SystemMessage } from '@langchain/
 import { UserQueryExtraction } from '../model/schemas';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { extractionLLM } from '../anthropicAgent';
-import {EXTRACTION_PROMPT_TEMPLATE} from '../constants';
+import { EXTRACTION_PROMPT_TEMPLATE } from '../constants';
 
 // Create the chain that uses the full PROMPT and the structured parser
-const structuredExtractionChain = PromptTemplate.fromTemplate(
-  EXTRACTION_PROMPT_TEMPLATE
-)
-  .pipe(extractionLLM)
+const structuredExtractionChain = PromptTemplate.fromTemplate(EXTRACTION_PROMPT_TEMPLATE).pipe(
+  extractionLLM,
+);
 
 export async function parseUserQuery(state: AgentStateData): Promise<Partial<AgentStateData>> {
   console.log(

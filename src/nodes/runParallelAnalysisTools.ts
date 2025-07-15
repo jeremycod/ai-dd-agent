@@ -5,10 +5,10 @@ import { AIMessage } from '@langchain/core/messages';
 import { analyzeDatadogErrorsTool } from '../tools/datadogLogsTool';
 import { analyzeDatadogWarningsTool } from '../tools/datadogLogsTool';
 import { analyzeEntityHistoryTool } from '../tools/entityHistoryTools';
-import { analyzeUPCOfferPriceTool } from '../tools/offerServiceTools'; // This is *your* analyzeUPCOfferPriceTool function, not a LangChain Tool instance
+import { analyzeUPSOfferPriceTool } from '../tools/upsTools'; // This is *your* analyzeUPSOfferPriceTool function, not a LangChain Tool instance
 
 export async function runParallelAnalysisTools(
-    state: AgentStateData,
+  state: AgentStateData,
 ): Promise<Partial<AgentStateData>> {
   console.log('[Node: runParallelAnalysisTools] Entering...');
   const { datadogLogs, messages, entityHistory, offerPriceDetails, queryCategory } = state; // Destructure only what's needed
@@ -18,7 +18,9 @@ export async function runParallelAnalysisTools(
   // Initialize an array to hold promises for custom functions that return Partial<AgentStateData>
   const customFunctionPromises: Promise<Partial<AgentStateData>>[] = [];
 
-  const analysisResultsAccumulator: AgentStateData['analysisResults'] = { ...state.analysisResults }; // Start with existing
+  const analysisResultsAccumulator: AgentStateData['analysisResults'] = {
+    ...state.analysisResults,
+  }; // Start with existing
   const newMessagesAccumulator: AIMessage[] = [];
 
   // --- Conditional Datadog/Entity History Analysis ---
@@ -40,35 +42,45 @@ export async function runParallelAnalysisTools(
     newMessagesAccumulator.push(new AIMessage('No entity history was available for analysis.'));
   }
 
-  // --- Conditional UPC Offer Price Analysis ---
+  // --- Conditional UPS Offer Price Analysis ---
   // This is a custom function, not a LangChain Tool instance, so it's called directly
   if (
-      queryCategory === 'OFFER_PRICE' &&
-      offerPriceDetails &&
-      offerPriceDetails.length > 0 // <-- This will now be correct due to AgentStateData change
+    queryCategory === 'OFFER_PRICE' &&
+    offerPriceDetails &&
+    offerPriceDetails.length > 0 // <-- This will now be correct due to AgentStateData change
   ) {
-    console.log('[Node: runParallelAnalysisTools] Adding analyzeUPCOfferPriceTool to parallel execution.');
-    customFunctionPromises.push(analyzeUPCOfferPriceTool(state)); // This is *your* custom function
+    console.log(
+      '[Node: runParallelAnalysisTools] Adding analyzeUPSOfferPriceTool to parallel execution.',
+    );
+    customFunctionPromises.push(analyzeUPSOfferPriceTool(state)); // This is *your* custom function
   } else if (queryCategory === 'OFFER_PRICE') {
-    analysisResultsAccumulator.upcOfferPrice = 'Could not retrieve UPC Offer Price details for analysis.';
-    newMessagesAccumulator.push(new AIMessage('Could not retrieve UPC Offer Price details for analysis.'));
+    analysisResultsAccumulator.upsOfferPrice =
+      'Could not retrieve UPS Offer Price details for analysis.';
+    newMessagesAccumulator.push(
+      new AIMessage('Could not retrieve UPS Offer Price details for analysis.'),
+    );
   }
-
 
   if (langchainToolPromises.length === 0 && customFunctionPromises.length === 0) {
     console.log('[Node: runParallelAnalysisTools] No specific analysis tools to run.');
     return {
       analysisResults: analysisResultsAccumulator,
-      messages: [...messages, ...newMessagesAccumulator, new AIMessage('No specific analysis tools were run as no relevant data was available.')],
+      messages: [
+        ...messages,
+        ...newMessagesAccumulator,
+        new AIMessage('No specific analysis tools were run as no relevant data was available.'),
+      ],
     };
   }
 
-  console.log(`[Node: runParallelAnalysisTools] Running analysis tools in parallel. LangChain Tools: ${langchainToolPromises.length}, Custom Functions: ${customFunctionPromises.length}`);
+  console.log(
+    `[Node: runParallelAnalysisTools] Running analysis tools in parallel. LangChain Tools: ${langchainToolPromises.length}, Custom Functions: ${customFunctionPromises.length}`,
+  );
 
   // Execute all promises in parallel
   const [langchainToolResults, customFunctionResults] = await Promise.all([
     Promise.all(langchainToolPromises),
-    Promise.all(customFunctionPromises)
+    Promise.all(customFunctionPromises),
   ]);
 
   // Process LangChain Tool results (assuming they return strings)

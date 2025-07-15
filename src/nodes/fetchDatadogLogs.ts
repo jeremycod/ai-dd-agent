@@ -13,7 +13,7 @@ function mapEnvironmentToTag(environment: string): string {
   return environmentMap[environment] || 'env:unknown';
 }
 function generateServiceSubquery(services: string[]): string {
-  return `(${services.map(service => `service:${service}`).join(' OR ')})`;
+  return `(${services.map((service) => `service:${service}`).join(' OR ')})`;
 }
 
 export async function fetchDatadogLogs(state: AgentStateData): Promise<Partial<AgentStateData>> {

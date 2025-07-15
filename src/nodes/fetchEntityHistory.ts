@@ -1,7 +1,7 @@
 import { AgentStateData } from '../model/agentState';
 import { AIMessage } from '@langchain/core/messages';
 import { getEntityHistoryTool } from '../tools/entityHistoryTools';
-import { Version } from '../model/types';
+import { Version } from '../model/types/entityHistory';
 
 export async function fetchEntityHistory(state: AgentStateData): Promise<Partial<AgentStateData>> {
   console.log('[Node: fetchEntityHistory] Fetching entity history...');

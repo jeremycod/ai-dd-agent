@@ -1,12 +1,17 @@
-import 'dotenv/config';
-import express, { Request, Response } from 'express';
+// server.ts
 
+import 'dotenv/config'; // Keep this at the very top to load environment variables first
+import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
-import { app } from './workflow';
+import { app } from './workflow'; // Assuming 'app' is your Langchain agent graph
 import { AgentStateData } from './model/agentState';
 import { PROMPT } from './constants';
 import path from 'path';
+
+// --- Import Token Service related parts ---
+import { TokenService } from './utils/auth/TokenService'; // Adjust path
+import { loadSymmetricKey } from './utils/auth/jwtSecret'; // Adjust path
 
 const server = express();
 const PORT = 3000;
@@ -27,9 +32,7 @@ server.get('/health', (req, res) => {
     location: 'Surrey, British Columbia, Canada',
   });
 });
-// --- In-memory store for states (FOR DEMO/TESTING ONLY - USE PERSISTENT STORAGE IN PRODUCTION) ---
-// In production, replace this with a database (e.g., MongoDB, PostgreSQL, Redis)
-// where you store the AgentState object serialized as JSON.
+
 const conversationStates = new Map<string, AgentStateData>(); // Maps sessionId -> AgentState
 
 server.post('/chat', async (req: Request, res: Response) => {
@@ -40,7 +43,6 @@ server.post('/chat', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'User query is required.' });
   }
 
-  // --- Crucial Debugging Step: Verify `app` before use ---
   if (!app || typeof app !== 'object' || typeof app.invoke !== 'function') {
     console.error('SERVER ERROR: The `app` object is not initialized or is invalid.', {
       appType: typeof app,
@@ -54,31 +56,24 @@ server.post('/chat', async (req: Request, res: Response) => {
 
   let currentAgentState: AgentStateData;
 
-  // --- STEP 1: Load Existing State or Initialize New ---
   if (conversationStates.has(sessionId)) {
     console.log(`[Session: ${sessionId}] Loading existing state.`);
-    currentAgentState = conversationStates.get(sessionId)!; // Type assertion: we trust .has()
+    currentAgentState = conversationStates.get(sessionId)!;
 
-    // Ensure messages array exists before pushing (defensive programming)
     currentAgentState.messages = currentAgentState.messages || [];
     currentAgentState.messages.push(new HumanMessage(userQuery));
 
-    // Update the userQuery for the current turn
     currentAgentState.userQuery = userQuery;
 
-    // Reset relevant temporary fields for a new turn
     currentAgentState.finalSummary = undefined;
-    currentAgentState.analysisResults = {}; // Clear previous analysis
-    currentAgentState.runParallelAnalysis = false; // Reset flag
-    currentAgentState.queryCategory = 'UNKNOWN_CATEGORY'; // Reset category for re-parsing if needed
-
-    // console.log(`[Session: ${sessionId}] State after update from map:`, JSON.stringify(currentAgentState, null, 2)); // DEBUG
+    currentAgentState.analysisResults = {};
+    currentAgentState.runParallelAnalysis = false;
+    currentAgentState.queryCategory = 'UNKNOWN_CATEGORY';
   } else {
     console.log(`[Session: ${sessionId}] Initializing new state.`);
-    // First turn for this session: Start with SystemMessage and user's first query
     currentAgentState = {
       messages: [new SystemMessage(PROMPT), new HumanMessage(userQuery)],
-      userQuery: userQuery, // Correctly setting userQuery for the first turn
+      userQuery: userQuery,
       entityIds: [],
       entityType: 'unknown',
       environment: 'unknown',
@@ -89,24 +84,21 @@ server.post('/chat', async (req: Request, res: Response) => {
       runParallelAnalysis: false,
       finalSummary: undefined,
       queryCategory: 'UNKNOWN_CATEGORY',
+      // Ensure callerClientId is set if it's dynamic, otherwise set it globally below
+      // callerClientId: 'your-dynamic-client-id-for-this-session',
     };
-    // console.log(`[Session: ${sessionId}] Newly initialized state:`, JSON.stringify(currentAgentState, null, 2)); // DEBUG
   }
 
   try {
     console.log(`[Session: ${sessionId}] Invoking agent with current state...`);
-    const finalState = await app.invoke(currentAgentState); // This line is the key interaction
+    const finalState = await app.invoke(currentAgentState);
     console.log(`[Session: ${sessionId}] Agent invocation complete.`);
 
-    // --- STEP 2: Save the Final State for the Next Turn ---
-    // Make sure the state saved for the next turn is the one returned by LangGraph
     conversationStates.set(sessionId, finalState);
     console.log(`[Session: ${sessionId}] State saved for next turn.`);
 
     let agentResponse: string = 'Agent finished without a clear summary.';
 
-
-    // --- Response Generation Logic ---
     if (finalState && finalState.finalSummary) {
       if (Array.isArray(finalState.finalSummary)) {
         const responseParts: string[] = [];
@@ -118,19 +110,14 @@ server.post('/chat', async (req: Request, res: Response) => {
               'DEBUG: Agent requested tool_use in finalSummary (not for user display):',
               JSON.stringify(part, null, 2),
             );
-            // You might add a placeholder like "The agent decided to use a tool to get more information."
-            // if you want to indicate this to the user, but usually tool_use is internal.
-            // If the graph is configured to END after tool_use, this is expected.
           }
         }
         agentResponse = responseParts.join('\n');
         console.log('DEBUG: Using finalSummary (parsed from array):', agentResponse);
       } else if (typeof finalState.finalSummary === 'string') {
-        // If finalSummary is a simple string
         agentResponse = finalState.finalSummary;
         console.log('DEBUG: Using finalSummary (simple string):', agentResponse);
       } else {
-        // Handle other unexpected types for finalSummary
         agentResponse = `[Agent finalSummary was unexpected type: ${typeof finalState.finalSummary}]`;
         console.warn(
           'WARN: finalSummary had unexpected type:',
@@ -139,11 +126,9 @@ server.post('/chat', async (req: Request, res: Response) => {
         );
       }
     } else if (finalState.messages && finalState.messages.length > 0) {
-      // Fallback to the last message if finalSummary is not present
       const lastMsg = finalState.messages[finalState.messages.length - 1];
       if (lastMsg) {
         if (typeof lastMsg.content === 'object' && lastMsg.content !== null) {
-          // This typically happens with tool outputs.
           try {
             agentResponse = '```json\n' + JSON.stringify(lastMsg.content, null, 2) + '\n```';
             console.log('DEBUG: Using last message (JSON content):', agentResponse);
@@ -171,10 +156,9 @@ server.post('/chat', async (req: Request, res: Response) => {
       console.warn('WARN: Final state had no finalSummary and no messages.');
     }
 
-    return res.json({ response: agentResponse }); // Use return res.json to avoid multiple headers set
+    return res.json({ response: agentResponse });
   } catch (error) {
     console.error(`[Session: ${sessionId}] ERROR during agent invocation:`, error);
-    // Be more specific with error details in development, less in production
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return res
       .status(500)
@@ -182,10 +166,42 @@ server.post('/chat', async (req: Request, res: Response) => {
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Chat endpoint: POST http://localhost:${PORT}/chat`);
-  console.log(`Health check endpoint: GET http://localhost:${PORT}/health`);
-  console.log(`Static files served from: ${path.join(__dirname, '..', 'public')}`);
-  console.log(`Access your index.html at: http://localhost:${PORT}/index.html`);
-});
+// --- Server Startup Logic with Token Initialization ---
+async function startServer() {
+  try {
+    // Load the symmetric key from the JWK string
+    await loadSymmetricKey();
+    console.log('JWT symmetric key loaded and ready for signing.');
+
+    // Initialize the TokenService
+    TokenService.initializeInstance();
+    console.log('TokenService initialized.');
+
+    // Get the initial token immediately upon startup.
+    // This will generate the first JWT and store it in memory.
+    // You can add any default claims that your service needs for its JWTs.
+    await TokenService.getInstance().getValidToken({
+      sub: 'genie-ai-agent-service', // Subject for this service's token
+      // Example: If your Scala app uses a 'clientId' claim for service identification
+      // clientId: 'genie-agent-backend',
+      // Example: If your tokens need specific roles or scopes
+      // roles: ['agent', 'read:all', 'write:some']
+    });
+    console.log('Initial JWT token generated for Genie services.');
+
+    // Start listening for HTTP requests only after token is successfully obtained
+    server.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+      console.log(`Chat endpoint: POST http://localhost:${PORT}/chat`);
+      console.log(`Health check endpoint: GET http://localhost:${PORT}/health`);
+      console.log(`Static files served from: ${path.join(__dirname, '..', 'public')}`);
+      console.log(`Access your index.html at: http://localhost:${PORT}/index.html`);
+    });
+  } catch (error) {
+    console.error('CRITICAL ERROR: Failed to start server due to JWT setup failure:', error);
+    process.exit(1); // Exit the process if we can't get a token, as the app won't function
+  }
+}
+
+// Call the function to start the server
+startServer();

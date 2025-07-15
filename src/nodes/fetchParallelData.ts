@@ -1,12 +1,11 @@
 import { AgentStateData } from '../model/agentState';
 import { fetchEntityHistory } from './fetchEntityHistory';
 import { fetchDatadogLogs } from './fetchDatadogLogs';
-import { fetchUPCOfferPrice } from './fetchUPCOfferPrice';
+import { fetchUPSOfferPrice } from './fetchUPSOfferPrice';
 import { BaseMessage } from '@langchain/core/messages';
+import { fetchGenieOffer } from './fetchGenieOffer';
 
-export async function fetchParallelData(
-    state: AgentStateData,
-): Promise<Partial<AgentStateData>> {
+export async function fetchParallelData(state: AgentStateData): Promise<Partial<AgentStateData>> {
   console.log('[Node: fetchParallelData] Starting parallel data fetching...');
 
   // Initialize an array to hold all promises
@@ -21,38 +20,53 @@ export async function fetchParallelData(
   promises.push(fetchDatadogLogs(state));
   calledFunctions.push('fetchDatadogLogs');
 
+  // -- Conditional Call for fetching Genie Offer
 
-  // --- Conditional Call for fetchUPCOfferPrice ---
+  if (state.entityType === 'offer' && state.entityIds && state.entityIds.length > 0) {
+    console.log(
+      '[Node: fetchGenieOffer] Query is for offer issue. Adding fetchGenieOffer to parallel calls.',
+    );
+    const genieOfferPromises = state.entityIds.map(
+      (offerId) => fetchGenieOffer({ ...state, entityIds: [offerId] }), // Pass a state with only one ID for this specific call
+    );
+    promises.push(...genieOfferPromises);
+    calledFunctions.push(`fetchGenieOffer (for ${state.entityIds.length} IDs)`);
+  }
+
+  // --- Conditional Call for fetchUPSOfferPrice ---
   // Check if the query is categorized as OFFER_PRICE,
   // entityType is 'offer', and entityIds exist.
   if (
-      state.queryCategory === 'OFFER_PRICE' &&
-      state.entityType === 'offer' &&
-      state.entityIds &&
-      state.entityIds.length > 0
+    state.queryCategory === 'OFFER_PRICE' &&
+    state.entityType === 'offer' &&
+    state.entityIds &&
+    state.entityIds.length > 0
   ) {
-    console.log('[Node: fetchParallelData] Query is for OFFER_PRICE. Adding fetchUPCOfferPrice to parallel calls.');
-    // The fetchUPCOfferPrice node is designed to handle fetching for the first ID.
+    console.log(
+      '[Node: fetchParallelData] Query is for OFFER_PRICE. Adding fetchUPSOfferPrice to parallel calls.',
+    );
+    // The fetchUPSOfferPrice node is designed to handle fetching for the first ID.
     // If you need to make *multiple* calls for *each* ID in `state.entityIds`,
-    // the logic here will become more complex. For now, assuming `fetchUPCOfferPrice`
+    // the logic here will become more complex. For now, assuming `fetchUPSOfferPrice`
     // will operate on `state.entityIds[0]` as per our previous setup.
 
-    // If fetchUPCOfferPrice already iterates entityIds internally, then a single call is fine.
-    // If fetchUPCOfferPrice expects a single ID, and you have multiple, you'd do this:
-    const offerPricePromises = state.entityIds.map(offerId =>
-        fetchUPCOfferPrice({ ...state, entityIds: [offerId] }) // Pass a state with only one ID for this specific call
+    // If fetchUPSOfferPrice already iterates entityIds internally, then a single call is fine.
+    // If fetchUPSOfferPrice expects a single ID, and you have multiple, you'd do this:
+    const offerPricePromises = state.entityIds.map(
+      (offerId) => fetchUPSOfferPrice({ ...state, entityIds: [offerId] }), // Pass a state with only one ID for this specific call
     );
     promises.push(...offerPricePromises);
-    calledFunctions.push(`fetchUPCOfferPrice (for ${state.entityIds.length} IDs)`);
+    calledFunctions.push(`fetchUPSOfferPrice (for ${state.entityIds.length} IDs)`);
 
-    // If fetchUPCOfferPrice is already designed to iterate state.entityIds internally:
-    // promises.push(fetchUPCOfferPrice(state));
-    // calledFunctions.push('fetchUPCOfferPrice');
+    // If fetchUPSOfferPrice is already designed to iterate state.entityIds internally:
+    // promises.push(fetchUPSOfferPrice(state));
+    // calledFunctions.push('fetchUPSOfferPrice');
   }
   // --- End Conditional Call ---
 
-
-  console.log(`[Node: fetchParallelData] Calling functions in parallel: ${calledFunctions.join(', ')}`);
+  console.log(
+    `[Node: fetchParallelData] Calling functions in parallel: ${calledFunctions.join(', ')}`,
+  );
 
   // Wait for all promises to resolve
   const results = await Promise.all(promises);

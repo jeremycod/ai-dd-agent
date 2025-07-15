@@ -2,8 +2,11 @@ import { BaseMessage, MessageContent } from '@langchain/core/messages'; // Use L
 
 import { Annotation, LastValue } from '@langchain/langgraph';
 import { DatadogLog } from './datadog';
-import { QueryCategory, EnvironmentType, EntityType, Version } from './types';
-import { OfferPriceResponse } from './types'; // Import the full OfferPriceResponse type
+import { QueryCategory, EnvironmentType, EntityType } from './types/general';
+import { Version } from './types/entityHistory';
+import { OfferPriceResponse } from './types/UPS';
+import { Offer } from './types/genieGraphql';
+
 // Define the core types for specific fields to avoid repetition
 
 // --- Base Agent State Data Definition ---
@@ -27,12 +30,13 @@ export type AgentStateData = {
     datadogWarnings?: string;
     datadogErrors?: string;
     entityHistory?: string;
-    upcOfferPrice?: string;
+    upsOfferPrice?: string;
   };
   runParallelAnalysis: boolean;
   finalSummary?: MessageContent;
   queryCategory?: QueryCategory;
   offerPriceDetails?: OfferPriceResponse[];
+  genieOfferDetails?: Offer[];
 };
 
 // --- Derived Agent State Channel Definition ---

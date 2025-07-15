@@ -1,9 +1,7 @@
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { DataManagerHistoryClient } from '../clients/DataManagerHistoryClient';
-import {
-  EnvironmentType,
-  Version,
-} from '../model/types';
+import { EnvironmentType } from '../model/types/general';
+import { Version } from '../model/types/entityHistory';
 import {
   GetEntityHistoryToolSchema,
   GetEntityHistoryToolSchemaInput,
@@ -57,8 +55,6 @@ export const analyzeEntityHistoryTool = new DynamicStructuredTool({
     'Provide the full array of entity history records.',
   schema: AnalyzeEntityHistoryToolInputSchema as any,
   func: async ({ entityHistory, currentTime }: AnalyzeEntityHistoryToolInputSchemaInput) => {
-
-
     if (!entityHistory || entityHistory.length === 0) {
       return 'No entity history records provided for analysis.';
     }

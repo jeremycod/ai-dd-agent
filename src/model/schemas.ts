@@ -1,6 +1,10 @@
 // schemas.ts (or wherever you keep your Zod schemas)
 import { z } from 'zod';
-import { ENTITY_TYPE_VALUES, QUERY_CATEGORY_VALUES, ENVIRONMENT_TYPE_VALUES } from './types';
+import {
+  ENTITY_TYPE_VALUES,
+  QUERY_CATEGORY_VALUES,
+  ENVIRONMENT_TYPE_VALUES,
+} from './types/general';
 
 export const UserQueryExtractionSchema = z.object({
   category: z.enum(QUERY_CATEGORY_VALUES).describe("The predicted category of the user's query."),
@@ -132,12 +136,12 @@ export type AnalyzeEntityHistoryToolInputSchemaInput = z.infer<
 >;
 
 // Input schema for the tool
-export const GetUPCOfferPriceToolSchema = z.object({
-  offerId: z.string().describe("The unique identifier of the offer."),
-  environment: z.enum(['production', 'staging', 'development']).describe("The environment."),
+export const GetUPSOfferPriceToolSchema = z.object({
+  offerId: z.string().describe('The unique identifier of the offer.'),
+  environment: z.enum(['production', 'staging', 'development']).describe('The environment.'),
 });
 
-export type GetUPCOfferPriceToolSchemaInput = z.infer<typeof GetUPCOfferPriceToolSchema>;
+export type GetUPSOfferPriceToolSchemaInput = z.infer<typeof GetUPSOfferPriceToolSchema>;
 
 // Output schema for the tool (this is where it *might* be causing a circular issue)
 export const OfferPriceOutputSchema = z.object({
@@ -147,16 +151,31 @@ export const OfferPriceOutputSchema = z.object({
     currency: z.string(),
   }),
   // ... potentially other fields ...
-  // Is there anything here that directly or indirectly references GetUPCOfferPriceToolSchema?
-  // Or is OfferPriceResponse (from types.ts) causing a loop?
+  // Is there anything here that directly or indirectly references GetUPSOfferPriceToolSchema?
+  // Or is OfferPriceResponse (from general.ts) causing a loop?
 });
 export type OfferPriceOutput = z.infer<typeof OfferPriceOutputSchema>;
 
-export const AnalyzeUPCOfferPriceToolInputSchema = z.object({
-  offerPriceDetails: z.array(z.any()) // Use z.any() if OfferPriceResponse isn't fully defined as a Zod schema.
+export const AnalyzeUPSOfferPriceToolInputSchema = z.object({
+  offerPriceDetails: z.array(z.any()), // Use z.any() if OfferPriceResponse isn't fully defined as a Zod schema.
   // Ideally, it would be z.array(OfferPriceResponseSchema)
   // if you have a Zod schema for OfferPriceResponse.
   // For now, if it's an interface, z.any() is a pragmatic choice.
 });
 
-export type AnalyzeUPCOfferPriceToolInput = z.infer<typeof AnalyzeUPCOfferPriceToolInputSchema>;
+export type AnalyzeUPSOfferPriceToolInput = z.infer<typeof AnalyzeUPSOfferPriceToolInputSchema>;
+
+// Genie Schemas
+// This schema describes the parameters the tool expects.
+export const GetGenieOfferToolSchema = z.object({
+  offerId: z.string().describe('The unique identifier of the offer to retrieve.'),
+  environment: z
+    .enum(['production', 'staging', 'development', 'unknown'])
+    .default('production')
+    .describe(
+      'The environment (e.g., "production", "staging", "development") where the offer resides.',
+    ),
+});
+
+// Infer the input type from the schema for type safety
+export type GetGenieOfferToolSchemaInput = z.infer<typeof GetGenieOfferToolSchema>;

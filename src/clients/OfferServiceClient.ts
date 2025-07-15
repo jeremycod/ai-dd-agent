@@ -1,4 +1,4 @@
-import { OfferServiceResponse } from '../model/types';
+import { OfferServiceResponse } from '../model/types/offerService';
 
 const GET_OFFERS_QUERY = `
 query GetOffers($offerId: ID!) {
@@ -91,62 +91,72 @@ query GetOffers($offerId: ID!) {
 `;
 
 export class OfferServiceClient {
-    private readonly baseUrl: string;
+  private readonly baseUrl: string;
 
-    constructor(environment: 'prod' | 'qa' | 'dev') {
-        // Note: The environment variable is nested within the subdomain for this URL
-        this.baseUrl = `http://default.offer-service.offermgmt.bamtech.${environment}.us-east-1.bamgrid.net/graphql`;
-    }
+  constructor(environment: 'prod' | 'qa' | 'dev') {
+    // Note: The environment variable is nested within the subdomain for this URL
+    this.baseUrl = `http://default.offer-service.offermgmt.bamtech.${environment}.us-east-1.bamgrid.net/graphql`;
+  }
 
-    /**
-     * Fetches offer data from the GraphQL service.
-     * @param offerId The ID of the offer to retrieve.
-     * @returns A Promise that resolves to an OfferServiceResponse object.
-     * @throws Will throw an error if the network request fails or the GraphQL response contains errors.
-     */
-    async getOfferById(offerId: string): Promise<OfferServiceResponse> {
-        const requestBody = {
-            query: GET_OFFERS_QUERY,
-            variables: {
-                offerId: offerId,
-            },
-        };
+  /**
+   * Fetches offer data from the GraphQL service.
+   * @param offerId The ID of the offer to retrieve.
+   * @returns A Promise that resolves to an OfferServiceResponse object.
+   * @throws Will throw an error if the network request fails or the GraphQL response contains errors.
+   */
+  async getOfferById(offerId: string): Promise<OfferServiceResponse> {
+    const requestBody = {
+      query: GET_OFFERS_QUERY,
+      variables: {
+        offerId: offerId,
+      },
+    };
 
-        try {
-            const response = await fetch(this.baseUrl, {
-                method: 'POST', // GraphQL APIs typically use POST
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json', // Indicate that we prefer JSON response
-                    // Add any authorization headers if required by your API
-                    // 'Authorization': 'Bearer YOUR_AUTH_TOKEN',
-                },
-                body: JSON.stringify(requestBody),
-            });
+    try {
+      const response = await fetch(this.baseUrl, {
+        method: 'POST', // GraphQL APIs typically use POST
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json', // Indicate that we prefer JSON response
+          // Add any authorization headers if required by your API
+          // 'Authorization': 'Bearer YOUR_AUTH_TOKEN',
+        },
+        body: JSON.stringify(requestBody),
+      });
 
-            if (!response.ok) {
-                const errorBody = await response.text();
-                return { error: `HTTP error! Status: ${response.status}, Body: ${errorBody}`, success: false } as OfferServiceResponse;
-            }
+      if (!response.ok) {
+        const errorBody = await response.text();
+        return {
+          error: `HTTP error! Status: ${response.status}, Body: ${errorBody}`,
+          success: false,
+        } as OfferServiceResponse;
+      }
 
-            const data: OfferServiceResponse = await response.json();
+      const data: OfferServiceResponse = await response.json();
 
-            // GraphQL responses can still return 200 OK but contain errors in the 'errors' field
-            if (data.data === null || data.data.offers === null) {
-                // If 'data' is null, there might be a top-level GraphQL error
-                const errorData: any = data; // Cast to any to access potential errors field
-                if (errorData.errors && Array.isArray(errorData.errors)) {
-                    const graphQLErrors = errorData.errors.map((err: any) => err.message).join(', ');
-                    return { error: `HTTP error! Status: ${response.status}, GraphQL errors: ${graphQLErrors}`, success: false } as OfferServiceResponse;
-                }
-                return { error: `GraphQL response 'data' field is null or 'offers' is null.`, success: false } as OfferServiceResponse;
-            }
-
-
-            return data;
-        } catch (error) {
-            console.error('Error fetching offer data:', error);
-            throw new Error(`Error fetching offer data: ${error instanceof Error ? error.message : String(error)}`);
+      // GraphQL responses can still return 200 OK but contain errors in the 'errors' field
+      if (data.data === null || data.data.offers === null) {
+        // If 'data' is null, there might be a top-level GraphQL error
+        const errorData: any = data; // Cast to any to access potential errors field
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          const graphQLErrors = errorData.errors.map((err: any) => err.message).join(', ');
+          return {
+            error: `HTTP error! Status: ${response.status}, GraphQL errors: ${graphQLErrors}`,
+            success: false,
+          } as OfferServiceResponse;
         }
+        return {
+          error: `GraphQL response 'data' field is null or 'offers' is null.`,
+          success: false,
+        } as OfferServiceResponse;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error fetching offer data:', error);
+      throw new Error(
+        `Error fetching offer data: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
+  }
 }
