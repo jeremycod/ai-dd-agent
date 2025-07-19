@@ -3,6 +3,7 @@ import { AIMessage } from '@langchain/core/messages';
 import { getDatadogLogsTool } from '../tools/datadogLogsTool';
 import { DatadogLog } from '../model/datadog';
 import { v2 } from '@datadog/datadog-api-client';
+import {generateNewAIMessage} from "../utils/auth/helpers";
 
 function mapEnvironmentToTag(environment: string): string {
   const environmentMap: Record<string, string> = {
@@ -26,7 +27,7 @@ export async function fetchDatadogLogs(state: AgentStateData): Promise<Partial<A
       datadogLogs: [],
       messages: [
         ...messages,
-        new AIMessage('Could not fetch Datadog logs as no specific IDs were identified.'),
+        generateNewAIMessage('Could not fetch Datadog logs as no specific IDs were identified.'),
       ],
     };
   }
@@ -85,7 +86,7 @@ export async function fetchDatadogLogs(state: AgentStateData): Promise<Partial<A
     datadogLogs: mappedDatadogLogs,
     messages: [
       ...messages,
-      new AIMessage('Fetched Datadog Logs. Proceeding to parallel analysis.'),
+      generateNewAIMessage('Fetched Datadog Logs. Proceeding to parallel analysis.'),
     ],
   };
 } // This closing brace was missing for the fetchDatadogLogs function

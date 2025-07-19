@@ -4,7 +4,8 @@ import { OfferPriceResponse } from '../model/types/UPS';
 import { GetUPSOfferPriceToolSchema, GetUPSOfferPriceToolSchemaInput } from '../model/schemas';
 import { AgentStateData } from '../model/agentState'; // Your agent state type
 import { AIMessage } from '@langchain/core/messages'; // For agent messages
-import { PackagePrice } from '../model/types/UPS'; // Ensure this is the correct import for PackagePrice
+import { PackagePrice } from '../model/types/UPS';
+import {generateNewAIMessage} from "../utils/auth/helpers"; // Ensure this is the correct import for PackagePrice
 
 const DSS_CALLER_CLIENT_ID = process.env.DSS_CALLER_CLIENT_ID || 'your-default-ai-agent-client-id';
 
@@ -70,7 +71,7 @@ export async function analyzeUPSOfferPriceTool(
     const message = 'No offer price details were provided for analysis.';
     console.warn(`[Tool: analyzeUPSOfferPriceTool] ${message}`);
     return {
-      messages: [...state.messages, new AIMessage(message)],
+      messages: [...state.messages, generateNewAIMessage(message)],
       analysisResults: {
         ...state.analysisResults,
         upsOfferPrice: undefined,
@@ -93,14 +94,14 @@ export async function analyzeUPSOfferPriceTool(
     if (retailPrice && retailPrice.amount !== undefined && retailPrice.amount !== null) {
       analysisSummary += `  Retail Price: ${retailPrice.amount} ${retailPrice.isoFormattedCurrency}\n`;
       messages.push(
-        new AIMessage(
+        generateNewAIMessage(
           `For offer \`${currentOfferId}\`, the retail price is ${retailPrice.amount} ${retailPrice.isoFormattedCurrency}.`,
         ),
       );
     } else {
       analysisSummary += `  Retail Price: Not available.\n`;
       messages.push(
-        new AIMessage(`For offer \`${currentOfferId}\`, the retail price is not available.`),
+        generateNewAIMessage(`For offer \`${currentOfferId}\`, the retail price is not available.`),
       );
     }
 
@@ -111,7 +112,7 @@ export async function analyzeUPSOfferPriceTool(
         analysisSummary += `    - Amount: ${promo.amount} ${promo.isoFormattedCurrency}, Phase: ${promo.phaseType || 'N/A'}, Billing: ${promo.billingPeriod || 'N/A'}\n`;
       });
       messages.push(
-        new AIMessage(
+        generateNewAIMessage(
           `For offer \`${currentOfferId}\`, found ${priceResponse.promotionalPrices.length} promotional price(s).`,
         ),
       );
@@ -132,7 +133,7 @@ export async function analyzeUPSOfferPriceTool(
         }
       });
       messages.push(
-        new AIMessage(
+        generateNewAIMessage(
           `For offer \`${currentOfferId}\`, found ${priceResponse.packagePrices.length} package price(s).`,
         ),
       );
@@ -152,7 +153,7 @@ export async function analyzeUPSOfferPriceTool(
       if (!hasAnyPrice) {
         analysisSummary += `  Overall Status for ${currentOfferId}: **Missing Price Information** (as requested by query)\n`;
         messages.push(
-          new AIMessage(
+          generateNewAIMessage(
             `For offer \`${currentOfferId}\`, despite being an OFFER_PRICE query, no price information (retail, promotional, or package) was found.`,
           ),
         );

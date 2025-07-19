@@ -1,7 +1,8 @@
 import { AgentStateData } from '../model/agentState';
 import { Offer } from '../model/types/genieGraphql'; // Assuming this path is correct for your Offer type
 import { AIMessage, BaseMessage } from '@langchain/core/messages';
-import { genieOfferTool } from '../tools/genieTools'; // Import your genieOfferTool instance
+import { genieOfferTool } from '../tools/genieTools';
+import {generateNewAIMessage} from "../utils/auth/helpers"; // Import your genieOfferTool instance
 
 /**
  * Node function to fetch Genie Offer details using the genieOfferTool.
@@ -18,14 +19,14 @@ export async function fetchGenieOffer(state: AgentStateData): Promise<Partial<Ag
   // Basic validation checks
   if (!environment || environment === 'unknown') {
     return {
-      messages: [...messages, new AIMessage('Environment not specified for fetching Genie offer.')],
+      messages: [...messages, generateNewAIMessage('Environment not specified for fetching Genie offer.')],
       genieOfferDetails: undefined,
     };
   }
 
   if (!entityIds || entityIds.length === 0) {
     return {
-      messages: [...messages, new AIMessage('No offer IDs provided to fetch Genie offer.')],
+      messages: [...messages, generateNewAIMessage('No offer IDs provided to fetch Genie offer.')],
       genieOfferDetails: undefined,
     };
   }
@@ -46,18 +47,18 @@ export async function fetchGenieOffer(state: AgentStateData): Promise<Partial<Ag
       if (toolCallResult.offer) {
         // If the tool returns an offer object, it's a success
         fetchedOffers.push(toolCallResult.offer);
-        newMessages.push(new AIMessage(`Successfully fetched details for offer \`${offerId}\`.`));
+        newMessages.push(generateNewAIMessage(`Successfully fetched details for offer \`${offerId}\`.`));
       } else {
         // If the tool returns a null offer (but a message), it indicates an error or no offer found
         newMessages.push(
-          new AIMessage(`Tool output for offer ${offerId}: ${toolCallResult.message}`),
+          generateNewAIMessage(`Tool output for offer ${offerId}: ${toolCallResult.message}`),
         );
         failedFetches.push(offerId);
       }
     } catch (error: any) {
       console.error(`[Node: fetchGenieOffer] Error invoking tool for offer ${offerId}:`, error);
       newMessages.push(
-        new AIMessage(
+        generateNewAIMessage(
           `Failed to retrieve details for offer \`${offerId}\` due to an unexpected error. Error: ${error.message}`,
         ),
       );
@@ -73,7 +74,7 @@ export async function fetchGenieOffer(state: AgentStateData): Promise<Partial<Ag
     summaryMessage += ` Failed for ${failedFetches.length} offers: ${failedFetches.join(', ')}.`;
   }
 
-  newMessages.push(new AIMessage(summaryMessage));
+  newMessages.push(generateNewAIMessage(summaryMessage));
 
   return {
     messages: [...messages, ...newMessages],

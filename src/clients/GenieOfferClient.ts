@@ -78,7 +78,7 @@ export class GenieOfferClient {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
+        const errorText = response.statusText;
         // Consider logging more details like response.status and the full errorText
         console.error(`GraphQL HTTP Error ${response.status}:`, errorText);
         return { errors: [{ message: `HTTP Error ${response.status}: ${errorText}` }] };

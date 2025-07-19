@@ -2,6 +2,7 @@ import { AgentStateData } from '../model/agentState';
 import { AIMessage } from '@langchain/core/messages';
 import { getEntityHistoryTool } from '../tools/entityHistoryTools';
 import { Version } from '../model/types/entityHistory';
+import {generateNewAIMessage} from "../utils/auth/helpers";
 
 export async function fetchEntityHistory(state: AgentStateData): Promise<Partial<AgentStateData>> {
   console.log('[Node: fetchEntityHistory] Fetching entity history...');
@@ -12,7 +13,7 @@ export async function fetchEntityHistory(state: AgentStateData): Promise<Partial
       entityHistory: [],
       messages: [
         ...messages,
-        new AIMessage('Could not fetch Entity History as no specific IDs were identified.'),
+        generateNewAIMessage('Could not fetch Entity History as no specific IDs were identified.'),
       ],
     };
   }
@@ -30,7 +31,7 @@ export async function fetchEntityHistory(state: AgentStateData): Promise<Partial
     entityHistory: (toolCallResult as { history: Version[] }).history,
     messages: [
       ...messages,
-      new AIMessage('Fetched Entity History. Proceeding to parallel analysis.'),
+      generateNewAIMessage('Fetched Entity History. Proceeding to parallel analysis.'),
     ], // Add tool output to history for LLM context
   };
 }

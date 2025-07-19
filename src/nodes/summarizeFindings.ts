@@ -2,6 +2,7 @@ import { AgentStateData } from '../model/agentState';
 import { AIMessage, BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { SUMMARIZATION_MESSAGE } from '../constants';
 import { summarizerLLM } from '../anthropicAgent';
+import {generateNewAIMessage, generateNewHumanMessage} from "../utils/auth/helpers";
 
 export async function summarizeFindings(state: AgentStateData): Promise<Partial<AgentStateData>> {
   console.log('[Node: summarizeFindings] Entering...');
@@ -40,7 +41,7 @@ export async function summarizeFindings(state: AgentStateData): Promise<Partial<
   const messagesForLLMCall: BaseMessage[] = [
     summarizationSystemMessage, // 1. The specific SystemMessage for summarization
     ...relevantHistoryWithoutSystemMessages, // 2. All previous Human and AI messages from the state
-    new HumanMessage(dataForSummaryPrompt), // 3. The current HumanMessage containing data for summarization
+    generateNewHumanMessage(dataForSummaryPrompt), // 3. The current HumanMessage containing data for summarization
   ];
 
   try {
@@ -62,7 +63,7 @@ export async function summarizeFindings(state: AgentStateData): Promise<Partial<
       finalSummary: 'Failed to generate a summary due to an internal error.',
       messages: [
         ...messages,
-        new AIMessage(
+        generateNewAIMessage(
           'I encountered an error while summarizing the findings. Please check the logs.',
         ),
       ],

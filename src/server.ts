@@ -11,7 +11,8 @@ import path from 'path';
 
 // --- Import Token Service related parts ---
 import { TokenService } from './utils/auth/TokenService'; // Adjust path
-import { loadSymmetricKey } from './utils/auth/jwtSecret'; // Adjust path
+import { loadSymmetricKey } from './utils/auth/jwtSecret';
+import {generateNewHumanMessage} from "./utils/auth/helpers"; // Adjust path
 
 const server = express();
 const PORT = 3000;
@@ -61,7 +62,7 @@ server.post('/chat', async (req: Request, res: Response) => {
     currentAgentState = conversationStates.get(sessionId)!;
 
     currentAgentState.messages = currentAgentState.messages || [];
-    currentAgentState.messages.push(new HumanMessage(userQuery));
+    currentAgentState.messages.push(generateNewHumanMessage(userQuery));
 
     currentAgentState.userQuery = userQuery;
 
@@ -72,7 +73,7 @@ server.post('/chat', async (req: Request, res: Response) => {
   } else {
     console.log(`[Session: ${sessionId}] Initializing new state.`);
     currentAgentState = {
-      messages: [new SystemMessage(PROMPT), new HumanMessage(userQuery)],
+      messages: [new SystemMessage(PROMPT), generateNewHumanMessage(userQuery)],
       userQuery: userQuery,
       entityIds: [],
       entityType: 'unknown',
@@ -86,6 +87,16 @@ server.post('/chat', async (req: Request, res: Response) => {
       queryCategory: 'UNKNOWN_CATEGORY',
       // Ensure callerClientId is set if it's dynamic, otherwise set it globally below
       // callerClientId: 'your-dynamic-client-id-for-this-session',
+
+      // --- Initialize the new fields added to AgentStateData ---
+      messageFeedbacks: {}, // Initialize as an empty object (no feedback yet)
+      overallRlReward: undefined, // Or 0, depending on your default
+      currentEpisodeActions: [], // Initialize as an empty array
+      rlFeatures: undefined, // Or {}, depending on your default structure
+      chosenRLAction: undefined,
+      rlEpisodeId: sessionId, // Often the same as your session ID
+      rlTrainingIteration: 1, // Start at 1 for the first episode
+      overallFeedbackAttempts: 0,
     };
   }
 

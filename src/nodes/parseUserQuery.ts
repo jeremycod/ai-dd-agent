@@ -4,6 +4,7 @@ import { UserQueryExtraction } from '../model/schemas';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { extractionLLM } from '../anthropicAgent';
 import { EXTRACTION_PROMPT_TEMPLATE } from '../constants';
+import {generateNewAIMessage} from "../utils/auth/helpers";
 
 // Create the chain that uses the full PROMPT and the structured parser
 const structuredExtractionChain = PromptTemplate.fromTemplate(EXTRACTION_PROMPT_TEMPLATE).pipe(
@@ -115,10 +116,9 @@ export async function parseUserQuery(state: AgentStateData): Promise<Partial<Age
   // The LLM's generated `initialResponse` (potentially modified) is now the agent's first message for this turn.
   console.log('Final agentResponseContent for AIMessage:', agentResponseContent);
   const newMessages: BaseMessage[] = [
-    new AIMessage({
-      content: agentResponseContent,
-      additional_kwargs: {}, // Explicitly provide an empty object
-    }),
+    generateNewAIMessage(
+      agentResponseContent
+    ),
   ];
 
   return {

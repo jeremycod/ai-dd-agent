@@ -3,285 +3,60 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Agent Chat</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Slightly modern font */
-      margin: 20px;
-      background-color: #e9ecef; /* Lighter background */
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 90vh;
-      color: #333;
-    }
-    .chat-container {
-      width: 100%;
-      max-width: 1000px; /* Slightly wider */
-      background-color: #fff;
-      border-radius: 10px; /* More rounded corners */
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Softer, larger shadow */
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      height: 95vh; /* Slightly taller */
-    }
-    .messages {
-      flex-grow: 1;
-      padding: 20px;
-      overflow-y: auto;
-      border-bottom: 1px solid #dee2e6; /* Lighter border */
-      scroll-behavior: smooth; /* Smooth scrolling */
-    }
-    .message {
-      margin-bottom: 15px; /* More spacing */
-      padding: 10px 15px; /* Larger padding */
-      border-radius: 8px; /* More rounded */
-      word-wrap: break-word;
-      line-height: 1.6; /* Better readability */
-      max-width: 80%; /* Limit width of messages */
-    }
-    .user-message {
-      background-color: #d1ecf1; /* Light blue */
-      color: #0c5460; /* Darker text for contrast */
-      margin-left: auto; /* Push to right */
-      margin-right: 0;
-      text-align: right;
-    }
-    .agent-message {
-      background-color: #f8f9fa; /* Off-white */
-      color: #212529; /* Darker text */
-      margin-right: auto; /* Push to left */
-      margin-left: 0;
-      text-align: left;
-      /* Add specific styles for Markdown rendered elements */
-    }
-    /* Markdown specific styles */
-    .agent-message h1, .agent-message h2, .agent-message h3, .agent-message h4, .agent-message h5, .agent-message h6 {
-      margin-top: 1em;
-      margin-bottom: 0.5em;
-      color: #0056b3; /* Blue headings */
-    }
-    .agent-message h1 { font-size: 1.8em; }
-    .agent-message h2 { font-size: 1.5em; border-bottom: 1px solid #ccc; padding-bottom: 5px;}
-    .agent-message h3 { font-size: 1.2em; }
-    .agent-message p {
-      margin-bottom: 1em;
-    }
-    .agent-message ul, .agent-message ol {
-      margin-left: 20px;
-      margin-bottom: 1em;
-      list-style-type: disc;
-    }
-    .agent-message ol {
-      list-style-type: decimal;
-    }
-    .agent-message li {
-      margin-bottom: 0.5em;
-    }
-    .agent-message strong {
-      font-weight: bold;
-    }
-    .agent-message em {
-      font-style: italic;
-    }
-    .agent-message code {
-      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; /* Monospaced font */
-      background-color: #e9ecef; /* Light gray background */
-      padding: 2px 4px;
-      border-radius: 4px;
-      font-size: 0.9em;
-      color: #c7254e; /* Reddish text */
-    }
-    .agent-message pre {
-      background-color: #282c34; /* Dark background for code blocks */
-      color: #abb2bf; /* Light gray text */
-      padding: 15px;
-      border-radius: 8px;
-      overflow-x: auto;
-      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
-      font-size: 0.9em;
-      margin-top: 1em;
-      margin-bottom: 1em;
-    }
-    .agent-message pre code {
-      background-color: transparent; /* No extra background for inline code in pre */
-      color: inherit; /* Inherit color from pre */
-      padding: 0;
-      border-radius: 0;
-      font-size: 1em;
-    }
-
-    .input-area {
-      display: flex;
-      padding: 15px;
-      border-top: 1px solid #dee2e6;
-      background-color: #f8f9fa; /* Slightly different background */
-    }
-    .input-area input {
-      flex-grow: 1;
-      padding: 12px; /* Taller input */
-      border: 1px solid #ced4da; /* Softer border */
-      border-radius: 6px; /* More rounded */
-      margin-right: 10px;
-      font-size: 16px;
-      transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    }
-    .input-area input:focus {
-      border-color: #80bdff;
-      outline: 0;
-      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-    }
-    .input-area button {
-      padding: 12px 20px; /* Larger button */
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 16px;
-      transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    }
-    .input-area button:hover {
-      background-color: #0056b3;
-      box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
-    }
-    .typing-indicator {
-      font-style: italic;
-      color: #6c757d; /* Muted color */
-      padding: 8px 12px;
-      border-radius: 5px;
-      background-color: #e2e3e5;
-      width: fit-content;
-      margin-top: 5px;
-    }
-  </style>
+  <title>Genie+ Chatbot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
 </head>
 <body>
 <div class="chat-container">
+  <div class="chat-header">
+    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+    Genie+ Assistant
+  </div>
   <div class="messages" id="messages">
-    <div class="agent-message message">Hello! Welcome to Genie Assistant. How can I help you today?</div>
+    <div class="agent-message-wrapper">
+      <div class="message-metadata">
+        <div class="avatar">
+          <img src="https://via.placeholder.com/24/6C63FF/FFFFFF?text=AI" alt="AI Avatar">
+        </div>
+      </div>
+      <div class="agent-message message">
+        <p>It seems that the documentation you've provided doesn't contain information specifically about Reinforcement Learning (RL). However, I can guide you on related concepts based on the context available.</p>
+        <p>From the documentation, we can focus on the importance of **learning from production data** in conjunction with Large Language Models (LLMs). Here's a brief overview relevant to the LLM context:</p>
+
+        <div class="message-section">
+          <div class="message-number-icon">3</div>
+          <h3>Learning from Production Data</h3>
+          <ul>
+            <li><strong>Generative AI</strong> outputs are not deterministic, which implies that <strong>forecasting outputs</strong> can be challenging.</li>
+            <li>This uncertainty affects how software is delivered, making it harder to assure quality before releasing code.</li>
+            <li>Instead of relying heavily on traditional design and testing, the emphasis is on <strong>tracing LLMs</strong> and analyzing what works in practice.</li>
+          </ul>
+        </div>
+        <p>By understanding production data and outcomes, developers can adjust their models and refine their approach, which parallels concepts found in reinforcement learning where feedback from an environment is used to improve performance over time.</p>
+        <p>If you have further questions or need deeper insights into Reinforcement Learning or other topics, please feel free to reach out to the founders directly via the chat widget or GitHub! &#128512;</p>
+
+        <div class="feedback-container">
+          <button class="feedback-button thumb-up" data-feedback="up">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+          </button>
+          <button class="feedback-button thumb-down" data-feedback="down">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zM17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
   <div class="input-area">
-    <input type="text" id="user-input" placeholder="Type your message...">
-    <button id="send-button">Send</button>
+    <input type="text" id="user-input" placeholder="Send a message">
+    <button id="send-button">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-send"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+    </button>
   </div>
 </div>
 
-<script>
-  const messagesDiv = document.getElementById('messages');
-  const userInput = document.getElementById('user-input');
-  const sendButton = document.getElementById('send-button');
-
-  const API_URL = 'http://localhost:3000/chat';
-
-  const md = new markdownit({
-    html: false,
-    linkify: true,
-    typographer: true
-  });
-
-  function addMessage(content, sender, isMarkdown = false) {
-    const messageElement = document.createElement('div');
-    messageElement.classList.add('message');
-    messageElement.classList.add(`${sender}-message`);
-
-    if (isMarkdown && sender === 'agent') {
-      messageElement.innerHTML = md.render(content);
-    } else {
-      messageElement.textContent = content;
-    }
-
-    messagesDiv.appendChild(messageElement);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  }
-
-  async function sendMessage() {
-    const query = userInput.value.trim();
-    if (query === '') return;
-
-    addMessage(query, 'user');
-    userInput.value = '';
-
-    const typingIndicator = document.createElement('div');
-    typingIndicator.classList.add('typing-indicator');
-    typingIndicator.textContent = 'Agent is typing...';
-    messagesDiv.appendChild(typingIndicator);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-    try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userQuery: query }),
-      });
-
-      if (typingIndicator.parentNode) {
-        typingIndicator.remove();
-      }
-
-      const data = await response.json();
-      console.log('Received data from server:', data);
-
-      if (response.ok) {
-        let agentResponseContent = 'No response content found.';
-
-        // **CRITICAL UPDATE FOR HANDLING `data.response` STRUCTURE**
-        // Assuming `data.response` is the `content` field from the LangChain AIMessage
-        let messageToDisplay = '';
-
-        if (Array.isArray(data.response)) { // Check if it's the array of parts
-          // Concatenate all text parts
-          messageToDisplay = data.response
-                  .filter(part => part.type === 'text' && typeof part.text === 'string')
-                  .map(part => part.text)
-                  .join('\n\n'); // Join with double newline for paragraph separation
-
-          // Optional: Log tool calls if you want to see them in console
-          const toolCalls = data.response.filter(part => part.type === 'tool_use');
-          if (toolCalls.length > 0) {
-            console.log('Agent made tool calls:', toolCalls);
-            // You might want to display a message to the user that a tool is being used
-            if (messageToDisplay === '') { // If no text message, just a tool call
-              messageToDisplay = 'Agent is processing your request using internal tools...';
-            }
-          }
-
-        } else if (typeof data.response === 'string') {
-          // This is the fallback if server sends just a string (e.g., older agent version or simple response)
-          messageToDisplay = data.response;
-        } else {
-          // General fallback for unexpected structures
-          console.warn('Received data.response does not match expected chat message array or string. Falling back to stringifying.');
-          messageToDisplay = JSON.stringify(data.response, null, 2);
-        }
-
-        // Add the extracted text content to the chat, assuming it can be Markdown
-        addMessage(messageToDisplay, 'agent', true);
-
-      } else {
-        addMessage(`Error: ${data.error || 'Something went wrong.'}`, 'agent', false);
-        console.error('API Error:', data.error);
-      }
-    } catch (error) {
-      if (typingIndicator.parentNode) {
-        typingIndicator.remove();
-      }
-      addMessage('Network error: Could not reach the server. Please check your server and network connection.', 'agent', false);
-      console.error('Fetch error:', error);
-    }
-  }
-
-  sendButton.addEventListener('click', sendMessage);
-  userInput.addEventListener('keypress', (event) => {
-    if (event.key === 'Enter') {
-      sendMessage();
-    }
-  });
-</script>
+<script src="script.js"></script>
 </body>
 </html>
