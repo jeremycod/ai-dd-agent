@@ -3,7 +3,7 @@ import { Offer } from '../model/types/genieGraphql'; // Assuming this path is co
 import { AIMessage, BaseMessage } from '@langchain/core/messages';
 import { genieOfferTool } from '../tools/genieTools';
 import {generateNewAIMessage} from "../utils/auth/helpers"; // Import your genieOfferTool instance
-
+import { logger } from '../utils/logger';
 /**
  * Node function to fetch Genie Offer details using the genieOfferTool.
  * It iterates through entityIds (expected to be offer IDs) and invokes the tool for each.
@@ -12,7 +12,7 @@ import {generateNewAIMessage} from "../utils/auth/helpers"; // Import your genie
  * @returns A partial update to the agent's state.
  */
 export async function fetchGenieOffer(state: AgentStateData): Promise<Partial<AgentStateData>> {
-  console.log('[Node: fetchGenieOffer] Attempting to fetch Genie Offer details...');
+  logger.info('[Node: fetchGenieOffer] Attempting to fetch Genie Offer details...');
 
   const { environment, entityIds, messages } = state; // Destructure callerClientId
 
@@ -56,7 +56,7 @@ export async function fetchGenieOffer(state: AgentStateData): Promise<Partial<Ag
         failedFetches.push(offerId);
       }
     } catch (error: any) {
-      console.error(`[Node: fetchGenieOffer] Error invoking tool for offer ${offerId}:`, error);
+      logger.error(`[Node: fetchGenieOffer] Error invoking tool for offer ${offerId}:`, error);
       newMessages.push(
         generateNewAIMessage(
           `Failed to retrieve details for offer \`${offerId}\` due to an unexpected error. Error: ${error.message}`,

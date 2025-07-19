@@ -1,5 +1,6 @@
 import { EntityHistoryResponse, Version } from '../model/types/entityHistory';
 import { EntityType } from '../model/types/general';
+import { logger } from '../utils/logger';
 
 export class HttpDataManagerError extends Error {
   constructor(
@@ -54,7 +55,7 @@ export class DataManagerHistoryClient {
     } catch (error) {
       // This catch block will now catch errors from makeRequest,
       // and also the explicit throws within this switch statement.
-      console.error(`Error in fetchEntityHistory for ${entityType} ${id}:`, error);
+      logger.error(`Error in fetchEntityHistory for ${entityType} ${id}:`, error);
       // Re-throw if you want the error to propagate further up
       if (error instanceof HttpDataManagerError) {
         throw error; // Re-throw specific HTTP errors
@@ -84,7 +85,7 @@ export class DataManagerHistoryClient {
   }
 
   private async makeRequest<T>(url: string): Promise<T> {
-    console.log(`Making request to: ${url}`);
+    logger.info(`Making request to: ${url}`);
     // No try/catch here, let errors propagate naturally
     const response = await fetch(url);
     if (!response.ok) {

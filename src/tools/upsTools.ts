@@ -6,6 +6,7 @@ import { AgentStateData } from '../model/agentState'; // Your agent state type
 import { AIMessage } from '@langchain/core/messages'; // For agent messages
 import { PackagePrice } from '../model/types/UPS';
 import {generateNewAIMessage} from "../utils/auth/helpers"; // Ensure this is the correct import for PackagePrice
+import { logger } from '../utils/logger';
 
 const DSS_CALLER_CLIENT_ID = process.env.DSS_CALLER_CLIENT_ID || 'your-default-ai-agent-client-id';
 
@@ -18,7 +19,7 @@ export const upsOfferPriceTool = new DynamicStructuredTool({
   schema: GetUPSOfferPriceToolSchema as any, // Use the defined input schema
   func: async ({ offerId, environment }: GetUPSOfferPriceToolSchemaInput) => {
     // Arguments will be type-checked by schema
-    console.log(
+    logger.info(
       `DEBUG: getUPSOfferPriceTool called for Offer ID: ${offerId} in environment: ${environment}`,
     );
 
@@ -42,7 +43,7 @@ export const upsOfferPriceTool = new DynamicStructuredTool({
 
     try {
       const priceDetails: OfferPriceResponse = await client.fetchOfferPrice(offerId);
-      console.log(
+      logger.info(
         `DEBUG: Successfully fetched price for ${offerId}:`,
         JSON.stringify(priceDetails),
       );
@@ -50,7 +51,7 @@ export const upsOfferPriceTool = new DynamicStructuredTool({
       // For a simple pass-through, just return priceDetails
       return priceDetails;
     } catch (error: any) {
-      console.error(`Error in fetchOfferPriceTool for ${offerId} in ${environment}:`, error);
+      logger.error(`Error in fetchOfferPriceTool for ${offerId} in ${environment}:`, error);
       return `Failed to retrieve offer price for ${offerId} in ${environment}. Error: ${error.message}`;
     }
   },
@@ -63,7 +64,7 @@ export const upsOfferPriceTool = new DynamicStructuredTool({
 export async function analyzeUPSOfferPriceTool(
   state: AgentStateData,
 ): Promise<Partial<AgentStateData>> {
-  console.log('[Tool: analyzeUPSOfferPriceTool] Analyzing UPS Offer Price details...');
+  logger.info('[Tool: analyzeUPSOfferPriceTool] Analyzing UPS Offer Price details...');
 
   const { offerPriceDetails, queryCategory, entityIds } = state; // Also get entityIds for context
 
@@ -163,7 +164,7 @@ export async function analyzeUPSOfferPriceTool(
     }
   });
 
-  console.log('[Tool: analyzeUPSOfferPriceTool] Analysis complete.');
+  logger.info('[Tool: analyzeUPSOfferPriceTool] Analysis complete.');
 
   return {
     messages: [...state.messages, ...messages],

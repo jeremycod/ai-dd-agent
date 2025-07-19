@@ -5,14 +5,14 @@ import { PromptTemplate } from '@langchain/core/prompts';
 import { extractionLLM } from '../anthropicAgent';
 import { EXTRACTION_PROMPT_TEMPLATE } from '../constants';
 import {generateNewAIMessage} from "../utils/auth/helpers";
-
+import { logger } from '../utils/logger';
 // Create the chain that uses the full PROMPT and the structured parser
 const structuredExtractionChain = PromptTemplate.fromTemplate(EXTRACTION_PROMPT_TEMPLATE).pipe(
   extractionLLM,
 );
 
 export async function parseUserQuery(state: AgentStateData): Promise<Partial<AgentStateData>> {
-  console.log(
+  logger.info(
     '[Node: parseUserQuery] Parsing user query with LLM for categorization and extraction...',
   );
   const lastMessage = state.messages[state.messages.length - 1];
@@ -50,7 +50,7 @@ export async function parseUserQuery(state: AgentStateData): Promise<Partial<Age
       //format_instructions: structuredOutputParser.getFormatInstructions(),
     })) as UserQueryExtraction;
 
-    //console.log('[Node: parseUserQuery] LLM Extracted Data:', extractedData);
+    //logger.info('[Node: parseUserQuery] LLM Extracted Data:', extractedData);
 
     // The initialResponse from LLM directly becomes the first part of the AI's message
     agentResponseContent = extractedData.initialResponse;
@@ -75,7 +75,7 @@ export async function parseUserQuery(state: AgentStateData): Promise<Partial<Age
       agentResponseContent += clarificationMsg;
     }
   } catch (error) {
-    console.error(
+    logger.error(
       '[Node: parseUserQuery] Error during LLM extraction or parsing. Falling back to UNKNOWN_CATEGORY:',
       error,
     );
@@ -114,7 +114,7 @@ export async function parseUserQuery(state: AgentStateData): Promise<Partial<Age
 
   // Construct new messages to add to the state history
   // The LLM's generated `initialResponse` (potentially modified) is now the agent's first message for this turn.
-  console.log('Final agentResponseContent for AIMessage:', agentResponseContent);
+  logger.info('Final agentResponseContent for AIMessage:', agentResponseContent);
   const newMessages: BaseMessage[] = [
     generateNewAIMessage(
       agentResponseContent

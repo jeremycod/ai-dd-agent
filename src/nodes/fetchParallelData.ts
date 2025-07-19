@@ -4,9 +4,10 @@ import { fetchDatadogLogs } from './fetchDatadogLogs';
 import { fetchUPSOfferPrice } from './fetchUPSOfferPrice';
 import { BaseMessage } from '@langchain/core/messages';
 import { fetchGenieOffer } from './fetchGenieOffer';
+import { logger } from '../utils/logger';
 
 export async function fetchParallelData(state: AgentStateData): Promise<Partial<AgentStateData>> {
-  console.log('[Node: fetchParallelData] Starting parallel data fetching...');
+  logger.info('[Node: fetchParallelData] Starting parallel data fetching...');
 
   // Initialize an array to hold all promises
   const promises: Promise<Partial<AgentStateData>>[] = [];
@@ -23,7 +24,7 @@ export async function fetchParallelData(state: AgentStateData): Promise<Partial<
   // -- Conditional Call for fetching Genie Offer
 
   if (state.entityType === 'offer' && state.entityIds && state.entityIds.length > 0) {
-    console.log(
+    logger.info(
       '[Node: fetchGenieOffer] Query is for offer issue. Adding fetchGenieOffer to parallel calls.',
     );
     const genieOfferPromises = state.entityIds.map(
@@ -42,7 +43,7 @@ export async function fetchParallelData(state: AgentStateData): Promise<Partial<
     state.entityIds &&
     state.entityIds.length > 0
   ) {
-    console.log(
+    logger.info(
       '[Node: fetchParallelData] Query is for OFFER_PRICE. Adding fetchUPSOfferPrice to parallel calls.',
     );
     // The fetchUPSOfferPrice node is designed to handle fetching for the first ID.
@@ -64,14 +65,14 @@ export async function fetchParallelData(state: AgentStateData): Promise<Partial<
   }
   // --- End Conditional Call ---
 
-  console.log(
+  logger.info(
     `[Node: fetchParallelData] Calling functions in parallel: ${calledFunctions.join(', ')}`,
   );
 
   // Wait for all promises to resolve
   const results = await Promise.all(promises);
 
-  console.log('[Node: fetchParallelData] All parallel data fetching complete.');
+  logger.info('[Node: fetchParallelData] All parallel data fetching complete.');
 
   // Combine the results from all fetches
   const combinedState: Partial<AgentStateData> = {};

@@ -8,6 +8,7 @@ import { app } from './workflow'; // Assuming 'app' is your Langchain agent grap
 import { AgentStateData } from './model/agentState';
 import { PROMPT } from './constants';
 import path from 'path';
+import { logger } from './utils/logger';
 
 // --- Import Token Service related parts ---
 import { TokenService } from './utils/auth/TokenService'; // Adjust path
@@ -45,7 +46,7 @@ server.post('/chat', async (req: Request, res: Response) => {
   }
 
   if (!app || typeof app !== 'object' || typeof app.invoke !== 'function') {
-    console.error('SERVER ERROR: The `app` object is not initialized or is invalid.', {
+    logger.error('SERVER ERROR: The `app` object is not initialized or is invalid.', {
       appType: typeof app,
       appDefined: app !== undefined && app !== null,
       appHasInvoke: typeof app?.invoke === 'function',
@@ -58,7 +59,7 @@ server.post('/chat', async (req: Request, res: Response) => {
   let currentAgentState: AgentStateData;
 
   if (conversationStates.has(sessionId)) {
-    console.log(`[Session: ${sessionId}] Loading existing state.`);
+    logger.info(`[Session: ${sessionId}] Loading existing state.`);
     currentAgentState = conversationStates.get(sessionId)!;
 
     currentAgentState.messages = currentAgentState.messages || [];
@@ -71,7 +72,7 @@ server.post('/chat', async (req: Request, res: Response) => {
     currentAgentState.runParallelAnalysis = false;
     currentAgentState.queryCategory = 'UNKNOWN_CATEGORY';
   } else {
-    console.log(`[Session: ${sessionId}] Initializing new state.`);
+    logger.info(`[Session: ${sessionId}] Initializing new state.`);
     currentAgentState = {
       messages: [new SystemMessage(PROMPT), generateNewHumanMessage(userQuery)],
       userQuery: userQuery,
@@ -101,12 +102,12 @@ server.post('/chat', async (req: Request, res: Response) => {
   }
 
   try {
-    console.log(`[Session: ${sessionId}] Invoking agent with current state...`);
+    logger.info(`[Session: ${sessionId}] Invoking agent with current state...`);
     const finalState = await app.invoke(currentAgentState);
-    console.log(`[Session: ${sessionId}] Agent invocation complete.`);
+    logger.info(`[Session: ${sessionId}] Agent invocation complete.`);
 
     conversationStates.set(sessionId, finalState);
-    console.log(`[Session: ${sessionId}] State saved for next turn.`);
+    logger.info(`[Session: ${sessionId}] State saved for next turn.`);
 
     let agentResponse: string = 'Agent finished without a clear summary.';
 
@@ -117,17 +118,17 @@ server.post('/chat', async (req: Request, res: Response) => {
           if (part.type === 'text') {
             responseParts.push(part.text);
           } else if (part.type === 'tool_use') {
-            console.log(
+            logger.info(
               'DEBUG: Agent requested tool_use in finalSummary (not for user display):',
               JSON.stringify(part, null, 2),
             );
           }
         }
         agentResponse = responseParts.join('\n');
-        console.log('DEBUG: Using finalSummary (parsed from array):', agentResponse);
+        logger.info('DEBUG: Using finalSummary (parsed from array):', agentResponse);
       } else if (typeof finalState.finalSummary === 'string') {
         agentResponse = finalState.finalSummary;
-        console.log('DEBUG: Using finalSummary (simple string):', agentResponse);
+        logger.info('DEBUG: Using finalSummary (simple string):', agentResponse);
       } else {
         agentResponse = `[Agent finalSummary was unexpected type: ${typeof finalState.finalSummary}]`;
         console.warn(
@@ -142,14 +143,14 @@ server.post('/chat', async (req: Request, res: Response) => {
         if (typeof lastMsg.content === 'object' && lastMsg.content !== null) {
           try {
             agentResponse = '```json\n' + JSON.stringify(lastMsg.content, null, 2) + '\n```';
-            console.log('DEBUG: Using last message (JSON content):', agentResponse);
+            logger.info('DEBUG: Using last message (JSON content):', agentResponse);
           } catch (e: any) {
             agentResponse = `[Error: Could not stringify tool output content: ${e.message}]`;
-            console.error('ERROR: Failed to stringify last message content:', e);
+            logger.error('ERROR: Failed to stringify last message content:', e);
           }
         } else if (typeof lastMsg.content === 'string') {
           agentResponse = lastMsg.content;
-          console.log('DEBUG: Using last message (string content):', agentResponse);
+          logger.info('DEBUG: Using last message (string content):', agentResponse);
         } else {
           agentResponse = `[Agent response content from last message was unexpected type: ${typeof lastMsg.content}]`;
           console.warn(
@@ -169,7 +170,7 @@ server.post('/chat', async (req: Request, res: Response) => {
 
     return res.json({ response: agentResponse });
   } catch (error) {
-    console.error(`[Session: ${sessionId}] ERROR during agent invocation:`, error);
+    logger.error(`[Session: ${sessionId}] ERROR during agent invocation:`, error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return res
       .status(500)
@@ -182,11 +183,11 @@ async function startServer() {
   try {
     // Load the symmetric key from the JWK string
     await loadSymmetricKey();
-    console.log('JWT symmetric key loaded and ready for signing.');
+    logger.info('JWT symmetric key loaded and ready for signing.');
 
     // Initialize the TokenService
     TokenService.initializeInstance();
-    console.log('TokenService initialized.');
+    logger.info('TokenService initialized.');
 
     // Get the initial token immediately upon startup.
     // This will generate the first JWT and store it in memory.
@@ -198,18 +199,18 @@ async function startServer() {
       // Example: If your tokens need specific roles or scopes
       // roles: ['agent', 'read:all', 'write:some']
     });
-    console.log('Initial JWT token generated for Genie services.');
+    logger.info('Initial JWT token generated for Genie services.');
 
     // Start listening for HTTP requests only after token is successfully obtained
     server.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-      console.log(`Chat endpoint: POST http://localhost:${PORT}/chat`);
-      console.log(`Health check endpoint: GET http://localhost:${PORT}/health`);
-      console.log(`Static files served from: ${path.join(__dirname, '..', 'public')}`);
-      console.log(`Access your index.html at: http://localhost:${PORT}/index.html`);
+      logger.info(`Server running on http://localhost:${PORT}`);
+      logger.info(`Chat endpoint: POST http://localhost:${PORT}/chat`);
+      logger.info(`Health check endpoint: GET http://localhost:${PORT}/health`);
+      logger.info(`Static files served from: ${path.join(__dirname, '..', 'public')}`);
+      logger.info(`Access your index.html at: http://localhost:${PORT}/index.html`);
     });
   } catch (error) {
-    console.error('CRITICAL ERROR: Failed to start server due to JWT setup failure:', error);
+    logger.error('CRITICAL ERROR: Failed to start server due to JWT setup failure:', error);
     process.exit(1); // Exit the process if we can't get a token, as the app won't function
   }
 }

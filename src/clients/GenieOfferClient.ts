@@ -53,7 +53,7 @@ export class GenieOfferClient {
         // e.g., sub: this.callerClientId, scopes: ['read:offer']
       });
     } catch (authError: any) {
-      console.error('Failed to obtain a valid authentication token:', authError);
+      logger.error('Failed to obtain a valid authentication token:', authError);
       return {
         errors: [
           {
@@ -80,14 +80,14 @@ export class GenieOfferClient {
       if (!response.ok) {
         const errorText = response.statusText;
         // Consider logging more details like response.status and the full errorText
-        console.error(`GraphQL HTTP Error ${response.status}:`, errorText);
+        logger.error(`GraphQL HTTP Error ${response.status}:`, errorText);
         return { errors: [{ message: `HTTP Error ${response.status}: ${errorText}` }] };
       }
 
       const result: GraphQLResponse<T> = await response.json();
       return result;
     } catch (error: any) {
-      console.error('GraphQL request network or parsing error:', error);
+      logger.error('GraphQL request network or parsing error:', error);
       return { errors: [{ message: error.message || 'Network error or invalid JSON response' }] };
     }
   }

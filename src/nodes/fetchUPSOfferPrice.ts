@@ -3,9 +3,9 @@ import { OfferPriceResponse } from '../model/types/UPS'; // Ensure this correctl
 import { AIMessage, BaseMessage } from '@langchain/core/messages';
 import { upsOfferPriceTool } from '../tools/upsTools';
 import {generateNewAIMessage} from "../utils/auth/helpers"; // Import your tool instance
-
+import { logger } from '../utils/logger';
 export async function fetchUPSOfferPrice(state: AgentStateData): Promise<Partial<AgentStateData>> {
-  console.log('[Node: fetchUPSOfferPrice] Attempting to fetch UPS Offer Price...');
+  logger.info('[Node: fetchUPSOfferPrice] Attempting to fetch UPS Offer Price...');
 
   const { environment, entityIds, messages } = state;
 
@@ -52,7 +52,7 @@ export async function fetchUPSOfferPrice(state: AgentStateData): Promise<Partial
         );
       }
     } catch (error: any) {
-      console.error(`[Node: fetchUPSOfferPrice] Error invoking tool for offer ${offerId}:`, error);
+      logger.error(`[Node: fetchUPSOfferPrice] Error invoking tool for offer ${offerId}:`, error);
       newMessages.push(
         generateNewAIMessage(
           `Failed to retrieve price for offer \`${offerId}\` due to an unexpected error. Error: ${error.message}`,

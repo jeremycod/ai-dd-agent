@@ -3,9 +3,10 @@ import { AIMessage, BaseMessage, HumanMessage, SystemMessage } from '@langchain/
 import { SUMMARIZATION_MESSAGE } from '../constants';
 import { summarizerLLM } from '../anthropicAgent';
 import {generateNewAIMessage, generateNewHumanMessage} from "../utils/auth/helpers";
+import { logger } from '../utils/logger';
 
 export async function summarizeFindings(state: AgentStateData): Promise<Partial<AgentStateData>> {
-  console.log('[Node: summarizeFindings] Entering...');
+  logger.info('[Node: summarizeFindings] Entering...');
   const { messages, userQuery, analysisResults, entityIds, entityType } = state;
 
   // Define the SystemMessage specifically for the summarization task.
@@ -57,7 +58,7 @@ export async function summarizeFindings(state: AgentStateData): Promise<Partial<
       messages: updatedMessages,
     };
   } catch (error) {
-    console.error('[Node: summarizeFindings] Error summarizing findings:', error);
+    logger.error('[Node: summarizeFindings] Error summarizing findings:', error);
     // Provide a fallback summary/message if the LLM call fails
     return {
       finalSummary: 'Failed to generate a summary due to an internal error.',

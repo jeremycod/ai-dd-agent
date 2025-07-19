@@ -1,9 +1,9 @@
 import { AgentStateData } from '../model/agentState';
-import { AIMessage } from '@langchain/core/messages';
+import { logger } from '../utils/logger';
 import {generateNewAIMessage} from "../utils/auth/helpers";
 
 export async function respondToUser(state: AgentStateData): Promise<Partial<AgentStateData>> {
-  console.log('[Node: respondToUser] Entering...');
+  logger.info('[Node: respondToUser] Entering...');
   // This node just takes the final summary and potentially adds a concluding message
   const finalMessageContent =
     state.finalSummary ||

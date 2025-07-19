@@ -1,6 +1,6 @@
 // Helper function to extract IDs and time range from a message
 import { AgentStateData } from '../model/agentState';
-
+import { logger } from '../utils/logger';
 /**
  * Node: ask_environment_clarification
  * This node is a placeholder. Its primary purpose is to be a target
@@ -11,7 +11,7 @@ import { AgentStateData } from '../model/agentState';
 export async function ask_environment_clarification(
   state: AgentStateData,
 ): Promise<Partial<AgentStateData>> {
-  console.log(
+  logger.info(
     '[Node: ask_environment_clarification] Environment needs clarification. Signaling graph end.',
   );
   // No complex logic needed here, as parseUserQuery already added the message.

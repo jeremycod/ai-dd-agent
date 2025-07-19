@@ -2,13 +2,12 @@
 
 import {
   getSymmetricKey,
-  JWT_ISSUER,
-  JWT_AUDIENCE,
-  JWT_EXPIRATION_TIME_SECONDS,
 } from './jwtSecret'; // Import the new key loading
 import * as jose from 'jose';
 import { setToken, getToken, removeToken } from './genie'; // Your in-memory token functions
 import { v4 as uuidv4 } from 'uuid';
+import { logger } from '../logger';
+
 const EXPIRY_TIME_MS = 24 * 60 * 60 * 1000;
 export class TokenService {
   private static instance: TokenService;
@@ -37,7 +36,7 @@ export class TokenService {
   }
 
   private async generateNewToken(dynamicPayload: Record<string, any> = {}): Promise<string> {
-    console.log('[TokenService] Generating new JWE token locally...');
+    logger.info('[TokenService] Generating new JWE token locally...');
 
     // Mimic the payload structure from the working consumer's buildJwePayload
     const defaultName = process.env.DEFAULT_JWE_NAME || 'test_user';
@@ -67,8 +66,8 @@ export class TokenService {
     try {
       const symmetricKey = getSymmetricKey();
 
-      console.log('JWE Plaintext Payload (JSON string) being encrypted:', jwePayload);
-      console.log('Symmetric Key (bytes):', symmetricKey.byteLength);
+      logger.info('JWE Plaintext Payload (JSON string) being encrypted:', jwePayload);
+      logger.info('Symmetric Key (bytes):', symmetricKey.byteLength);
 
       token = await new jose.CompactEncrypt(
           new TextEncoder().encode(JSON.stringify(jwePayload)) // Plaintext is the stringified JSON object
@@ -86,8 +85,7 @@ export class TokenService {
       // Note: Token expiry time now based on 'expiryDate' in payload, not standard 'exp'
       this.tokenExpiryTime = jwePayload.expiryDate - 5 * 60 * 1000; // 5 minutes buffer
       setToken(token);
-      console.log('[TokenService] Successfully generated and set new JWE token.');
-      console.log('Generated JWE Token:', token);
+      logger.info('[TokenService] Successfully generated and set new JWE token.');
 
       // --- Client-side self-verification (Crucial for debugging) ---
       try {
@@ -98,19 +96,17 @@ export class TokenService {
         const { plaintext, protectedHeader } = await jose.compactDecrypt(token, symmetricKey);
         const decryptedJson = JSON.parse(new TextDecoder().decode(plaintext)); // Decode bytes to string, then parse JSON
 
-        console.log('CLIENT-SIDE SELF-DECRYPTION SUCCESSFUL!');
-        console.log('Decrypted Header:', protectedHeader);
-        console.log('Decrypted Plaintext (JSON Object):', decryptedJson);
+        logger.info('CLIENT-SIDE SELF-DECRYPTION SUCCESSFUL!');
         if (!decryptedJson.name || !decryptedJson.profile || !decryptedJson.roles || !decryptedJson.expiryDate) {
-          console.error('CRITICAL: Decrypted claims are missing expected fields (name, profile, roles, expiryDate)!');
+          logger.error('CRITICAL: Decrypted claims are missing expected fields (name, profile, roles, expiryDate)!');
         }
       } catch (selfDecryptError) {
-        console.error('CLIENT-SIDE SELF-DECRYPTION FAILED! This indicates a problem with JWE generation on the client.', selfDecryptError);
+        logger.error('CLIENT-SIDE SELF-DECRYPTION FAILED! This indicates a problem with JWE generation on the client.', selfDecryptError);
       }
 
       return token;
     } catch (error: any) {
-      console.error('[TokenService] Error generating JWE token with symmetric key:', error.message);
+      logger.error('[TokenService] Error generating JWE token with symmetric key:', error.message);
       this.currentToken = null;
       this.tokenExpiryTime = null;
       removeToken();
@@ -128,7 +124,7 @@ export class TokenService {
 
   public async getValidToken(dynamicClaims?: Record<string, any>): Promise<string> {
     if (this.isTokenExpired()) {
-      console.log('[TokenService] Current token expired or missing. Generating new one...');
+      logger.info('[TokenService] Current token expired or missing. Generating new one...');
       await this.generateNewToken(dynamicClaims);
     }
     if (!this.currentToken) {

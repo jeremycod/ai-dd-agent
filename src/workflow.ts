@@ -7,6 +7,8 @@ import { fetchParallelData } from './nodes/fetchParallelData';
 import { respondToUser } from './nodes/respondToUser';
 import { summarizeFindings } from './nodes/summarizeFindings';
 import { runParallelAnalysisTools } from './nodes/runParallelAnalysisTools';
+import { logger } from './utils/logger';
+
 // --- Define the Graph ---
 const workflow = new StateGraph(AgentStateAnnotation)
   .addNode('parse_user_query', parseUserQuery)
@@ -27,11 +29,11 @@ workflow.addConditionalEdges(
     // This is the gatekeeper.
     // If the environment is 'unknown', we go to the clarification step.
     if (state.environment === 'unknown') {
-      console.log('[Graph Edge] Environment is unknown, moving to ask_environment_clarification.');
+      logger.info('[Graph Edge] Environment is unknown, moving to ask_environment_clarification.');
       return 'ask_environment_clarification';
     }
     // Otherwise, if a valid environment was extracted, we proceed to fetch data.
-    console.log('[Graph Edge] Environment is valid, proceeding to fetch_parallel_data.');
+    logger.info('[Graph Edge] Environment is valid, proceeding to fetch_parallel_data.');
     return 'fetch_parallel_data';
   },
 );

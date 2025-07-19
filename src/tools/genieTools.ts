@@ -2,6 +2,7 @@ import { GenieOfferClient } from '../clients/GenieOfferClient'; // Adjust path a
 import { EnvironmentType } from '../model/types/general'; // Adjust path as needed
 import { GetGenieOfferToolSchema, GetGenieOfferToolSchemaInput } from '../model/schemas';
 import { DynamicStructuredTool } from '@langchain/core/tools';
+import { logger } from '../utils/logger';
 
 const DSS_CALLER_CLIENT_ID = process.env.DSS_CALLER_CLIENT_ID || 'your-default-ai-agent-client-id';
 
@@ -11,7 +12,7 @@ export const genieOfferTool = new DynamicStructuredTool({
     'Fetches detailed information about a specific offer by its ID from the GraphQL server. Useful for retrieving offer attributes like products, countries, prices, and transitions.',
   schema: GetGenieOfferToolSchema as any, // Cast to any is often needed for DynamicStructuredTool's schema due to Zod's complex types
   func: async ({ offerId, environment }: GetGenieOfferToolSchemaInput) => {
-    console.log(`Executing genieOfferTool for offer ID: ${offerId} in environment ${environment}`);
+    logger.info(`Executing genieOfferTool for offer ID: ${offerId} in environment ${environment}`);
 
     try {
       // Map your abstract EnvironmentType to the concrete environment string expected by GraphQLClient
@@ -41,7 +42,7 @@ export const genieOfferTool = new DynamicStructuredTool({
         const errorMessages = response.errors
           .map((err: { message: string }) => err.message)
           .join('; ');
-        console.error('GraphQL errors:', response.errors);
+        logger.error('GraphQL errors:', response.errors);
         return {
           offer: null, // Indicate no offer found
           message: `Error fetching offer with ID ${offerId}: ${errorMessages}`,
@@ -54,7 +55,7 @@ export const genieOfferTool = new DynamicStructuredTool({
         };
       }
     } catch (error) {
-      console.error(`Unexpected error executing genieOfferTool for offer ID ${offerId}:`, error);
+      logger.error(`Unexpected error executing genieOfferTool for offer ID ${offerId}:`, error);
       return {
         offer: null,
         message: `Unexpected error fetching offer: ${error instanceof Error ? error.message : String(error)}`,

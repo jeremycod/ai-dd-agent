@@ -1,5 +1,5 @@
 import { AgentStateData } from '../model/agentState';
-import { AIMessage } from '@langchain/core/messages';
+import { logger } from '../utils/logger';
 import { getDatadogLogsTool } from '../tools/datadogLogsTool';
 import { DatadogLog } from '../model/datadog';
 import { v2 } from '@datadog/datadog-api-client';
@@ -18,7 +18,7 @@ function generateServiceSubquery(services: string[]): string {
 }
 
 export async function fetchDatadogLogs(state: AgentStateData): Promise<Partial<AgentStateData>> {
-  console.log('[Node: fetchDatadogLogs] Entering...');
+  logger.info('[Node: fetchDatadogLogs] Entering...');
   const { entityIds, entityType, timeRange, messages } = state;
 
   if (entityIds.length === 0) {

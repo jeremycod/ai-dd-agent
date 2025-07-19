@@ -123,7 +123,7 @@ function addMessage(content, sender, isMarkdown = false, addFeedback = false, sh
                 feedbackContainer.querySelectorAll('.feedback-button').forEach(btn => btn.style.pointerEvents = 'none');
 
                 // Log initial feedback immediately
-                console.log(`Feedback received: ${feedbackType}`);
+                logger.info(`Feedback received: ${feedbackType}`);
 
                 // Show comment section
                 commentSection.classList.remove('hidden'); // Remove 'hidden' class
@@ -141,7 +141,7 @@ function addMessage(content, sender, isMarkdown = false, addFeedback = false, sh
                 commentSection.querySelector('.feedback-comment-submit').onclick = function() {
                     const comment = commentInput.value.trim();
                     // Send feedback AND comment to your backend here
-                    console.log(`Comment for message "${content.substring(0, 50)}...": "${comment}"`);
+                    logger.info(`Comment for message "${content.substring(0, 50)}...": "${comment}"`);
 
                     // Replace feedback area with a thank you message
                     feedbackArea.innerHTML = `<span class="feedback-thanks">Thank you for your feedback!</span>`;
@@ -236,7 +236,7 @@ async function sendMessage() {
         }
 
         const data = await response.json();
-        console.log('Received data from server:', data);
+        logger.info('Received data from server:', data);
 
         if (response.ok) {
             let messageToDisplay = '';
@@ -249,7 +249,7 @@ async function sendMessage() {
 
                 const toolCalls = data.response.filter(part => part.type === 'tool_use');
                 if (toolCalls.length > 0) {
-                    console.log('Genie+ made tool calls:', toolCalls);
+                    logger.info('Genie+ made tool calls:', toolCalls);
                     if (messageToDisplay === '') {
                         messageToDisplay = 'Genie+ is processing your request using internal tools...';
                     }
@@ -267,14 +267,14 @@ async function sendMessage() {
 
         } else {
             addMessage(`Error: ${data.error || 'Something went wrong on the server.'}`, 'agent', false, false);
-            console.error('API Error:', data.error);
+            logger.error('API Error:', data.error);
         }
     } catch (error) {
         if (typingIndicator.parentNode) {
             typingIndicator.remove();
         }
         addMessage('Network error: Could not reach the server. Please check your server and network connection.', 'agent', false, false);
-        console.error('Fetch error:', error);
+        logger.error('Fetch error:', error);
     }
 }
 

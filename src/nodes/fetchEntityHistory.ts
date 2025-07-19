@@ -3,9 +3,9 @@ import { AIMessage } from '@langchain/core/messages';
 import { getEntityHistoryTool } from '../tools/entityHistoryTools';
 import { Version } from '../model/types/entityHistory';
 import {generateNewAIMessage} from "../utils/auth/helpers";
-
+import { logger } from '../utils/logger';
 export async function fetchEntityHistory(state: AgentStateData): Promise<Partial<AgentStateData>> {
-  console.log('[Node: fetchEntityHistory] Fetching entity history...');
+  logger.info('[Node: fetchEntityHistory] Fetching entity history...');
   const { entityIds, entityType, environment, messages } = state;
   if (entityIds.length === 0) {
     console.warn('[Node: fetchEntityHistory] No entity IDs to fetch history for.');

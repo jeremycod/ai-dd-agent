@@ -153,7 +153,7 @@ export class OfferServiceClient {
 
       return data;
     } catch (error) {
-      console.error('Error fetching offer data:', error);
+      logger.error('Error fetching offer data:', error);
       throw new Error(
         `Error fetching offer data: ${error instanceof Error ? error.message : String(error)}`,
       );

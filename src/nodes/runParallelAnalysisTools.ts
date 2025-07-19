@@ -7,11 +7,12 @@ import { analyzeDatadogWarningsTool } from '../tools/datadogLogsTool';
 import { analyzeEntityHistoryTool } from '../tools/entityHistoryTools';
 import { analyzeUPSOfferPriceTool } from '../tools/upsTools';
 import {generateNewAIMessage} from "../utils/auth/helpers"; // This is *your* analyzeUPSOfferPriceTool function, not a LangChain Tool instance
+import { logger } from '../utils/logger';
 
 export async function runParallelAnalysisTools(
   state: AgentStateData,
 ): Promise<Partial<AgentStateData>> {
-  console.log('[Node: runParallelAnalysisTools] Entering...');
+  logger.info('[Node: runParallelAnalysisTools] Entering...');
   const { datadogLogs, messages, entityHistory, offerPriceDetails, genieOfferDetails, queryCategory } = state; // Destructure only what's needed
 
   // Initialize an array to hold promises for tools that are LangChain.js Tool instances (which have .invoke())
@@ -28,7 +29,7 @@ export async function runParallelAnalysisTools(
   if (datadogLogs.length > 0) {
     langchainToolPromises.push(analyzeDatadogErrorsTool.invoke({ logs: datadogLogs }));
     langchainToolPromises.push(analyzeDatadogWarningsTool.invoke({ logs: datadogLogs }));
-    console.log('[Node: runParallelAnalysisTools] Added Datadog analysis tools.');
+    logger.info('[Node: runParallelAnalysisTools] Added Datadog analysis tools.');
   } else {
     analysisResultsAccumulator.datadogErrors = 'No logs retrieved to check for errors.';
     analysisResultsAccumulator.datadogWarnings = 'No logs retrieved to check for warnings.';
@@ -37,7 +38,7 @@ export async function runParallelAnalysisTools(
 
   if (entityHistory.length > 0) {
     langchainToolPromises.push(analyzeEntityHistoryTool.invoke({ entityHistory: entityHistory }));
-    console.log('[Node: runParallelAnalysisTools] Added Entity History analysis tool.');
+    logger.info('[Node: runParallelAnalysisTools] Added Entity History analysis tool.');
   } else {
     analysisResultsAccumulator.entityHistory = 'No entity history found.';
     newMessagesAccumulator.push(generateNewAIMessage('No entity history was available for analysis.'));
@@ -50,7 +51,7 @@ export async function runParallelAnalysisTools(
     offerPriceDetails &&
     offerPriceDetails.length > 0 // <-- This will now be correct due to AgentStateData change
   ) {
-    console.log(
+    logger.info(
       '[Node: runParallelAnalysisTools] Adding analyzeUPSOfferPriceTool to parallel execution.',
     );
     customFunctionPromises.push(analyzeUPSOfferPriceTool(state)); // This is *your* custom function
@@ -63,7 +64,7 @@ export async function runParallelAnalysisTools(
   }
 
   if (langchainToolPromises.length === 0 && customFunctionPromises.length === 0) {
-    console.log('[Node: runParallelAnalysisTools] No specific analysis tools to run.');
+    logger.info('[Node: runParallelAnalysisTools] No specific analysis tools to run.');
     return {
       analysisResults: analysisResultsAccumulator,
       messages: [
@@ -74,7 +75,7 @@ export async function runParallelAnalysisTools(
     };
   }
 
-  console.log(
+  logger.info(
     `[Node: runParallelAnalysisTools] Running analysis tools in parallel. LangChain Tools: ${langchainToolPromises.length}, Custom Functions: ${customFunctionPromises.length}`,
   );
 
@@ -104,7 +105,7 @@ export async function runParallelAnalysisTools(
     }
   }
 
-  console.log('[Node: runParallelAnalysisTools] Parallel analysis completed.');
+  logger.info('[Node: runParallelAnalysisTools] Parallel analysis completed.');
 
   return {
     analysisResults: analysisResultsAccumulator,

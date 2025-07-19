@@ -35,7 +35,7 @@ export class UPSClient {
 
       return await response.json();
     } catch (error) {
-      console.error(`Error fetching offer price for ${offerId}:`, error);
+      logger.error(`Error fetching offer price for ${offerId}:`, error);
       throw new Error(
         `Error fetching offer price for ${offerId}: ${error instanceof Error ? error.message : String(error)}`,
       );

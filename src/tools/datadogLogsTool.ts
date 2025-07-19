@@ -12,6 +12,8 @@ import {
 } from '../model/schemas';
 import { TIMESTAMP_ASCENDING } from '@datadog/datadog-api-client/dist/packages/datadog-api-client-v2/models/RUMSort';
 import { BaseServerConfiguration } from '@datadog/datadog-api-client/dist/packages/datadog-api-client-common';
+import { logger } from '../utils/logger';
+
 const { LogsApi } = v2;
 
 const DATADOG_API_KEY = process.env.DATADOG_API_KEY;
@@ -19,7 +21,7 @@ const DATADOG_APP_KEY = process.env.DATADOG_APP_KEY;
 const DATADOG_SITE = process.env.DATADOG_SITE || 'datadoghq.com';
 
 if (!DATADOG_API_KEY || !DATADOG_APP_KEY) {
-  console.error('Datadog API and Application keys are required.');
+  logger.error('Datadog API and Application keys are required.');
   // In a real app, you might throw or handle this more gracefully
   // process.exit(1);
 }
@@ -73,7 +75,7 @@ export const getDatadogLogsTool = new DynamicStructuredTool({
     additionalQuery,
     limit,
   }: GetDataDogLogsToolSchemaInput) => {
-    console.log(
+    logger.info(
       `Executing getDatadogLogsTool for ${entityType} IDs: ${ids.join(', ')} in ${timeRange}`,
     );
     const { fromMs, toMs } = parseTimeRange(timeRange);
@@ -103,7 +105,7 @@ export const getDatadogLogsTool = new DynamicStructuredTool({
         message: `Successfully retrieved ${response.data?.length || 0} logs for ${entityType} IDs: ${ids.join(', ')}.`,
       };
     } catch (error) {
-      console.error('Error fetching Datadog logs:', error);
+      logger.error('Error fetching Datadog logs:', error);
       return {
         datadogLogs: [],
         message: `Error fetching Datadog logs: ${error instanceof Error ? error.message : String(error)}`,

@@ -8,6 +8,7 @@ import {
   AnalyzeEntityHistoryToolInputSchema,
   AnalyzeEntityHistoryToolInputSchemaInput,
 } from '../model/schemas';
+import { logger } from '../utils/logger';
 
 export const getEntityHistoryTool = new DynamicStructuredTool({
   name: 'getEntityHistoryTool',
@@ -15,7 +16,7 @@ export const getEntityHistoryTool = new DynamicStructuredTool({
     'Fetches history from Data Manager based on a query, environment, entity type, and specific entity ID (campaign, offer, sku). ',
   schema: GetEntityHistoryToolSchema as any,
   func: async ({ ids, environment, entityType, limit }: GetEntityHistoryToolSchemaInput) => {
-    console.log(
+    logger.info(
       `Executing getEntityHistoryTool for ${entityType} ID: ${ids} for entity ${entityType} in environment ${environment} with limit ${limit}`,
     );
 
@@ -35,7 +36,7 @@ export const getEntityHistoryTool = new DynamicStructuredTool({
         message: `Successfully retrieved ${response?.length || 0} history records for ${entityType} IDs: ${ids.join(', ')}.`,
       };
     } catch (error) {
-      console.error('Error fetching entity history:', error);
+      logger.error('Error fetching entity history:', error);
       return {
         history: [],
         message: `Error fetching entity history: ${error instanceof Error ? error.message : String(error)}`,
@@ -77,13 +78,13 @@ export const analyzeEntityHistoryTool = new DynamicStructuredTool({
 
         // 1. Check for exclusion by prefix
         if (excludedFieldPrefixes.some((prefix) => fieldName.startsWith(prefix))) {
-          console.log(`DEBUG: Skipping field '${fieldName}' due to excluded prefix.`);
+          logger.info(`DEBUG: Skipping field '${fieldName}' due to excluded prefix.`);
           continue;
         }
 
         // 2. Check for exclusion by exact name
         if (excludedExactFieldNames.includes(fieldName)) {
-          console.log(`DEBUG: Skipping field '${fieldName}' due to exact exclusion.`);
+          logger.info(`DEBUG: Skipping field '${fieldName}' due to exact exclusion.`);
           continue;
         }
 
