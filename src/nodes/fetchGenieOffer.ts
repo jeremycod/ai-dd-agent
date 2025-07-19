@@ -1,8 +1,8 @@
 import { AgentStateData } from '../model/agentState';
 import { Offer } from '../model/types/genieGraphql'; // Assuming this path is correct for your Offer type
-import { AIMessage, BaseMessage } from '@langchain/core/messages';
+import { BaseMessage } from '@langchain/core/messages';
 import { genieOfferTool } from '../tools/genieTools';
-import {generateNewAIMessage} from "../utils/auth/helpers"; // Import your genieOfferTool instance
+import { generateNewAIMessage } from '../utils/auth/helpers'; // Import your genieOfferTool instance
 import { logger } from '../utils/logger';
 /**
  * Node function to fetch Genie Offer details using the genieOfferTool.
@@ -19,7 +19,10 @@ export async function fetchGenieOffer(state: AgentStateData): Promise<Partial<Ag
   // Basic validation checks
   if (!environment || environment === 'unknown') {
     return {
-      messages: [...messages, generateNewAIMessage('Environment not specified for fetching Genie offer.')],
+      messages: [
+        ...messages,
+        generateNewAIMessage('Environment not specified for fetching Genie offer.'),
+      ],
       genieOfferDetails: undefined,
     };
   }
@@ -47,7 +50,9 @@ export async function fetchGenieOffer(state: AgentStateData): Promise<Partial<Ag
       if (toolCallResult.offer) {
         // If the tool returns an offer object, it's a success
         fetchedOffers.push(toolCallResult.offer);
-        newMessages.push(generateNewAIMessage(`Successfully fetched details for offer \`${offerId}\`.`));
+        newMessages.push(
+          generateNewAIMessage(`Successfully fetched details for offer \`${offerId}\`.`),
+        );
       } else {
         // If the tool returns a null offer (but a message), it indicates an error or no offer found
         newMessages.push(

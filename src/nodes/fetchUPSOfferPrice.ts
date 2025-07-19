@@ -2,7 +2,7 @@ import { AgentStateData } from '../model/agentState';
 import { OfferPriceResponse } from '../model/types/UPS'; // Ensure this correctly defines your types
 import { AIMessage, BaseMessage } from '@langchain/core/messages';
 import { upsOfferPriceTool } from '../tools/upsTools';
-import {generateNewAIMessage} from "../utils/auth/helpers"; // Import your tool instance
+import { generateNewAIMessage } from '../utils/auth/helpers'; // Import your tool instance
 import { logger } from '../utils/logger';
 export async function fetchUPSOfferPrice(state: AgentStateData): Promise<Partial<AgentStateData>> {
   logger.info('[Node: fetchUPSOfferPrice] Attempting to fetch UPS Offer Price...');
@@ -21,7 +21,10 @@ export async function fetchUPSOfferPrice(state: AgentStateData): Promise<Partial
 
   if (!entityIds || entityIds.length === 0) {
     return {
-      messages: [...messages, generateNewAIMessage('No offer IDs provided to fetch UPS offer price.')],
+      messages: [
+        ...messages,
+        generateNewAIMessage('No offer IDs provided to fetch UPS offer price.'),
+      ],
       offerPriceDetails: undefined,
     };
   }
@@ -42,7 +45,9 @@ export async function fetchUPSOfferPrice(state: AgentStateData): Promise<Partial
 
       if (typeof toolCallResult === 'string') {
         // If the tool returns a string, it indicates an error or summary
-        newMessages.push(generateNewAIMessage(`Tool output for offer ${offerId}: ${toolCallResult}`));
+        newMessages.push(
+          generateNewAIMessage(`Tool output for offer ${offerId}: ${toolCallResult}`),
+        );
         failedFetches.push(offerId);
       } else {
         // If it returns an OfferPriceResponse object, it's a success

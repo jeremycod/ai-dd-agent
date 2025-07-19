@@ -8,7 +8,8 @@ import { DatadogLog } from './datadog';
 import { QueryCategory, EnvironmentType, EntityType } from './types/general';
 import { Version } from './types/entityHistory';
 import { OfferPriceResponse } from './types/UPS';
-import { Offer } from './types/genieGraphql';
+import { Offer as GenieOffer } from './types/genieGraphql'; // <--- Renamed for clarity
+import { Offer as OfferServiceOffer } from './types/offerService';
 
 // --- Feedback Types ---
 export type FeedbackType = 'positive' | 'negative' | 'neutral';
@@ -36,12 +37,14 @@ export type AgentStateData = {
     datadogErrors?: string;
     entityHistory?: string;
     upsOfferPrice?: string;
+    offerServiceDetails?: string;
   };
   runParallelAnalysis: boolean;
   finalSummary?: MessageContent;
   queryCategory?: QueryCategory;
   offerPriceDetails?: OfferPriceResponse[];
-  genieOfferDetails?: Offer[];
+  genieOfferDetails?: GenieOffer[];
+  offerServiceDetails?: OfferServiceOffer[];
 
   messageFeedbacks: Record<string, AgentMessageFeedback>;
   overallRlReward?: number;
@@ -68,7 +71,12 @@ export type AgentStateData = {
     numTurnsInConversation?: number;
   };
   chosenRLAction?: {
-    type: 'retrieval_strategy' | 'generation_style' | 'analysis_depth' | 're_query' | 'present_summary';
+    type:
+      | 'retrieval_strategy'
+      | 'generation_style'
+      | 'analysis_depth'
+      | 're_query'
+      | 'present_summary';
     value: string;
     producedMessageId?: string;
   };
@@ -82,7 +90,8 @@ export type AgentStateData = {
 // The key is to correctly type the 'value' and 'default' for EACH Annotation().
 export const AgentStateAnnotation = Annotation.Root({
   // For 'messages': This is a concatenating channel.
-  messages: Annotation<BaseMessage[], BaseMessage[]>({ // Explicitly type the Annotation for clarity
+  messages: Annotation<BaseMessage[], BaseMessage[]>({
+    // Explicitly type the Annotation for clarity
     value: (x: BaseMessage[], y: BaseMessage[]): BaseMessage[] => x.concat(y),
     default: () => [],
   }),
@@ -132,10 +141,15 @@ export const AgentStateAnnotation = Annotation.Root({
   }),
 
   // For 'analysisResults': Merging object
-  analysisResults: Annotation<AgentStateData['analysisResults'], AgentStateData['analysisResults']>({
-    value: (x: AgentStateData['analysisResults'], y: AgentStateData['analysisResults']): AgentStateData['analysisResults'] => ({ ...(x || {}), ...(y || {}) }),
-    default: () => ({}),
-  }),
+  analysisResults: Annotation<AgentStateData['analysisResults'], AgentStateData['analysisResults']>(
+    {
+      value: (
+        x: AgentStateData['analysisResults'],
+        y: AgentStateData['analysisResults'],
+      ): AgentStateData['analysisResults'] => ({ ...(x || {}), ...(y || {}) }),
+      default: () => ({}),
+    },
+  ),
 
   // For 'runParallelAnalysis': LastValue
   runParallelAnalysis: Annotation<boolean, boolean>({
@@ -145,7 +159,10 @@ export const AgentStateAnnotation = Annotation.Root({
 
   // For 'finalSummary': LastValue (can be undefined)
   finalSummary: Annotation<MessageContent | undefined, MessageContent | undefined>({
-    value: (x: MessageContent | undefined, y: MessageContent | undefined): MessageContent | undefined => y ?? x,
+    value: (
+      x: MessageContent | undefined,
+      y: MessageContent | undefined,
+    ): MessageContent | undefined => y ?? x,
     default: () => undefined,
   }),
 
@@ -156,21 +173,33 @@ export const AgentStateAnnotation = Annotation.Root({
   }),
 
   // For 'offerPriceDetails': LastValue (can be undefined)
-  offerPriceDetails: Annotation<OfferPriceResponse[] | undefined, OfferPriceResponse[] | undefined>({
-    value: (x: OfferPriceResponse[] | undefined, y: OfferPriceResponse[] | undefined): OfferPriceResponse[] | undefined => y ?? x,
-    default: () => undefined,
-  }),
+  offerPriceDetails: Annotation<OfferPriceResponse[] | undefined, OfferPriceResponse[] | undefined>(
+    {
+      value: (
+        x: OfferPriceResponse[] | undefined,
+        y: OfferPriceResponse[] | undefined,
+      ): OfferPriceResponse[] | undefined => y ?? x,
+      default: () => undefined,
+    },
+  ),
 
   // For 'genieOfferDetails': LastValue (can be undefined)
-  genieOfferDetails: Annotation<Offer[] | undefined, Offer[] | undefined>({
-    value: (x: Offer[] | undefined, y: Offer[] | undefined): Offer[] | undefined => y ?? x,
+  genieOfferDetails: Annotation<GenieOffer[] | undefined, GenieOffer[] | undefined>({
+    value: (x: GenieOffer[] | undefined, y: GenieOffer[] | undefined): GenieOffer[] | undefined =>
+      y ?? x,
     default: () => undefined,
   }),
 
   // --- Custom Reducers for new RL/Feedback fields ---
   // For 'messageFeedbacks': Merging object
-  messageFeedbacks: Annotation<Record<string, AgentMessageFeedback>, Record<string, AgentMessageFeedback>>({
-    value: (x: Record<string, AgentMessageFeedback>, y: Record<string, AgentMessageFeedback>): Record<string, AgentMessageFeedback> => ({ ...x, ...y }),
+  messageFeedbacks: Annotation<
+    Record<string, AgentMessageFeedback>,
+    Record<string, AgentMessageFeedback>
+  >({
+    value: (
+      x: Record<string, AgentMessageFeedback>,
+      y: Record<string, AgentMessageFeedback>,
+    ): Record<string, AgentMessageFeedback> => ({ ...x, ...y }),
     default: () => ({}),
   }),
 
@@ -181,14 +210,23 @@ export const AgentStateAnnotation = Annotation.Root({
   }),
 
   // For 'currentEpisodeActions': Concatenating array, can start undefined
-  currentEpisodeActions: Annotation<AgentStateData['currentEpisodeActions'], AgentStateData['currentEpisodeActions']>({
-    value: (x: AgentStateData['currentEpisodeActions'], y: AgentStateData['currentEpisodeActions']): AgentStateData['currentEpisodeActions'] => (x || []).concat(y || []),
+  currentEpisodeActions: Annotation<
+    AgentStateData['currentEpisodeActions'],
+    AgentStateData['currentEpisodeActions']
+  >({
+    value: (
+      x: AgentStateData['currentEpisodeActions'],
+      y: AgentStateData['currentEpisodeActions'],
+    ): AgentStateData['currentEpisodeActions'] => (x || []).concat(y || []),
     default: () => [],
   }),
 
   // For 'rlFeatures': Merging object, can be undefined
   rlFeatures: Annotation<AgentStateData['rlFeatures'], AgentStateData['rlFeatures']>({
-    value: (x: AgentStateData['rlFeatures'], y: AgentStateData['rlFeatures']): AgentStateData['rlFeatures'] => {
+    value: (
+      x: AgentStateData['rlFeatures'],
+      y: AgentStateData['rlFeatures'],
+    ): AgentStateData['rlFeatures'] => {
       if (x === undefined && y === undefined) {
         return undefined;
       }
@@ -199,7 +237,10 @@ export const AgentStateAnnotation = Annotation.Root({
 
   // For 'chosenRLAction': LastValue (can be undefined)
   chosenRLAction: Annotation<AgentStateData['chosenRLAction'], AgentStateData['chosenRLAction']>({
-    value: (x: AgentStateData['chosenRLAction'], y: AgentStateData['chosenRLAction']): AgentStateData['chosenRLAction'] => y ?? x,
+    value: (
+      x: AgentStateData['chosenRLAction'],
+      y: AgentStateData['chosenRLAction'],
+    ): AgentStateData['chosenRLAction'] => y ?? x,
     default: () => undefined,
   }),
 

@@ -1,94 +1,7 @@
 import { OfferServiceResponse } from '../model/types/offerService';
 
-const GET_OFFERS_QUERY = `
-query GetOffers($offerId: ID!) {
-  offers(offerFilters: [{ offerId: $offerId}]) {
-    id
-    name
-    offerType
-    packages {
-      id
-      name
-    }
-    offerEligibility {
-      cohortEligibility {
-        eligibleCohorts {
-          name
-        }
-      }
-    }
-    availability {
-      isActive
-      startDate
-      endDate
-    }
-    legacyIds {
-      dssOfferId
-      huluBundleId
-      huluProgramId
-    }
-    discounts {
-      discountPrices {
-        product {
-          id
-        }
-        price {
-          amount
-        }
-      }
-    }
-    products {
-      offerProductType
-      basePrice {
-        amount
-      }
-      product {
-        id
-        name
-        entitlements {
-          name
-        }
-        legacyIds {
-          dssProductId
-        }
-      }
-      schedule {
-        phases {
-          id
-          discounts {
-            id
-            type
-            duration {
-              unit
-              length
-            }
-            paymentDuration {
-              unit
-              length
-            }
-            discountPrices {
-              product {
-                id
-              }
-              price {
-                amount
-              }
-            }
-          }
-          phaseType
-          repeatCount
-          accountingType
-          finalPrice
-          duration {
-            unit
-            length
-          }
-        }
-      }
-    }
-  }
-}
-`;
+import { logger } from '../utils/logger';
+import { GET_OFFER_BY_ID_QUERY, GetOfferByIdVariables } from '../model/queries/offerService';
 
 export class OfferServiceClient {
   private readonly baseUrl: string;
@@ -105,11 +18,10 @@ export class OfferServiceClient {
    * @throws Will throw an error if the network request fails or the GraphQL response contains errors.
    */
   async getOfferById(offerId: string): Promise<OfferServiceResponse> {
+    const variables: GetOfferByIdVariables = { offerId: offerId };
     const requestBody = {
-      query: GET_OFFERS_QUERY,
-      variables: {
-        offerId: offerId,
-      },
+      query: GET_OFFER_BY_ID_QUERY,
+      variables: variables,
     };
 
     try {
@@ -134,29 +46,36 @@ export class OfferServiceClient {
 
       const data: OfferServiceResponse = await response.json();
 
-      // GraphQL responses can still return 200 OK but contain errors in the 'errors' field
-      if (data.data === null || data.data.offers === null) {
-        // If 'data' is null, there might be a top-level GraphQL error
-        const errorData: any = data; // Cast to any to access potential errors field
-        if (errorData.errors && Array.isArray(errorData.errors)) {
-          const graphQLErrors = errorData.errors.map((err: any) => err.message).join(', ');
-          return {
-            error: `HTTP error! Status: ${response.status}, GraphQL errors: ${graphQLErrors}`,
-            success: false,
-          } as OfferServiceResponse;
-        }
+      if (data.errors && data.errors.length > 0) {
+        logger.warn(`GraphQL errors for offer ${offerId}: ${JSON.stringify(data.errors)}`);
         return {
-          error: `GraphQL response 'data' field is null or 'offers' is null.`,
           success: false,
-        } as OfferServiceResponse;
+          data: data.data, // Still return data if partially available
+          errors: data.errors,
+          error: data.errors.map((e) => e.message).join('; '), // Combine messages for a single error string
+        };
       }
 
-      return data;
-    } catch (error) {
-      logger.error('Error fetching offer data:', error);
-      throw new Error(
-        `Error fetching offer data: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      // If no GraphQL errors and data.offers is present, consider it a success
+      if (data.data && data.data.offers && data.data.offers.length > 0) {
+        return {
+          success: true, // <--- success is defined here
+          data: data.data,
+        };
+      } else {
+        // Case where GraphQL call was successful but no offer data found
+        return {
+          success: false,
+          data: data.data,
+          error: `No offer data found for ID: ${offerId}`,
+        };
+      }
+    } catch (error: any) {
+      logger.error(`Network or unexpected error for offer ${offerId}:`, error);
+      return {
+        success: false,
+        error: `Network or unexpected error: ${error.message}`,
+      };
     }
   }
 }

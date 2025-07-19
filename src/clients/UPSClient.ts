@@ -1,5 +1,5 @@
 import { OfferPriceResponse } from '../model/types/UPS'; // Assuming this path is correct
-
+import { logger } from '../utils/logger';
 export class UPSClient {
   private readonly baseUrl: string;
   private readonly callerClientId: string; // <--- Add this property

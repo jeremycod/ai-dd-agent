@@ -3,7 +3,7 @@ import { logger } from '../utils/logger';
 import { getDatadogLogsTool } from '../tools/datadogLogsTool';
 import { DatadogLog } from '../model/datadog';
 import { v2 } from '@datadog/datadog-api-client';
-import {generateNewAIMessage} from "../utils/auth/helpers";
+import { generateNewAIMessage } from '../utils/auth/helpers';
 
 function mapEnvironmentToTag(environment: string): string {
   const environmentMap: Record<string, string> = {

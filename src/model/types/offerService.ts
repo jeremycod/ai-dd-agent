@@ -117,7 +117,7 @@ export interface Offer {
 
 // Overall response structure
 export interface OfferServiceResponse {
-  data: {
+  data?: {
     offers: Offer[];
   };
   error?: string;

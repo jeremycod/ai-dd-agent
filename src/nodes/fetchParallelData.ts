@@ -1,10 +1,29 @@
+// src/nodes/fetchParallelData.ts
+
 import { AgentStateData } from '../model/agentState';
 import { fetchEntityHistory } from './fetchEntityHistory';
 import { fetchDatadogLogs } from './fetchDatadogLogs';
 import { fetchUPSOfferPrice } from './fetchUPSOfferPrice';
-import { BaseMessage } from '@langchain/core/messages';
+import { BaseMessage, AIMessage, ToolMessage, HumanMessage } from '@langchain/core/messages'; // Import specific message types for better type checking/filtering
 import { fetchGenieOffer } from './fetchGenieOffer';
 import { logger } from '../utils/logger';
+import { fetchOfferServiceOffer } from './fetchOfferServiceOffer';
+
+// Helper function to check if a message is already in an array
+function messageExists(message: BaseMessage, messageArray: BaseMessage[]): boolean {
+  // A more robust check might involve comparing content, type, and tool_call_id if applicable.
+  // For simplicity, let's use content and type. If you have unique IDs for messages, use them.
+  return messageArray.some(
+    (existingMsg) =>
+      existingMsg.content === message.content &&
+      existingMsg.getType === message.getType &&
+      (existingMsg instanceof ToolMessage && message instanceof ToolMessage
+        ? existingMsg.name === message.name
+        : true),
+    // If BaseMessage had a reliable unique ID, you'd use that:
+    // && (existingMsg.id && message.id ? existingMsg.id === message.id : true)
+  );
+}
 
 export async function fetchParallelData(state: AgentStateData): Promise<Partial<AgentStateData>> {
   logger.info('[Node: fetchParallelData] Starting parallel data fetching...');
@@ -22,7 +41,6 @@ export async function fetchParallelData(state: AgentStateData): Promise<Partial<
   calledFunctions.push('fetchDatadogLogs');
 
   // -- Conditional Call for fetching Genie Offer
-
   if (state.entityType === 'offer' && state.entityIds && state.entityIds.length > 0) {
     logger.info(
       '[Node: fetchGenieOffer] Query is for offer issue. Adding fetchGenieOffer to parallel calls.',
@@ -34,9 +52,16 @@ export async function fetchParallelData(state: AgentStateData): Promise<Partial<
     calledFunctions.push(`fetchGenieOffer (for ${state.entityIds.length} IDs)`);
   }
 
+  // -- Conditional Call for fetching Offer Service Offer
+  if (state.entityType === 'offer' && state.entityIds && state.entityIds.length > 0) {
+    logger.info(
+      '[Node: fetchOfferServiceOffer] Query is for offer. Adding fetchOfferServiceOffer to parallel calls.',
+    );
+    promises.push(fetchOfferServiceOffer(state));
+    calledFunctions.push('fetchOfferServiceOffer');
+  }
+
   // --- Conditional Call for fetchUPSOfferPrice ---
-  // Check if the query is categorized as OFFER_PRICE,
-  // entityType is 'offer', and entityIds exist.
   if (
     state.queryCategory === 'OFFER_PRICE' &&
     state.entityType === 'offer' &&
@@ -46,22 +71,11 @@ export async function fetchParallelData(state: AgentStateData): Promise<Partial<
     logger.info(
       '[Node: fetchParallelData] Query is for OFFER_PRICE. Adding fetchUPSOfferPrice to parallel calls.',
     );
-    // The fetchUPSOfferPrice node is designed to handle fetching for the first ID.
-    // If you need to make *multiple* calls for *each* ID in `state.entityIds`,
-    // the logic here will become more complex. For now, assuming `fetchUPSOfferPrice`
-    // will operate on `state.entityIds[0]` as per our previous setup.
-
-    // If fetchUPSOfferPrice already iterates entityIds internally, then a single call is fine.
-    // If fetchUPSOfferPrice expects a single ID, and you have multiple, you'd do this:
-    const offerPricePromises = state.entityIds.map(
-      (offerId) => fetchUPSOfferPrice({ ...state, entityIds: [offerId] }), // Pass a state with only one ID for this specific call
+    const offerPricePromises = state.entityIds.map((offerId) =>
+      fetchUPSOfferPrice({ ...state, entityIds: [offerId] }),
     );
     promises.push(...offerPricePromises);
     calledFunctions.push(`fetchUPSOfferPrice (for ${state.entityIds.length} IDs)`);
-
-    // If fetchUPSOfferPrice is already designed to iterate state.entityIds internally:
-    // promises.push(fetchUPSOfferPrice(state));
-    // calledFunctions.push('fetchUPSOfferPrice');
   }
   // --- End Conditional Call ---
 
@@ -76,20 +90,81 @@ export async function fetchParallelData(state: AgentStateData): Promise<Partial<
 
   // Combine the results from all fetches
   const combinedState: Partial<AgentStateData> = {};
-  let allNewMessages: BaseMessage[] = [];
+  const finalMessages: BaseMessage[] = [...state.messages]; // Start with the original messages
 
   for (const result of results) {
-    // Merge properties from each result into combinedState
-    // Messages need special handling to accumulate, not overwrite
-    if (result.messages) {
-      allNewMessages = allNewMessages.concat(result.messages);
-      delete result.messages; // Remove messages from individual result to avoid overwriting
+    // Merge analysisResults and other data properties deeply
+    if (result.analysisResults) {
+      combinedState.analysisResults = {
+        ...(combinedState.analysisResults || {}),
+        ...result.analysisResults,
+      };
+      // Remove from result to avoid shallow overwrite by Object.assign later
+      delete result.analysisResults;
     }
-    Object.assign(combinedState, result); // Merge all other properties
+
+    // Merge offerPriceDetails (if present)
+    if (result.offerPriceDetails) {
+      combinedState.offerPriceDetails = [
+        ...(combinedState.offerPriceDetails || []),
+        ...result.offerPriceDetails,
+      ];
+      delete result.offerPriceDetails;
+    }
+
+    // Merge genieOfferDetails (if present)
+    if (result.genieOfferDetails) {
+      combinedState.genieOfferDetails = [
+        ...(combinedState.genieOfferDetails || []),
+        ...result.genieOfferDetails,
+      ];
+      delete result.genieOfferDetails;
+    }
+
+    // Merge offerServiceOffers (if present)
+    if (result.offerServiceDetails) {
+      combinedState.offerServiceDetails = [
+        ...(combinedState.offerServiceDetails || []),
+        ...result.offerServiceDetails,
+      ];
+      delete result.offerServiceDetails;
+    }
+
+    // Handle datadogLogs - assuming fetchDatadogLogs is the only one populating this
+    if (result.datadogLogs) {
+      combinedState.datadogLogs = result.datadogLogs; // Datadog logs likely replace, not merge
+      delete result.datadogLogs;
+    }
+
+    // Handle entityHistory - assuming fetchEntityHistory is the only one populating this
+    if (result.entityHistory) {
+      combinedState.entityHistory = result.entityHistory; // Entity history likely replaces, not merge
+      delete result.entityHistory;
+    }
+
+    // Add new messages from this result, ensuring no duplicates.
+    // We assume original messages are only from state.messages (HumanMessage/past AIMessages)
+    // and tool outputs/new AI messages come from the results.
+    if (result.messages) {
+      for (const msg of result.messages) {
+        // Only add if it's not a HumanMessage (which should only come from initial state)
+        // and it doesn't already exist in our finalMessages array.
+        if (!(msg instanceof HumanMessage) && !messageExists(msg, finalMessages)) {
+          finalMessages.push(msg);
+        }
+      }
+      // Remove messages from result so Object.assign doesn't try to merge it
+      delete result.messages;
+    }
+
+    // Merge all other properties (userQuery, entityType, timeRange etc.)
+    // Note: This assumes these are single-value properties that either replace or are consistent.
+    // For example, timeRange, entityType should ideally be consistent across parallel calls if derived from initial state.
+    Object.assign(combinedState, result);
   }
 
-  // Prepend original messages, then append all new messages from parallel fetches
-  combinedState.messages = [...state.messages, ...allNewMessages];
+  // Assign the accumulated and deduplicated messages
+  combinedState.messages = finalMessages;
 
   return combinedState;
 }

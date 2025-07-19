@@ -13,7 +13,7 @@ import { logger } from './utils/logger';
 // --- Import Token Service related parts ---
 import { TokenService } from './utils/auth/TokenService'; // Adjust path
 import { loadSymmetricKey } from './utils/auth/jwtSecret';
-import {generateNewHumanMessage} from "./utils/auth/helpers"; // Adjust path
+import { generateNewHumanMessage } from './utils/auth/helpers'; // Adjust path
 
 const server = express();
 const PORT = 3000;

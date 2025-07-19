@@ -6,14 +6,22 @@ import { analyzeDatadogErrorsTool } from '../tools/datadogLogsTool';
 import { analyzeDatadogWarningsTool } from '../tools/datadogLogsTool';
 import { analyzeEntityHistoryTool } from '../tools/entityHistoryTools';
 import { analyzeUPSOfferPriceTool } from '../tools/upsTools';
-import {generateNewAIMessage} from "../utils/auth/helpers"; // This is *your* analyzeUPSOfferPriceTool function, not a LangChain Tool instance
+import { generateNewAIMessage } from '../utils/auth/helpers'; // This is *your* analyzeUPSOfferPriceTool function, not a LangChain Tool instance
 import { logger } from '../utils/logger';
 
 export async function runParallelAnalysisTools(
   state: AgentStateData,
 ): Promise<Partial<AgentStateData>> {
   logger.info('[Node: runParallelAnalysisTools] Entering...');
-  const { datadogLogs, messages, entityHistory, offerPriceDetails, genieOfferDetails, queryCategory } = state; // Destructure only what's needed
+  const {
+    datadogLogs,
+    messages,
+    entityHistory,
+    offerPriceDetails,
+    genieOfferDetails,
+    offerServiceDetails,
+    queryCategory,
+  } = state; // Destructure only what's needed
 
   // Initialize an array to hold promises for tools that are LangChain.js Tool instances (which have .invoke())
   const langchainToolPromises: Promise<string>[] = []; // Assuming these tools return string summaries
@@ -33,7 +41,9 @@ export async function runParallelAnalysisTools(
   } else {
     analysisResultsAccumulator.datadogErrors = 'No logs retrieved to check for errors.';
     analysisResultsAccumulator.datadogWarnings = 'No logs retrieved to check for warnings.';
-    newMessagesAccumulator.push(generateNewAIMessage('No Datadog logs were available for analysis.'));
+    newMessagesAccumulator.push(
+      generateNewAIMessage('No Datadog logs were available for analysis.'),
+    );
   }
 
   if (entityHistory.length > 0) {
@@ -41,7 +51,9 @@ export async function runParallelAnalysisTools(
     logger.info('[Node: runParallelAnalysisTools] Added Entity History analysis tool.');
   } else {
     analysisResultsAccumulator.entityHistory = 'No entity history found.';
-    newMessagesAccumulator.push(generateNewAIMessage('No entity history was available for analysis.'));
+    newMessagesAccumulator.push(
+      generateNewAIMessage('No entity history was available for analysis.'),
+    );
   }
 
   // --- Conditional UPS Offer Price Analysis ---
@@ -70,7 +82,9 @@ export async function runParallelAnalysisTools(
       messages: [
         ...messages,
         ...newMessagesAccumulator,
-        generateNewAIMessage('No specific analysis tools were run as no relevant data was available.'),
+        generateNewAIMessage(
+          'No specific analysis tools were run as no relevant data was available.',
+        ),
       ],
     };
   }

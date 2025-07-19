@@ -1,8 +1,6 @@
 // utils/auth/TokenService.ts
 
-import {
-  getSymmetricKey,
-} from './jwtSecret'; // Import the new key loading
+import { getSymmetricKey } from './jwtSecret'; // Import the new key loading
 import * as jose from 'jose';
 import { setToken, getToken, removeToken } from './genie'; // Your in-memory token functions
 import { v4 as uuidv4 } from 'uuid';
@@ -44,9 +42,11 @@ export class TokenService {
     const defaultGivenname = process.env.DEFAULT_JWE_GIVENNAME || 'Test';
     const defaultSurname = process.env.DEFAULT_JWE_SURNAME || 'User';
     const defaultRolesString = process.env.DEFAULT_JWE_ROLES || 'USER';
-    const defaultRoles = defaultRolesString.split(',').map(role => role.trim()).filter(role => role.length > 0);
+    const defaultRoles = defaultRolesString
+      .split(',')
+      .map((role) => role.trim())
+      .filter((role) => role.length > 0);
     const defaultProfile = process.env.DEFAULT_JWE_PROFILE || 'main';
-
 
     const jwePayload = {
       name: dynamicPayload.name || defaultName,
@@ -54,8 +54,9 @@ export class TokenService {
       givenname: dynamicPayload.givenname || defaultGivenname,
       surname: dynamicPayload.surname || defaultSurname,
       // Initials will still be derived dynamically
-      initials: (dynamicPayload.givenname?.charAt(0) || defaultGivenname.charAt(0)) +
-          (dynamicPayload.surname?.charAt(0) || defaultSurname.charAt(0)),
+      initials:
+        (dynamicPayload.givenname?.charAt(0) || defaultGivenname.charAt(0)) +
+        (dynamicPayload.surname?.charAt(0) || defaultSurname.charAt(0)),
       roles: dynamicPayload.roles || defaultRoles, // Use the parsed default roles array
       profile: dynamicPayload.profile || defaultProfile,
       expiryDate: new Date(Date.now() + EXPIRY_TIME_MS).valueOf(), // Milliseconds
@@ -70,16 +71,16 @@ export class TokenService {
       logger.info('Symmetric Key (bytes):', symmetricKey.byteLength);
 
       token = await new jose.CompactEncrypt(
-          new TextEncoder().encode(JSON.stringify(jwePayload)) // Plaintext is the stringified JSON object
+        new TextEncoder().encode(JSON.stringify(jwePayload)), // Plaintext is the stringified JSON object
       )
-          .setProtectedHeader({
-            alg: 'dir',    // Key Management Algorithm: Direct Encryption
-            enc: 'A256GCM', // Content Encryption Algorithm: AES GCM using 256-bit key
-            // typ: 'JWT', // REMOVED: If the inner payload is just a JSON, not a full JWT
-            // If backend's AuthenticationCommon does not parse this as a full JWT,
-            // then 'typ: JWT' would be incorrect and cause issues.
-          })
-          .encrypt(symmetricKey);
+        .setProtectedHeader({
+          alg: 'dir', // Key Management Algorithm: Direct Encryption
+          enc: 'A256GCM', // Content Encryption Algorithm: AES GCM using 256-bit key
+          // typ: 'JWT', // REMOVED: If the inner payload is just a JSON, not a full JWT
+          // If backend's AuthenticationCommon does not parse this as a full JWT,
+          // then 'typ: JWT' would be incorrect and cause issues.
+        })
+        .encrypt(symmetricKey);
 
       this.currentToken = token;
       // Note: Token expiry time now based on 'expiryDate' in payload, not standard 'exp'
@@ -97,11 +98,21 @@ export class TokenService {
         const decryptedJson = JSON.parse(new TextDecoder().decode(plaintext)); // Decode bytes to string, then parse JSON
 
         logger.info('CLIENT-SIDE SELF-DECRYPTION SUCCESSFUL!');
-        if (!decryptedJson.name || !decryptedJson.profile || !decryptedJson.roles || !decryptedJson.expiryDate) {
-          logger.error('CRITICAL: Decrypted claims are missing expected fields (name, profile, roles, expiryDate)!');
+        if (
+          !decryptedJson.name ||
+          !decryptedJson.profile ||
+          !decryptedJson.roles ||
+          !decryptedJson.expiryDate
+        ) {
+          logger.error(
+            'CRITICAL: Decrypted claims are missing expected fields (name, profile, roles, expiryDate)!',
+          );
         }
       } catch (selfDecryptError) {
-        logger.error('CLIENT-SIDE SELF-DECRYPTION FAILED! This indicates a problem with JWE generation on the client.', selfDecryptError);
+        logger.error(
+          'CLIENT-SIDE SELF-DECRYPTION FAILED! This indicates a problem with JWE generation on the client.',
+          selfDecryptError,
+        );
       }
 
       return token;
@@ -113,7 +124,6 @@ export class TokenService {
       throw new Error(`Failed to generate JWE token: ${error.message}`);
     }
   }
-
 
   private isTokenExpired(): boolean {
     if (!this.currentToken || !this.tokenExpiryTime || Date.now() >= this.tokenExpiryTime) {
@@ -132,5 +142,4 @@ export class TokenService {
     }
     return this.currentToken;
   }
-
 }

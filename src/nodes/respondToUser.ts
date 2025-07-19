@@ -1,6 +1,6 @@
 import { AgentStateData } from '../model/agentState';
 import { logger } from '../utils/logger';
-import {generateNewAIMessage} from "../utils/auth/helpers";
+import { generateNewAIMessage } from '../utils/auth/helpers';
 
 export async function respondToUser(state: AgentStateData): Promise<Partial<AgentStateData>> {
   logger.info('[Node: respondToUser] Entering...');
