@@ -84,5 +84,9 @@ export async function fetchGenieOffer(state: AgentStateData): Promise<Partial<Ag
   return {
     messages: [...messages, ...newMessages],
     genieOfferDetails: fetchedOffers.length > 0 ? fetchedOffers : undefined,
+    analysisResults: {
+      ...state.analysisResults,
+        genieOfferDetails: summaryMessage,
+    }
   };
 }

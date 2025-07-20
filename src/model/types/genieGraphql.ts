@@ -1,8 +1,8 @@
-// types/graphql.d.ts (or wherever you keep your types)
+// src/model/types/genieService.ts
 
-export type OfferBillingType = 'ONE_TIME' | 'RECURRING' | 'FREE'; // Example, adjust based on your schema
-export type PriceType = 'NET' | 'GROSS'; // Example
-export type OfferStatus = 'ACTIVE' | 'INACTIVE' | 'PENDING'; // Example
+export type OfferBillingType = 'ONE_TIME' | 'RECURRING' | 'FREE' | 'DIRECT_BILLING'; // Added DIRECT_BILLING
+export type PriceType = 'NET' | 'GROSS' | 'PROMO' | 'RETAIL'; // Added PROMO, RETAIL
+export type OfferStatus = 'LIVE' | 'ACTIVE' | 'INACTIVE' | 'PENDING'; // Added LIVE
 
 export interface ReferenceLink {
   key: string;
@@ -34,11 +34,11 @@ export interface TierDefinition {
   entitlementTierDefinitions: EntitlementTierDefinition[];
 }
 
-export interface Product {
+export interface Product { // This is the Genie Product
   id: string;
   name: string;
   entitlements: Entitlement[];
-  tierDefinitions?: TierDefinition[]; // Added based on your query
+  tierDefinitions?: TierDefinition[];
 }
 
 export interface Country {
@@ -49,8 +49,8 @@ export interface TransitionOffer {
   id: string;
   name: string;
   brands: string[];
-  startDate?: string; // Assuming date string
-  endDate?: string; // Assuming date string
+  startDate?: string;
+  endDate?: string | null; // Added null
   countries: Country[];
   packageId?: string;
   package?: {
@@ -61,7 +61,6 @@ export interface TransitionOffer {
     name: string;
   }[];
   currency?: {
-    // Only for OfferD2C
     code: string;
   };
 }
@@ -78,30 +77,30 @@ export interface Eligibility {
 
 export interface Transition {
   transitionOffer: TransitionOffer;
-  transitionDate?: string; // Assuming date string
-  transitionDateOperator?: string; // e.g., "BEFORE", "AFTER"
+  transitionDate?: string;
+  transitionDateOperator?: string;
   transitionReason?: string;
   eligibility?: Eligibility;
 }
 
-export interface Currency {
+export interface Currency { // Genie specific currency interface
   code: string;
 }
 
 export interface OfferProductPrice {
-  retailPrice?: { amount: number };
-  offerDiscount?: { discountAmount: number };
+  retailPrice?: number | null; // Simplified based on your Genie JSON having null or number
+  offerDiscount?: number | null; // Simplified
   referenceOfferProductPriceAmount?: number;
   offerProductPriceAmount?: number;
 }
 
 export interface DurationLength {
   durationLength?: number;
-  durationUnit?: string; // e.g., "MONTH", "YEAR"
+  durationUnit?: string; // e.g., "MONTH", "YEAR" - note: this is different from OfferService's DurationUnit
 }
 
 export interface DurationDate {
-  endDate?: string; // Assuming date string
+  endDate?: string;
 }
 
 export type Duration = DurationLength | DurationDate;
@@ -111,7 +110,7 @@ export interface ProductPhase {
   phaseType: string;
   discount?: { discountAmount: number };
   finalPrice?: number;
-  currency?: { code: string };
+  currency?: Currency; // Using Genie's Currency
   isUnlimited?: boolean;
   isOneTime?: boolean;
   duration?: Duration;
@@ -123,33 +122,42 @@ export interface ProductPhase {
   };
 }
 
-export interface OfferProduct {
+export interface OfferProduct { // This is the Genie's OfferProduct
   referenceOfferId?: string;
   productId: string;
   price?: OfferProductPrice;
   initialPhase?: ProductPhase;
 }
 
+// These are the specific discriminated union types
 export interface OfferD2C {
-  initialPrice?: number;
-  billingFrequency?: string; // e.g., "MONTHLY", "ANNUAL"
+  __typename: 'OfferD2C'; // Explicit discriminator for OfferD2C
+  initialPrice: number; // Required based on your JSON
+  billingFrequency: string; // Required based on your JSON
   billingType: OfferBillingType;
-  currency?: Currency;
-  referenceOffers?: Offer[]; // Recursive, careful with depth
+  currency: Currency; // Required based on your JSON
+  referenceOffers?: Offer[];
   offerProducts?: OfferProduct[];
 }
 
-export type PartnerSaleType = 'REVENUE_SHARE' | 'FIXED_FEE'; // Example
-export type PromoType3PP = 'COUPON' | 'BOGO'; // Example
-export type PaidUpon = 'ACTIVATION' | 'RENEWAL'; // Example
-
 export interface Offer3PP {
+  __typename: 'Offer3PP'; // Explicit discriminator
   partnerSaleType?: PartnerSaleType;
   promoType3PP?: PromoType3PP;
   partnerPaidAmount?: number;
   durationLength?: DurationLength;
   paidUpon?: PaidUpon;
 }
+
+export interface OfferIAP {
+  __typename: 'OfferIAP'; // Explicit discriminator
+  billingFrequency?: string;
+  offerPhases?: OfferPhaseIAP[];
+}
+
+export type PartnerSaleType = 'REVENUE_SHARE' | 'FIXED_FEE';
+export type PromoType3PP = 'COUPON' | 'BOGO';
+export type PaidUpon = 'ACTIVATION' | 'RENEWAL';
 
 export interface OfferPhaseIAP {
   id: string;
@@ -159,14 +167,9 @@ export interface OfferPhaseIAP {
   iapDuration?: DurationLength;
 }
 
-export interface OfferIAP {
-  billingFrequency?: string;
-  offerPhases?: OfferPhaseIAP[];
-}
 
-// The main Offer interface, with Discriminated Unions for offer types
-export type Offer = {
-  __typename: 'OfferD2C' | 'Offer3PP' | 'OfferIAP'; // Discriminator
+// The main Genie Offer interface, as a Discriminated Union
+export type Offer = { // Exported as 'GenieOffer'
   id: string;
   name: string;
   description?: string;
@@ -175,7 +178,7 @@ export type Offer = {
   endDate?: string;
   referenceLinks?: ReferenceLink[];
   packageId?: string;
-  products?: Product[];
+  products?: Product[]; // Array of Genie's Product type
   countries?: Country[];
   createdBy?: string;
   createdDate?: string;
@@ -185,7 +188,7 @@ export type Offer = {
   updatedDate?: string;
   priceType?: PriceType;
   transitions?: Transition[];
-} & (OfferD2C | Offer3PP | OfferIAP);
+} & (OfferD2C | Offer3PP | OfferIAP); // The discriminated union part
 
 export interface GraphQLResponse<T> {
   data?: T;

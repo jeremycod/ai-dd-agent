@@ -1,4 +1,4 @@
-import { BaseMessage, MessageContent } from '@langchain/core/messages';
+import {AIMessage, BaseMessage, HumanMessage, MessageContent, SystemMessage} from '@langchain/core/messages';
 import { Annotation } from '@langchain/langgraph';
 // Note: We are no longer importing LastValue or BinaryOperatorAggregate directly here.
 // We let Annotation() infer them based on the structure we provide.
@@ -21,6 +21,18 @@ export type AgentMessageFeedback = {
   feedbackSource?: string;
 };
 
+export type AnalysisResults = {
+  datadogLogs?: string;
+  datadogWarnings?: string;
+  datadogErrors?: string;
+  entityHistory?: string;
+  upsOfferPrice?: string;
+  offerServiceDetails?: string;
+  genieOfferDetails?: string;
+  [key: `offerComparison_${string}`]: string | undefined; // For specific offer comparisons
+  offerComparison?: string; // For a general summary if no specific IDs
+
+}
 // --- Agent State Data Definition (Your core data type) ---
 // This remains the same, as it defines the shape of the data itself.
 export type AgentStateData = {
@@ -32,20 +44,13 @@ export type AgentStateData = {
   timeRange: string;
   datadogLogs: DatadogLog[];
   entityHistory: Version[];
-  analysisResults: {
-    datadogWarnings?: string;
-    datadogErrors?: string;
-    entityHistory?: string;
-    upsOfferPrice?: string;
-    offerServiceDetails?: string;
-  };
+  analysisResults: AnalysisResults;
   runParallelAnalysis: boolean;
   finalSummary?: MessageContent;
   queryCategory?: QueryCategory;
   offerPriceDetails?: OfferPriceResponse[];
   genieOfferDetails?: GenieOffer[];
   offerServiceDetails?: OfferServiceOffer[];
-
   messageFeedbacks: Record<string, AgentMessageFeedback>;
   overallRlReward?: number;
   currentEpisodeActions?: {
@@ -85,14 +90,64 @@ export type AgentStateData = {
   overallFeedbackAttempts?: number;
 };
 
+// --- Helper for the reducer: Generate a unique identifier for each message ---
+// This is crucial for robust deduplication, especially for structured messages like tool calls/results.
+function getMessageIdentifier(msg: BaseMessage): string {
+  // 1. Identify Tool Use messages by their tool_call_id(s)
+  if (msg instanceof AIMessage && msg.tool_calls && msg.tool_calls.length > 0) {
+    // Sort IDs for consistent identifier regardless of order
+    const toolCallIds = msg.tool_calls.map(tc => tc.id).sort().join(',');
+    return `AI_TOOL_USE:${toolCallIds}`;
+  }
+  // 2. Identify Tool Result messages by their tool_use_id
+  // LangChain often wraps tool results in a HumanMessage with specific content structure
+  const contentAsAny = msg.content as any;
+  if (msg instanceof HumanMessage && Array.isArray(contentAsAny) && contentAsAny.length > 0 && contentAsAny[0]?.type === 'tool_result') {
+    return `TOOL_RESULT:${contentAsAny[0].tool_use_id}`;
+  }
+  // 3. For System Messages, use content. Ideally, only one SystemMessage should exist.
+  if (msg instanceof SystemMessage) {
+    // You might want a simpler identifier if you expect multiple *different* system messages
+    // in rare cases, but for a primary "persona" system message, content is usually unique enough.
+    return `SYSTEM:${JSON.stringify(msg.content)}`;
+  }
+  // 4. For other messages (Human, AI text-only), use type, name (if present), and stringified content.
+  // JSON.stringify handles both string content and array/object content correctly for comparison.
+  return `${msg.getType}:${msg.name || ''}:${JSON.stringify(msg.content)}`;
+}
+
 // --- AgentStateAnnotation: Define channels directly within Annotation.Root ---
 // We let Annotation.Root infer the overall StateDefinition based on the channels provided.
 // The key is to correctly type the 'value' and 'default' for EACH Annotation().
 export const AgentStateAnnotation = Annotation.Root({
   // For 'messages': This is a concatenating channel.
   messages: Annotation<BaseMessage[], BaseMessage[]>({
-    // Explicitly type the Annotation for clarity
-    value: (x: BaseMessage[], y: BaseMessage[]): BaseMessage[] => x.concat(y),
+    value: (x: BaseMessage[] | undefined, y: BaseMessage[] | undefined): BaseMessage[] => {
+      const existingMessages = x || [];
+      const newMessages = y || [];
+
+      // Use a Set to track identifiers of messages already present in the existing history.
+      const existingIdentifiers = new Set<string>();
+      for (const msg of existingMessages) {
+        existingIdentifiers.add(getMessageIdentifier(msg));
+      }
+
+      // Filter new messages: only include those whose identifier is NOT already in the history.
+      const uniqueNewMessages = newMessages.filter(msg => {
+        const identifier = getMessageIdentifier(msg);
+        // Only add if it's not already in the existing messages.
+        const isDuplicate = existingIdentifiers.has(identifier);
+        if (!isDuplicate) {
+          // Add this identifier to the set so subsequent messages within the *same batch*
+          // (i.e., from `y`) don't get duplicated either.
+          existingIdentifiers.add(identifier);
+        }
+        return !isDuplicate;
+      });
+
+      // Concatenate the existing messages with the unique new messages.
+      return existingMessages.concat(uniqueNewMessages);
+    },
     default: () => [],
   }),
 
@@ -187,6 +242,12 @@ export const AgentStateAnnotation = Annotation.Root({
   genieOfferDetails: Annotation<GenieOffer[] | undefined, GenieOffer[] | undefined>({
     value: (x: GenieOffer[] | undefined, y: GenieOffer[] | undefined): GenieOffer[] | undefined =>
       y ?? x,
+    default: () => undefined,
+  }),
+
+  offerServiceDetails: Annotation<OfferServiceOffer[] | undefined, OfferServiceOffer[] | undefined>({
+    value: (x:OfferServiceOffer[] | undefined, y: OfferServiceOffer[] | undefined): OfferServiceOffer[] | undefined =>
+        y ?? x,
     default: () => undefined,
   }),
 

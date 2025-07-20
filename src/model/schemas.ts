@@ -191,3 +191,11 @@ export const GetOfferServiceOfferToolSchema = z.object({
 });
 
 export type GetOfferServiceOfferToolSchemaInput = z.infer<typeof GetOfferServiceOfferToolSchema>;
+
+export const CompareOffersToolSchema = z.object({
+  offerId: z.string().describe("The ID of the offer being compared."),
+  offerServiceOffer: z.any().nullable().describe("The full Offer object from Offer Service, or null if not found."),
+  genieOffer: z.any().nullable().describe("The full Offer object from Genie, or null if not found."),
+});
+
+export type CompareOffersToolSchemaInput = z.infer<typeof CompareOffersToolSchema>;

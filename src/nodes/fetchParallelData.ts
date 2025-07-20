@@ -11,19 +11,58 @@ import { fetchOfferServiceOffer } from './fetchOfferServiceOffer';
 
 // Helper function to check if a message is already in an array
 function messageExists(message: BaseMessage, messageArray: BaseMessage[]): boolean {
-  // A more robust check might involve comparing content, type, and tool_call_id if applicable.
-  // For simplicity, let's use content and type. If you have unique IDs for messages, use them.
-  return messageArray.some(
-    (existingMsg) =>
-      existingMsg.content === message.content &&
-      existingMsg.getType === message.getType &&
-      (existingMsg instanceof ToolMessage && message instanceof ToolMessage
-        ? existingMsg.name === message.name
-        : true),
-    // If BaseMessage had a reliable unique ID, you'd use that:
-    // && (existingMsg.id && message.id ? existingMsg.id === message.id : true)
-  );
+  return messageArray.some(existingMsg => {
+    // 1. Check if they are the exact same object reference (fastest)
+    if (existingMsg === message) return true;
+
+    // 2. Check for unique LangChain internal ID (if available and reliable across runs)
+    // LangChain often adds unique IDs, check their structure
+    if ((existingMsg as any).lc_id && (message as any).lc_id &&
+        (existingMsg as any).lc_id[existingMsg.lc_id.length - 1] === (message as any).lc_id[message.lc_id.length - 1]) {
+      return true; // Match by LC internal ID
+    }
+
+    // 3. For ToolMessages (or HumanMessages acting as tool_result), compare by tool_use_id
+    // This is the most important for your specific error
+    const existingToolUseId = (existingMsg instanceof HumanMessage && (existingMsg.content as any)[0]?.type === 'tool_result')
+        ? (existingMsg.content as any)[0].tool_use_id
+        : null;
+    const messageToolUseId = (message instanceof HumanMessage && (message.content as any)[0]?.type === 'tool_result')
+        ? (message.content as any)[0].tool_use_id
+        : null;
+
+    if (existingToolUseId && messageToolUseId && existingToolUseId === messageToolUseId) {
+      return true; // Both are tool results with the same tool_use_id
+    }
+
+    // 4. For AIMessages with tool_use, compare by tool_call_id
+    const existingToolCallIds = (existingMsg instanceof AIMessage && existingMsg.tool_calls)
+        ? existingMsg.tool_calls.map(tc => tc.id).sort().join(',')
+        : null;
+    const messageToolCallIds = (message instanceof AIMessage && message.tool_calls)
+        ? message.tool_calls.map(tc => tc.id).sort().join(',')
+        : null;
+
+    if (existingToolCallIds && messageToolCallIds && existingToolCallIds === messageToolCallIds) {
+      return true; // Both are AI tool uses with the same tool_call_ids
+    }
+
+
+    // 5. Fallback for other messages (System, Human, AI text-only) - Compare type and content (JSON stringify for complex content)
+    if (existingMsg.getType() !== message.getType()) return false;
+    if (existingMsg.name !== message.name) return false; // Important for ToolMessages
+
+    try {
+      // Deep comparison for content, robust enough for strings or structured arrays
+      return JSON.stringify(existingMsg.content) === JSON.stringify(message.content);
+    } catch (e) {
+      // Fallback for extreme cases (circular refs, etc.)
+      logger.warn("Could not stringify message content for comparison.", e);
+      return false;
+    }
+  });
 }
+
 
 export async function fetchParallelData(state: AgentStateData): Promise<Partial<AgentStateData>> {
   logger.info('[Node: fetchParallelData] Starting parallel data fetching...');
@@ -90,7 +129,7 @@ export async function fetchParallelData(state: AgentStateData): Promise<Partial<
 
   // Combine the results from all fetches
   const combinedState: Partial<AgentStateData> = {};
-  const finalMessages: BaseMessage[] = [...state.messages]; // Start with the original messages
+  const newMessagesForThisNode: BaseMessage[] = [];// Start with the original messages
 
   for (const result of results) {
     // Merge analysisResults and other data properties deeply
@@ -147,13 +186,14 @@ export async function fetchParallelData(state: AgentStateData): Promise<Partial<
     // and tool outputs/new AI messages come from the results.
     if (result.messages) {
       for (const msg of result.messages) {
-        // Only add if it's not a HumanMessage (which should only come from initial state)
-        // and it doesn't already exist in our finalMessages array.
-        if (!(msg instanceof HumanMessage) && !messageExists(msg, finalMessages)) {
-          finalMessages.push(msg);
+        // This 'messageExists' check here is now for deduplicating messages *within* the results
+        // from parallel fetches, not against the entire history.
+        // It's still good to prevent duplicates if a sub-fetch function somehow returns the same message twice.
+        if (!(msg instanceof HumanMessage) && !messageExists(msg, newMessagesForThisNode)) {
+          newMessagesForThisNode.push(msg);
         }
       }
-      // Remove messages from result so Object.assign doesn't try to merge it
+      // CRITICAL: Remove 'messages' from 'result' so Object.assign doesn't overwrite the channel later
       delete result.messages;
     }
 
@@ -164,7 +204,7 @@ export async function fetchParallelData(state: AgentStateData): Promise<Partial<
   }
 
   // Assign the accumulated and deduplicated messages
-  combinedState.messages = finalMessages;
-
+  combinedState.messages = newMessagesForThisNode;
+  logger.debug('[Node: fetchParallelData] Combined State BEFORE return:', JSON.stringify(combinedState, null, 2));
   return combinedState;
 }

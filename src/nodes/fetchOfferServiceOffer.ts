@@ -53,14 +53,6 @@ export async function fetchOfferServiceOffer(
           environment: environment,
         });
 
-      // 2. Add the ToolMessage with the raw tool output immediately
-      newMessages.push(
-        new ToolMessage({
-          tool_call_id: `fetchOfferServiceOfferTool-call-${offerId}`,
-          content: toolCallResult.message, // This is the simple status message from the tool
-          name: fetchOfferServiceOfferTool.name,
-        }),
-      );
 
       // 3. Based on the tool result, add a clarifying AIMessage and collect data
       if (toolCallResult.offer) {
@@ -92,11 +84,9 @@ export async function fetchOfferServiceOffer(
 
       // Add a ToolMessage for the error as well, reflecting the tool's failed execution
       newMessages.push(
-        new ToolMessage({
-          tool_call_id: `fetchOfferServiceOfferTool-call-error-${offerId}`,
-          content: `Error: ${error.message}`, // Simple error message for the tool output
-          name: fetchOfferServiceOfferTool.name,
-        }),
+          generateNewAIMessage(
+              `Failed to retrieve offer from offer service for \`${offerId}\` due to an error: ${error.message}.`
+          )
       );
     }
   }

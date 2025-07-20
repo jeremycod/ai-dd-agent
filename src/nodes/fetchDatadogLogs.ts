@@ -81,6 +81,10 @@ export async function fetchDatadogLogs(state: AgentStateData): Promise<Partial<A
       } as DatadogLog; // Cast the constructed object to DatadogLog
     },
   );
+  let summaryMessage = `Datadog logs fetching completed for ${entityIds.length} entities.`;
+  if (mappedDatadogLogs.length > 0) {
+    summaryMessage += ` Successfully retrieved ${mappedDatadogLogs.length} logs.`;
+  }
 
   return {
     datadogLogs: mappedDatadogLogs,
@@ -88,5 +92,9 @@ export async function fetchDatadogLogs(state: AgentStateData): Promise<Partial<A
       ...messages,
       generateNewAIMessage('Fetched Datadog Logs. Proceeding to parallel analysis.'),
     ],
+    analysisResults: {
+      ...state.analysisResults,
+      datadogLogs: summaryMessage,
+    },
   };
 } // This closing brace was missing for the fetchDatadogLogs function

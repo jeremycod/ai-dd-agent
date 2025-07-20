@@ -1,3 +1,5 @@
+// src/nodes/summarizeFindings.ts
+
 import { AgentStateData } from '../model/agentState';
 import { AIMessage, BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { SUMMARIZATION_MESSAGE } from '../constants';
@@ -16,7 +18,27 @@ export async function summarizeFindings(state: AgentStateData): Promise<Partial<
   // Craft the content of the HumanMessage that will provide the data to be summarized.
   // We'll try to get the initial user query from messages, falling back to userQuery string if needed.
   const initialUserQueryContent =
-    messages.find((msg: BaseMessage) => msg instanceof HumanMessage)?.content || userQuery;
+      messages.find((msg: BaseMessage) => msg instanceof HumanMessage)?.content || userQuery;
+
+  // --- Start of Changes for Offer Comparison ---
+  let offerComparisonSummary = '';
+  if (entityType === 'offer' && entityIds && entityIds.length > 0) {
+    logger.info('[Node: summarizeFindings] Preparing offer comparison summaries.');
+    for (const offerId of entityIds) {
+      const comparisonKey = `offerComparison_${offerId}`;
+      if (analysisResults && (analysisResults as any)[comparisonKey]) {
+        offerComparisonSummary += `\n- Offer ID ${offerId} Comparison: ${
+            (analysisResults as any)[comparisonKey]
+        }`;
+      } else {
+        offerComparisonSummary += `\n- Offer ID ${offerId} Comparison: No specific comparison data available.`;
+      }
+    }
+  } else {
+    logger.info('[Node: summarizeFindings] No offer comparison needed for summarization.');
+  }
+  // --- End of Changes for Offer Comparison ---
+
 
   const dataForSummaryPrompt = `
     Based on the following user query and the subsequent analysis results, provide a concise summary of the problems found and potential next steps.
@@ -27,6 +49,7 @@ export async function summarizeFindings(state: AgentStateData): Promise<Partial<
     - Datadog Errors: ${analysisResults.datadogErrors || 'N/A'}
     - Datadog Warnings: ${analysisResults.datadogWarnings || 'N/A'}
     - History of recent changes: ${analysisResults.entityHistory || 'N/A'}
+    ${offerComparisonSummary}
 
     Synthesize this information, highlighting critical issues and proposing actionable advice.
   `;
@@ -35,7 +58,7 @@ export async function summarizeFindings(state: AgentStateData): Promise<Partial<
   // This is crucial because Anthropic only allows one SystemMessage, and it must be the first.
   // We are explicitly providing the summarizationSystemMessage as the first message for this call.
   const relevantHistoryWithoutSystemMessages = messages.filter(
-    (msg: BaseMessage) => !(msg instanceof SystemMessage),
+      (msg: BaseMessage) => !(msg instanceof SystemMessage),
   );
 
   // Construct the final array of messages to send to the Anthropic LLM for this specific invocation.
@@ -65,7 +88,7 @@ export async function summarizeFindings(state: AgentStateData): Promise<Partial<
       messages: [
         ...messages,
         generateNewAIMessage(
-          'I encountered an error while summarizing the findings. Please check the logs.',
+            'I encountered an error while summarizing the findings. Please check the logs.',
         ),
       ],
     };

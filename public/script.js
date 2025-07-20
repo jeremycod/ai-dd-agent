@@ -132,7 +132,7 @@ function addMessage(
           .forEach((btn) => (btn.style.pointerEvents = "none"));
 
         // Log initial feedback immediately
-        logger.info(`Feedback received: ${feedbackType}`);
+        console.log(`Feedback received: ${feedbackType}`);
 
         // Show comment section
         commentSection.classList.remove("hidden"); // Remove 'hidden' class
@@ -152,7 +152,7 @@ function addMessage(
           function () {
             const comment = commentInput.value.trim();
             // Send feedback AND comment to your backend here
-            logger.info(
+            console.log(
               `Comment for message "${content.substring(0, 50)}...": "${comment}"`,
             );
 
@@ -249,7 +249,7 @@ async function sendMessage() {
     }
 
     const data = await response.json();
-    logger.info("Received data from server:", data);
+    console.log("Received data from server:", data);
 
     if (response.ok) {
       let messageToDisplay = "";
@@ -266,7 +266,7 @@ async function sendMessage() {
           (part) => part.type === "tool_use",
         );
         if (toolCalls.length > 0) {
-          logger.info("Genie+ made tool calls:", toolCalls);
+          console.log("Genie+ made tool calls:", toolCalls);
           if (messageToDisplay === "") {
             messageToDisplay =
               "Genie+ is processing your request using internal tools...";
@@ -292,7 +292,7 @@ async function sendMessage() {
         false,
         false,
       );
-      logger.error("API Error:", data.error);
+      console.error("API Error:", data.error);
     }
   } catch (error) {
     if (typingIndicator.parentNode) {
@@ -304,7 +304,7 @@ async function sendMessage() {
       false,
       false,
     );
-    logger.error("Fetch error:", error);
+    console.error("Fetch error:", error);
   }
 }
 

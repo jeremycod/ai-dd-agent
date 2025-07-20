@@ -80,5 +80,9 @@ export async function fetchUPSOfferPrice(state: AgentStateData): Promise<Partial
   return {
     messages: [...messages, ...newMessages],
     offerPriceDetails: offerPrices.length > 0 ? offerPrices : undefined,
+    analysisResults: {
+      ...state.analysisResults,
+        upsOfferPrice: summaryMessage,
+    }
   };
 }
