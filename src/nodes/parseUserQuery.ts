@@ -6,10 +6,13 @@ import { extractionLLM } from '../anthropicAgent';
 import { EXTRACTION_PROMPT_TEMPLATE } from '../constants';
 import { generateNewAIMessage } from '../utils/auth/helpers';
 import { logger } from '../utils/logger';
+import {getDynamicTimeRangeFallback} from "../utils/timeHelpers";
 // Create the chain that uses the full PROMPT and the structured parser
 const structuredExtractionChain = PromptTemplate.fromTemplate(EXTRACTION_PROMPT_TEMPLATE).pipe(
   extractionLLM,
 );
+
+
 
 export async function parseUserQuery(state: AgentStateData): Promise<Partial<AgentStateData>> {
   logger.info(
@@ -110,7 +113,7 @@ export async function parseUserQuery(state: AgentStateData): Promise<Partial<Age
       ? extractedData.environment
       : state.environment; // Retain from previous state
 
-  const finalTimeRange = extractedData.timeRange || state.timeRange || '24h'; // Default '24h'
+  const finalTimeRange = extractedData.timeRange || state.timeRange || getDynamicTimeRangeFallback();
 
   // Construct new messages to add to the state history
   // The LLM's generated `initialResponse` (potentially modified) is now the agent's first message for this turn.

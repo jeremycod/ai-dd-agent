@@ -83,6 +83,9 @@ export type GetDataDogLogsToolSchemaInput = z.infer<typeof GetDataDogLogsToolSch
 
 export const AnalyzeDatadogWarningsToolSchema = z.object({
   logs: z.array(z.any()).describe('An array of Datadog log objects to analyze.'),
+  ids: z
+      .array(z.string())
+      .describe('An array of specific IDs (campaign, offer, or product IDs) to filter logs by.'),
 });
 
 export type AnalyzeDatadogWarningsToolSchemaInput = z.infer<
@@ -91,6 +94,9 @@ export type AnalyzeDatadogWarningsToolSchemaInput = z.infer<
 
 export const AnalyzeDatadogErrorsToolSchema = z.object({
   logs: z.array(z.any()).describe('An array of Datadog log objects to analyze.'),
+  ids: z
+      .array(z.string())
+      .describe('An array of specific IDs (campaign, offer, or product IDs) to filter logs by.'),
 });
 
 export type AnalyzeDatadogErrorsToolSchemaInput = z.infer<typeof AnalyzeDatadogErrorsToolSchema>;

@@ -13,6 +13,7 @@ import {
 import { TIMESTAMP_ASCENDING } from '@datadog/datadog-api-client/dist/packages/datadog-api-client-v2/models/RUMSort';
 import { BaseServerConfiguration } from '@datadog/datadog-api-client/dist/packages/datadog-api-client-common';
 import { logger } from '../utils/logger';
+import {trimErrorMessage} from "../utils/stringHelpers";
 
 const { LogsApi } = v2;
 
@@ -118,57 +119,118 @@ export const getDatadogLogsTool = new DynamicStructuredTool({
 export const analyzeDatadogErrorsTool = new DynamicStructuredTool({
   name: 'analyzeDatadogErrors',
   description:
-    'Analyzes a list of Datadog logs to specifically identify and summarize error patterns. Focus on unique error messages, their counts, and affected services/components.',
+      'Analyzes a list of Datadog logs to specifically identify and summarize error patterns. Focus on unique error messages, their counts, and affected services/components.',
   schema: AnalyzeDatadogErrorsToolSchema as any,
-  func: async ({ logs }: AnalyzeDatadogErrorsToolSchemaInput) => {
+  func: async ({ logs, ids }: AnalyzeDatadogErrorsToolSchemaInput) => {
     if (logs.length === 0) {
       return 'No error logs provided for analysis.';
     }
 
-    const errors: { message: string; service: string; timestamp: string }[] = [];
-    const uniqueErrorMessages = new Map<string, number>();
-    const serviceErrorCounts: { [key: string]: number } = {};
+    const trimErrorMessage = (message: string) => {
+      return message.split('\n')[0].replace(/Error: |Exception: |\[.*?\]/g, '').trim();
+    };
+
+    const errorsById: { [id: string]: { message: string; exception: string; service: string; timestamp: string }[] } = {};
+    const uniqueErrorMessagesById: { [id: string]: Map<string, number> } = {};
+    const serviceErrorCountsById: { [id: string]: { [key: string]: number } } = {};
+
+    // Determine the set of IDs to actively search for
+    const idsToSearch = Array.isArray(ids) && ids.length > 0 ? ids : []; // Now it's the actual IDs we will search for in message
 
     for (const log of logs) {
       const message = log.attributes?.message || 'No message';
+      const exception =
+          log.attributes?.exception && log.attributes.exception.trim() !== ''
+              ? log.attributes.exception
+              : log.attributes?.additionalAttributes?.attributes?.exception || 'No exception';
+
       const status = log.attributes?.status;
       const service = log.attributes?.service || 'unknown_service';
 
+      let logId: string = '_no_id_'; // Default to _no_id_ if no specific ID is found
+
+      // --- NEW ID DETECTION LOGIC ---
+      // 1. Try to find the ID directly in log attributes (less preferred, but still useful)
+      const attributeId = log.attributes?.id || log.attributes?.['offer_id'] || log.attributes?.['campaign_id'] || log.attributes?.['entity_id'];
+      if (attributeId && idsToSearch.includes(attributeId)) { // Only use attributeId if it's one of the specific IDs we care about
+        logId = attributeId;
+      } else {
+        // 2. Search for the provided IDs within the log message
+        for (const searchId of idsToSearch) {
+          const idRegex = new RegExp(`\\b${searchId}\\b|${searchId}`, 'i');
+          if (message.includes(searchId) || idRegex.test(message) || exception.includes(searchId)) {
+            logId = searchId;
+            break;
+          }
+        }
+      }
+      // --- END NEW ID DETECTION LOGIC ---
+
+      // Initialize structures for this ID if not already done
+      if (!errorsById[logId]) {
+        errorsById[logId] = [];
+        uniqueErrorMessagesById[logId] = new Map<string, number>();
+        serviceErrorCountsById[logId] = {};
+      }
+
       if (
-        status.toLowerCase() === 'error' ||
-        status === 'critical' ||
-        status === 'emergency' ||
-        message.toLowerCase().includes('error')
+          status &&
+          (status.toLowerCase() === 'error' ||
+              status.toLowerCase() === 'critical' ||
+              status.toLowerCase() === 'emergency' ||
+              message.toLowerCase().includes('error'))
       ) {
-        errors.push({ message, service, timestamp: log.attributes?.timestamp });
-        const trimmedMessage = message.split('\n')[0].substring(0, 200); // For grouping
-        uniqueErrorMessages.set(trimmedMessage, (uniqueErrorMessages.get(trimmedMessage) || 0) + 1);
-        serviceErrorCounts[service] = (serviceErrorCounts[service] || 0) + 1;
+        const trimmedException = trimErrorMessage(exception);
+        errorsById[logId].push({ message, service, exception: trimmedException, timestamp: log.attributes?.timestamp });
+
+        let keyParts: string[] = [];
+
+        if (exception.trim() !== '' && exception.trim().toLowerCase() !== 'no exception') {
+          const exceptionKey = trimmedException.split('\n')[0].substring(0, 150).trim();
+          keyParts.push(`[EXC]${exceptionKey}`);
+        } else {
+          keyParts.push('[EXC]NoException');
+        }
+
+        const trimmedMessage = message.split('\n')[0].substring(0, 200);
+        keyParts.push(`[MSG]${trimmedMessage}`);
+
+        const compositeKey = keyParts.join('::');
+
+        uniqueErrorMessagesById[logId].set(compositeKey, (uniqueErrorMessagesById[logId].get(compositeKey) || 0) + 1);
+        serviceErrorCountsById[logId][service] = (serviceErrorCountsById[logId][service] || 0) + 1;
       }
     }
 
-    if (errors.length === 0) {
-      return 'No critical errors found within the provided logs.';
+    let overallSummary = '';
+    const allProcessedIds = Object.keys(errorsById).filter(id => errorsById[id].length > 0);
+
+    if (allProcessedIds.length === 0) {
+      return 'No critical errors found within the provided logs for the specified IDs.';
     }
 
-    let summary = `Found ${errors.length} error/critical logs.\n\n`;
-    summary += 'Top unique error messages (count: message):\n';
-    Array.from(uniqueErrorMessages.entries())
-      .sort(([, countA], [, countB]) => countB - countA)
-      .slice(0, 5) // Top 5 unique errors
-      .forEach(([msg, count]) => {
-        summary += `- ${count}: "${msg}"\n`;
-      });
+    for (const id of allProcessedIds) {
+      const idErrors = errorsById[id];
+      const idUniqueErrors = uniqueErrorMessagesById[id];
+      const idServiceCounts = serviceErrorCountsById[id];
 
-    summary += '\nErrors by service:\n';
-    for (const service in serviceErrorCounts) {
-      summary += `- ${service}: ${serviceErrorCounts[service]} errors\n`;
+      overallSummary += `\n---\n## Errors for ID: ${id === '_no_id_' ? 'Logs without a specific recognized ID' : id} (${idErrors.length} errors)\n\n`;
+
+      overallSummary += '### Top unique error messages (count: message::exception):\n';
+      Array.from(idUniqueErrors.entries())
+          .sort(([, countA], [, countB]) => countB - countA)
+          .slice(0, 5)
+          .forEach(([msg, count]) => {
+            overallSummary += `- ${count}: "${msg}"\n`;
+          });
+
+      overallSummary += '\n### Errors by service:\n';
+      for (const service in idServiceCounts) {
+        overallSummary += `- ${service}: ${idServiceCounts[service]} errors\n`;
+      }
     }
 
-    // In a real scenario, this would be more advanced, perhaps using NLP/embeddings to group similar errors
-    // or identifying services with sudden error spikes.
-
-    return summary;
+    return overallSummary;
   },
 });
 
@@ -176,68 +238,115 @@ export const analyzeDatadogErrorsTool = new DynamicStructuredTool({
 export const analyzeDatadogWarningsTool = new DynamicStructuredTool({
   name: 'analyzeDatadogWarnings',
   description:
-    'Analyzes a list of Datadog logs to identify and summarize warning patterns. Focus on unique warning messages, their counts, and affected services/components.',
+      'Analyzes a list of Datadog logs to identify and summarize warning patterns. Focus on unique warning messages, their counts, and affected services/components.',
   schema: AnalyzeDatadogWarningsToolSchema as any,
-  func: async ({ logs }: AnalyzeDatadogWarningsToolSchemaInput) => {
+  func: async ({ logs, ids }: AnalyzeDatadogWarningsToolSchemaInput) => {
     if (logs.length === 0) {
       return 'No warning logs provided for analysis.';
     }
 
-    const warnings: { message: string; exception: string; service: string; timestamp: string }[] =
-      [];
-    const uniqueWarningMessages = new Map<string, number>();
-    const serviceWarningCounts: { [key: string]: number } = {};
+    const trimErrorMessage = (message: string) => {
+      return message.split('\n')[0].replace(/Error: |Exception: |\[.*?\]/g, '').trim();
+    };
+
+    const warningsById: { [id: string]: { message: string; exception: string; service: string; timestamp: string }[] } = {};
+    const uniqueWarningMessagesById: { [id: string]: Map<string, number> } = {};
+    const serviceWarningCountsById: { [id: string]: { [key: string]: number } } = {};
+
+    // Determine the set of IDs to actively search for
+    // If 'ids' is not provided or empty, we default to looking for _no_id_
+    const idsToSearch = Array.isArray(ids) && ids.length > 0 ? ids : []; // Now it's the actual IDs we will search for in message
 
     for (const log of logs) {
       const message = log.attributes?.message || 'No message';
-      const exception = log.attributes?.attributes?.exception || 'No exception';
+      const exception =
+          log.attributes?.exception && log.attributes.exception.trim() !== ''
+              ? log.attributes.exception
+              : log.attributes?.additionalAttributes?.attributes?.exception || 'No exception';
       const status = log.attributes?.status;
       const service = log.attributes?.service || 'unknown_service';
 
-      if (status.toLowerCase() === 'warn' || message.toLowerCase().includes('warn')) {
-        warnings.push({ message, exception, service, timestamp: log.attributes?.timestamp });
+      let logId: string = '_no_id_'; // Default to _no_id_ if no specific ID is found
+
+      // --- NEW ID DETECTION LOGIC ---
+      // 1. Try to find the ID directly in log attributes (less preferred, but still useful)
+      const attributeId = log.attributes?.id || log.attributes?.['offer_id'] || log.attributes?.['campaign_id'] || log.attributes?.['entity_id'];
+      if (attributeId && idsToSearch.includes(attributeId)) { // Only use attributeId if it's one of the specific IDs we care about
+        logId = attributeId;
+      } else {
+        // 2. Search for the provided IDs within the log message
+        for (const searchId of idsToSearch) {
+          // Use a regex to match the ID as a whole word or surrounded by common delimiters
+          // This avoids matching 'abc' in 'abcdef' but matches 'abc' in 'id=abc' or 'msg: abc'
+          const idRegex = new RegExp(`\\b${searchId}\\b|${searchId}`, 'i'); // \b for word boundary, or just substring match
+          if (message.includes(searchId) || idRegex.test(message) || exception.includes(searchId)) {
+            logId = searchId;
+            break; // Found a matching ID, use this one and stop searching for this log
+          }
+        }
+      }
+      // --- END NEW ID DETECTION LOGIC ---
+
+
+      // Initialize structures for this ID if not already done
+      if (!warningsById[logId]) {
+        warningsById[logId] = [];
+        uniqueWarningMessagesById[logId] = new Map<string, number>();
+        serviceWarningCountsById[logId] = {};
+      }
+
+      if (status && (status.toLowerCase() === 'warn' || message.toLowerCase().includes('warn'))) {
+        const trimmedException = trimErrorMessage(exception);
+        warningsById[logId].push({ message, exception: trimmedException, service, timestamp: log.attributes?.timestamp });
+
         let keyParts: string[] = [];
 
-        // Prioritize and include the exception details in the key
         if (exception.trim() !== '' && exception.trim().toLowerCase() !== 'no exception') {
-          // Take the first line of the exception and trim it to a reasonable length
-          const trimmedException = exception.split('\n')[0].substring(0, 150).trim();
-          keyParts.push(`[EXC]${trimmedException}`);
+          const exceptionKey = trimmedException.split('\n')[0].substring(0, 150).trim();
+          keyParts.push(`[EXC]${exceptionKey}`);
         } else {
-          keyParts.push('[EXC]NoException'); // Explicitly state if no meaningful exception
+          keyParts.push('[EXC]NoException');
         }
 
         const trimmedMessage = message.split('\n')[0].substring(0, 200);
         keyParts.push(`[MSG]${trimmedMessage}`);
 
-        // Join the parts to form the composite key
-        const compositeKey = keyParts.join('::'); // Example: "[EXC]NullPointer::[MSG]Failed to save data"
+        const compositeKey = keyParts.join('::');
 
-        // Create a composite key that includes both the trimmed message and the exception
-        // If exception can be null/undefined, handle that (e.g., provide a default string)
-
-        uniqueWarningMessages.set(compositeKey, (uniqueWarningMessages.get(compositeKey) || 0) + 1);
-        serviceWarningCounts[service] = (serviceWarningCounts[service] || 0) + 1;
+        uniqueWarningMessagesById[logId].set(compositeKey, (uniqueWarningMessagesById[logId].get(compositeKey) || 0) + 1);
+        serviceWarningCountsById[logId][service] = (serviceWarningCountsById[logId][service] || 0) + 1;
       }
     }
 
-    if (warnings.length === 0) {
-      return 'No significant warnings found within the provided logs.';
+    let overallSummary = '';
+    // Only process IDs for which we actually found logs
+    const allProcessedIds = Object.keys(warningsById).filter(id => warningsById[id].length > 0);
+
+    if (allProcessedIds.length === 0) {
+      return 'No significant warnings found within the provided logs for the specified IDs.';
     }
 
-    let summary = `Found ${warnings.length} warning logs.\n\n`;
-    summary += 'Top unique warning messages (count: message::exception):\n';
-    Array.from(uniqueWarningMessages.entries())
-      .sort(([, countA], [, countB]) => countB - countA)
-      .slice(0, 5) // Top 5 unique warnings
-      .forEach(([msg, count]) => {
-        summary += `- ${count}: "${msg}"\n`;
-      });
+    for (const id of allProcessedIds) {
+      const idWarnings = warningsById[id];
+      const idUniqueWarnings = uniqueWarningMessagesById[id];
+      const idServiceCounts = serviceWarningCountsById[id];
 
-    summary += '\nWarnings by service:\n';
-    for (const service in serviceWarningCounts) {
-      summary += `- ${service}: ${serviceWarningCounts[service]} warnings\n`;
+      overallSummary += `\n---\n## Warnings for ID: ${id === '_no_id_' ? 'Logs without a specific recognized ID' : id} (${idWarnings.length} warnings)\n\n`;
+
+      overallSummary += '### Top unique warning messages (count: message::exception):\n';
+      Array.from(idUniqueWarnings.entries())
+          .sort(([, countA], [, countB]) => countB - countA)
+          .slice(0, 5)
+          .forEach(([msg, count]) => {
+            overallSummary += `- ${count}: "${msg}"\n`;
+          });
+
+      overallSummary += '\n### Warnings by service:\n';
+      for (const service in idServiceCounts) {
+        overallSummary += `- ${service}: ${idServiceCounts[service]} warnings\n`;
+      }
     }
-    return summary;
+
+    return overallSummary;
   },
 });

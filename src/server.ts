@@ -14,6 +14,8 @@ import { logger } from './utils/logger';
 import { TokenService } from './utils/auth/TokenService'; // Adjust path
 import { loadSymmetricKey } from './utils/auth/jwtSecret';
 import { generateNewHumanMessage } from './utils/auth/helpers'; // Adjust path
+import { ZodError} from "zod";
+import { safeJsonStringify} from "./utils/errorHelpers";
 
 const server = express();
 const PORT = 3000;
@@ -52,8 +54,8 @@ server.post('/chat', async (req: Request, res: Response) => {
       appHasInvoke: typeof app?.invoke === 'function',
     });
     return res
-      .status(500)
-      .json({ error: 'Agent service is not available. Please check server logs.' });
+        .status(500)
+        .json({ error: 'Agent service is not available. Please check server logs.' });
   }
 
   let currentAgentState: AgentStateData;
@@ -79,24 +81,20 @@ server.post('/chat', async (req: Request, res: Response) => {
       entityIds: [],
       entityType: 'unknown',
       environment: 'unknown',
-      timeRange: '24h',
+      timeRange: undefined,
       datadogLogs: [],
       entityHistory: [],
       analysisResults: {},
       runParallelAnalysis: false,
       finalSummary: undefined,
       queryCategory: 'UNKNOWN_CATEGORY',
-      // Ensure callerClientId is set if it's dynamic, otherwise set it globally below
-      // callerClientId: 'your-dynamic-client-id-for-this-session',
-
-      // --- Initialize the new fields added to AgentStateData ---
-      messageFeedbacks: {}, // Initialize as an empty object (no feedback yet)
-      overallRlReward: undefined, // Or 0, depending on your default
-      currentEpisodeActions: [], // Initialize as an empty array
-      rlFeatures: undefined, // Or {}, depending on your default structure
+      messageFeedbacks: {},
+      overallRlReward: undefined,
+      currentEpisodeActions: [],
+      rlFeatures: undefined,
       chosenRLAction: undefined,
-      rlEpisodeId: sessionId, // Often the same as your session ID
-      rlTrainingIteration: 1, // Start at 1 for the first episode
+      rlEpisodeId: sessionId,
+      rlTrainingIteration: 1,
       overallFeedbackAttempts: 0,
     };
   }
@@ -119,8 +117,8 @@ server.post('/chat', async (req: Request, res: Response) => {
             responseParts.push(part.text);
           } else if (part.type === 'tool_use') {
             logger.info(
-              'DEBUG: Agent requested tool_use in finalSummary (not for user display):',
-              JSON.stringify(part, null, 2),
+                'DEBUG: Agent requested tool_use in finalSummary (not for user display):',
+                JSON.stringify(part, null, 2),
             );
           }
         }
@@ -132,9 +130,9 @@ server.post('/chat', async (req: Request, res: Response) => {
       } else {
         agentResponse = `[Agent finalSummary was unexpected type: ${typeof finalState.finalSummary}]`;
         console.warn(
-          'WARN: finalSummary had unexpected type:',
-          typeof finalState.finalSummary,
-          finalState.finalSummary,
+            'WARN: finalSummary had unexpected type:',
+            typeof finalState.finalSummary,
+            finalState.finalSummary,
         );
       }
     } else if (finalState.messages && finalState.messages.length > 0) {
@@ -154,9 +152,9 @@ server.post('/chat', async (req: Request, res: Response) => {
         } else {
           agentResponse = `[Agent response content from last message was unexpected type: ${typeof lastMsg.content}]`;
           console.warn(
-            'WARN: Last message content had unexpected type:',
-            typeof lastMsg.content,
-            lastMsg.content,
+              'WARN: Last message content had unexpected type:',
+              typeof lastMsg.content,
+              lastMsg.content,
           );
         }
       } else {
@@ -171,10 +169,61 @@ server.post('/chat', async (req: Request, res: Response) => {
     return res.json({ response: agentResponse });
   } catch (error) {
     logger.error(`[Session: ${sessionId}] ERROR during agent invocation:`, error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+    let errorDetails: any = {
+      message: 'An unknown error occurred.',
+      type: 'UnknownError',
+    };
+
+    if (error instanceof Error) {
+      errorDetails.message = error.message;
+      errorDetails.type = error.name; // e.g., 'Error', 'TypeError', 'ZodError'
+      errorDetails.stack = error.stack; // Capture stack trace for server logs
+
+      if (error instanceof ZodError) {
+        errorDetails.type = 'SchemaValidationError';
+        errorDetails.zodIssues = error.issues; // Array of validation issues
+        errorDetails.toolInput = (error as any).cause?.toolInput; // If available, some LangChain errors wrap this
+        errorDetails.parsedInput = (error as any).cause?.parsedInput; // Or the parsed input that failed
+        logger.error(`[Session: ${sessionId}] ZodError details:`, safeJsonStringify(error.issues, 2));
+      } else if (typeof (error as any).toolInput !== 'undefined') {
+        // Catch other LangChain-specific errors that might include toolInput
+        errorDetails.toolInput = (error as any).toolInput;
+        logger.error(`[Session: ${sessionId}] Tool invocation error with input:`, safeJsonStringify((error as any).toolInput, 2));
+      }
+
+      // If the error object itself is large or complex, log it fully for debugging
+      // but only send specific details to the user.
+      logger.error(`[Session: ${sessionId}] Full error object:`, safeJsonStringify(error, 2));
+
+    } else if (typeof error === 'object' && error !== null) {
+      // If error is an object but not an Error instance
+      errorDetails.message = (error as any).message || JSON.stringify(error);
+      errorDetails.type = (error as any).name || 'NonStandardErrorObject';
+      logger.error(`[Session: ${sessionId}] Non-standard error object:`, safeJsonStringify(error, 2));
+    } else {
+      // Primitive error types (string, number, etc.)
+      errorDetails.message = String(error);
+      errorDetails.type = 'PrimitiveError';
+      logger.error(`[Session: ${sessionId}] Primitive error value:`, error);
+    }
+
+    // Prepare a user-friendly error response
+    const userFacingError = {
+      error: 'An internal server error occurred while processing your request.',
+      details: errorDetails.message, // Provide the main error message to the user
+      // Optionally, expose more details to the user for specific error types,
+      // but be cautious about sensitive info.
+      // For ZodErrors, you might tell the user about invalid parameters.
+      validationErrors: errorDetails.zodIssues ? errorDetails.zodIssues.map((issue: any) => ({
+        path: issue.path.join('.'),
+        message: issue.message,
+      })) : undefined,
+    };
+
     return res
-      .status(500)
-      .json({ error: 'An error occurred while processing your request.', details: errorMessage });
+        .status(500)
+        .json(userFacingError);
   }
 });
 

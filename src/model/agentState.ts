@@ -41,7 +41,7 @@ export type AgentStateData = {
   entityIds: string[];
   entityType: EntityType;
   environment: EnvironmentType;
-  timeRange: string;
+  timeRange?: string;
   datadogLogs: DatadogLog[];
   entityHistory: Version[];
   analysisResults: AnalysisResults;
@@ -178,9 +178,9 @@ export const AgentStateAnnotation = Annotation.Root({
   }),
 
   // For 'timeRange': LastValue
-  timeRange: Annotation<string, string>({
+  timeRange: Annotation<string | undefined, string>({
     value: (x: string | undefined, y: string): string => y ?? x,
-    default: () => '24h',
+    default: () => undefined,
   }),
 
   // For 'datadogLogs': LastValue (assuming you replace the array, not concat)

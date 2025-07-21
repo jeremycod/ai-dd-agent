@@ -3,10 +3,8 @@
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { logger } from '../utils/logger';
 
-// --- IMPORTANT IMPORTS ---
 import { Offer as OfferServiceOffer } from '../model/types/offerService'; // OfferService's Offer
-// Import all specific union members for better narrowing in getGeniePriceSummary
-import { Offer as GenieOffer, OfferD2C, Offer3PP, OfferIAP, DurationLength } from '../model/types/genieGraphql'; // Added DurationLength
+import { Offer as GenieOffer, DurationLength } from '../model/types/genieGraphql'; // Added DurationLength
 
 // Import the schema and its inferred type
 import { CompareOffersToolSchema, CompareOffersToolSchemaInput } from '../model/schemas';
@@ -59,16 +57,12 @@ function getGeniePriceSummary(offer: GenieOffer): string {
             }).join('; ');
         }
     } else if (offer.__typename === 'Offer3PP') {
-        const offer3PP = offer;
-        summary += `Genie offer is a 3PP type. Partner paid amount: ${offer3PP.partnerPaidAmount || 'N/A'}`;
+        summary += `Genie offer is a 3PP type. Pricing is typically not applicable as it's handled by a third-party partner.`;
     } else if (offer.__typename === 'OfferIAP') {
         const offerIAP = offer;
         summary += `Genie offer is an IAP type. Billing Frequency: ${offerIAP.billingFrequency || 'N/A'}`;
     } else {
-        // FIX 4: Handle the 'never' type by providing a generic message or casting to `any` if absolutely necessary
         summary += `Genie offer type is unknown. Pricing details not extracted.`;
-        // Or if you are absolutely sure __typename will exist, but TS can't infer it:
-        // summary += `Genie offer type unknown: ${(offer as any).__typename}. Pricing details not extracted.`;
     }
 
     return summary || "No pricing information available.";
@@ -106,24 +100,32 @@ export const compareOffersTool = new DynamicStructuredTool({
                 comparisonResult += `- IDs Match: "${osOffer.id}"\n`;
             }
 
-            // Pricing comparison
-            const offerServicePrice = getOfferServicePriceSummary(osOffer);
-            const geniePrice = getGeniePriceSummary(gOffer);
+            // MODIFICATION START: Conditional Pricing Comparison
+            if (gOffer.__typename === 'OfferD2C') {
+                const offerServicePrice = getOfferServicePriceSummary(osOffer);
+                const geniePrice = getGeniePriceSummary(gOffer);
 
-            comparisonResult += `\n--- Pricing Comparison ---\n`;
-            if (offerServicePrice === geniePrice) {
-                comparisonResult += `- Pricing appears consistent. OfferService: [${offerServicePrice}], Genie: [${geniePrice}]\n`;
+                comparisonResult += `\n--- Pricing Comparison ---\n`;
+                if (offerServicePrice === geniePrice) {
+                    comparisonResult += `- Pricing appears consistent. OfferService: [${offerServicePrice}], Genie: [${geniePrice}]\n`;
+                } else {
+                    comparisonResult += `- Pricing Discrepancy:\n`;
+                    comparisonResult += `  - OfferService Pricing: [${offerServicePrice}]\n`;
+                    comparisonResult += `  - Genie Pricing: [${geniePrice}]\n`;
+                }
             } else {
-                comparisonResult += `- Pricing Discrepancy:\n`;
-                comparisonResult += `  - OfferService Pricing: [${offerServicePrice}]\n`;
-                comparisonResult += `  - Genie Pricing: [${geniePrice}]\n`;
+                comparisonResult += `\n--- Pricing Information ---\n`;
+                comparisonResult += `- Pricing comparison is not applicable for ${gOffer.__typename} offers as it is managed externally.\n`;
+                comparisonResult += `  - OfferService Pricing Summary: [${getOfferServicePriceSummary(osOffer)}]\n`;
+                comparisonResult += `  - Genie Pricing Summary: [${getGeniePriceSummary(gOffer)}]\n`;
             }
+            // MODIFICATION END: Conditional Pricing Comparison
 
             // Product Comparison (simplified, focusing on product IDs)
             const offerServiceProductIds = new Set(osOffer.products.map(p => p.product.id));
 
             let genieProductIds: Set<string>;
-            if (gOffer.__typename === 'OfferD2C' && gOffer.products) {
+            if (gOffer && gOffer.products) {
                 // p's type will be correctly inferred as Product (Genie's Product) here
                 genieProductIds = new Set(gOffer.products.map(p => p.id));
             } else {
@@ -159,6 +161,7 @@ export const compareOffersTool = new DynamicStructuredTool({
                 comparisonResult += `Genie Products: Not applicable or no products found for this Genie offer type.\n`;
             }
         }
+        logger.info(`compareOfferDetailsTool completed for offer ID: ${offerId}`);
 
         return comparisonResult;
     },
