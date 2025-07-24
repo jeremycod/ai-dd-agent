@@ -101,17 +101,11 @@ function addMessage(
             <button class="feedback-button thumb-down" data-feedback="down">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zM17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path></svg>
             </button>
+            <button class="feedback-button flag-response" data-feedback="flag">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+            </button>
         `;
     feedbackArea.appendChild(feedbackContainer);
-
-    const commentSection = document.createElement("div");
-    commentSection.classList.add("feedback-comment-section");
-    commentSection.classList.add("hidden"); // Add 'hidden' class initially
-    commentSection.innerHTML = `
-            <textarea class="feedback-comment-input" placeholder="Optional: Please provide more context or suggest how this specific response could be better." rows="3"></textarea>
-            <button class="feedback-comment-submit">Submit Comment</button>
-        `;
-    feedbackArea.appendChild(commentSection);
 
     messageElement.appendChild(feedbackArea); // Append the whole feedback area inside the message bubble
 
@@ -120,50 +114,27 @@ function addMessage(
       button.addEventListener("click", function () {
         const feedbackType = this.dataset.feedback;
 
-        // Remove active state from all buttons and add to the clicked one
-        feedbackContainer
-          .querySelectorAll(".feedback-button")
-          .forEach((btn) => btn.classList.remove("active"));
+        if (feedbackType === "flag") {
+          openFeedbackModal(content);
+          return;
+        }
+
+        feedbackContainer.querySelectorAll(".feedback-button").forEach((btn) => btn.classList.remove("active"));
         this.classList.add("active");
-
-        // Disable buttons after selection (optional, but good for single submission)
-        feedbackContainer
-          .querySelectorAll(".feedback-button")
-          .forEach((btn) => (btn.style.pointerEvents = "none"));
-
-        // Log initial feedback immediately
+        
         console.log(`Feedback received: ${feedbackType}`);
-
-        // Show comment section
-        commentSection.classList.remove("hidden"); // Remove 'hidden' class
-        commentSection.classList.add("visible"); // Add 'visible' class for transitions
-        const commentInput = commentSection.querySelector(
-          ".feedback-comment-input",
-        );
-        commentInput.focus();
-
-        // Scroll to ensure the comment box is visible. Use a timeout to allow layout to update.
-        setTimeout(() => {
-          messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }, 0);
-
-        // Handle comment submission
-        commentSection.querySelector(".feedback-comment-submit").onclick =
-          function () {
-            const comment = commentInput.value.trim();
-            // Send feedback AND comment to your backend here
-            console.log(
-              `Comment for message "${content.substring(0, 50)}...": "${comment}"`,
-            );
-
-            // Replace feedback area with a thank you message
-            feedbackArea.innerHTML = `<span class="feedback-thanks">Thank you for your feedback!</span>`;
-            feedbackArea.classList.add("feedback-submitted"); // Add a class for styling the thank you message
-            // Scroll again after feedback area changes height
-            setTimeout(() => {
-              messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            }, 0);
-          };
+        
+        let existingThanks = feedbackArea.querySelector('.feedback-thanks');
+        if (!existingThanks) {
+          const thanksMessage = document.createElement('div');
+          thanksMessage.className = 'feedback-thanks';
+          thanksMessage.textContent = 'Thank you for your feedback!';
+          feedbackArea.insertBefore(thanksMessage, feedbackContainer);
+        }
+        
+        if (feedbackType === "down") {
+          openFeedbackModal(content);
+        }
       });
     });
   }
@@ -315,6 +286,65 @@ userInput.addEventListener("keypress", (event) => {
   }
 });
 
+// Feedback Modal Functions
+function generateRequestId() {
+  return Math.random().toString(36).substr(2, 9) + '-' + 
+         Math.random().toString(36).substr(2, 4) + '-' + 
+         Math.random().toString(36).substr(2, 4) + '-' + 
+         Math.random().toString(36).substr(2, 4) + '-' + 
+         Math.random().toString(36).substr(2, 12);
+}
+
+function openFeedbackModal(messageContent) {
+  const modal = document.getElementById('feedback-modal');
+  const requestIdSpan = document.getElementById('request-id');
+  
+  // Generate and display request ID
+  requestIdSpan.textContent = generateRequestId();
+  
+  // Clear previous form data
+  document.getElementById('freeform-feedback').value = '';
+  document.getElementById('source-document').value = '';
+  document.querySelectorAll('input[name="reason"]').forEach(radio => {
+    radio.checked = false;
+  });
+  
+  modal.style.display = 'block';
+  document.body.style.overflow = 'hidden'; // Prevent background scrolling
+}
+
+function closeFeedbackModal() {
+  const modal = document.getElementById('feedback-modal');
+  modal.style.display = 'none';
+  document.body.style.overflow = 'auto'; // Restore scrolling
+}
+
+function submitFeedback() {
+  const freeformFeedback = document.getElementById('freeform-feedback').value.trim();
+  const sourceDocument = document.getElementById('source-document').value.trim();
+  const selectedReason = document.querySelector('input[name="reason"]:checked')?.value;
+  const requestId = document.getElementById('request-id').textContent;
+  
+  // Collect feedback data
+  const feedbackData = {
+    requestId,
+    freeformFeedback,
+    reason: selectedReason,
+    sourceDocument,
+    timestamp: new Date().toISOString()
+  };
+  
+  console.log('Feedback submitted:', feedbackData);
+  
+  // Here you would send the feedback to your backend
+  // await sendFeedbackToBackend(feedbackData);
+  
+  closeFeedbackModal();
+  
+  // Show success message (optional)
+  alert('Thank you for your feedback! We appreciate your input.');
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const existingInitialAgentMessage = messagesDiv.querySelector(
     ".agent-message-wrapper",
@@ -330,4 +360,28 @@ document.addEventListener("DOMContentLoaded", () => {
     false,
   );
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  
+  // Modal event listeners
+  const modal = document.getElementById('feedback-modal');
+  const closeBtn = document.querySelector('.modal-close');
+  const cancelBtn = document.querySelector('.btn-cancel');
+  const submitBtn = document.querySelector('.btn-submit');
+  
+  closeBtn.addEventListener('click', closeFeedbackModal);
+  cancelBtn.addEventListener('click', closeFeedbackModal);
+  submitBtn.addEventListener('click', submitFeedback);
+  
+  // Close modal when clicking outside
+  window.addEventListener('click', (event) => {
+    if (event.target === modal) {
+      closeFeedbackModal();
+    }
+  });
+  
+  // Close modal with Escape key
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && modal.style.display === 'block') {
+      closeFeedbackModal();
+    }
+  });
 });

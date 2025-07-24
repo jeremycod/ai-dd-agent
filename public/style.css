@@ -312,10 +312,11 @@ body {
 .feedback-thanks {
   font-size: 0.9em;
   color: var(--text-medium);
-  text-align: right;
-  width: 100%; /* Ensure it takes full width when replacing */
-  padding: 8px 0; /* Consistent padding */
-  font-style: italic; /* A bit more subtle */
+  text-align: center;
+  width: 100%;
+  padding: 8px 0;
+  font-style: italic;
+  margin-bottom: 8px;
 }
 
 /* Markdown specific styles */
@@ -546,6 +547,213 @@ body {
   background: #c0c0c0;
 }
 
+/* Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background-color: white;
+  margin: 5% auto;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5em;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-medium);
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.modal-close:hover {
+  background-color: var(--feedback-button-hover);
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-body > p {
+  margin: 0 0 16px 0;
+  color: var(--text-medium);
+  line-height: 1.5;
+}
+
+.request-id {
+  font-size: 0.9em;
+  color: var(--text-light);
+  margin-bottom: 24px;
+  font-family: monospace;
+}
+
+.feedback-section {
+  margin-bottom: 24px;
+}
+
+.feedback-section h3 {
+  margin: 0 0 12px 0;
+  font-size: 1.1em;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.section-description {
+  margin: 0 0 8px 0;
+  font-size: 0.9em;
+  color: var(--text-medium);
+}
+
+#freeform-feedback,
+#source-document {
+  width: 100%;
+  min-height: 80px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-family: "Inter", sans-serif;
+  font-size: 0.95em;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+#freeform-feedback:focus,
+#source-document:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.1);
+}
+
+.feedback-divider {
+  text-align: center;
+  margin: 20px 0;
+  color: var(--text-light);
+  font-size: 0.9em;
+  position: relative;
+}
+
+.feedback-divider::before,
+.feedback-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 45%;
+  height: 1px;
+  background-color: var(--border-color);
+}
+
+.feedback-divider::before {
+  left: 0;
+}
+
+.feedback-divider::after {
+  right: 0;
+}
+
+.reason-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.reason-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  background-color: white;
+}
+
+.reason-option:hover {
+  border-color: var(--accent-blue);
+  box-shadow: 0 2px 8px rgba(108, 99, 255, 0.1);
+}
+
+.reason-option input[type="radio"] {
+  margin: 0;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.reason-option span {
+  line-height: 1.4;
+  color: var(--text-dark);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px 24px;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-cancel,
+.btn-submit {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.95em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-color);
+}
+
+.btn-cancel {
+  background-color: white;
+  color: var(--text-dark);
+}
+
+.btn-cancel:hover {
+  background-color: var(--feedback-button-hover);
+}
+
+.btn-submit {
+  background-color: var(--text-dark);
+  color: white;
+  border-color: var(--text-dark);
+}
+
+.btn-submit:hover {
+  background-color: #222;
+  border-color: #222;
+}
+
 /* Media queries for responsiveness */
 @media (max-width: 768px) {
   body {
@@ -594,6 +802,27 @@ body {
   }
   .feedback-comment-input {
     width: calc(100% - 16px);
+  }
+  
+  .modal-content {
+    margin: 10% auto;
+    width: 95%;
+    max-height: 85vh;
+  }
+  
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 16px;
+  }
+  
+  .reason-options {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .reason-option {
+    padding: 12px;
   }
 }
 

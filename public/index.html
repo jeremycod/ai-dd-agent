@@ -44,6 +44,9 @@
           <button class="feedback-button thumb-down" data-feedback="down">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zM17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path></svg>
           </button>
+          <button class="feedback-button flag-response" data-feedback="flag">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+          </button>
         </div>
       </div>
     </div>
@@ -54,6 +57,68 @@
     <button id="send-button">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-send"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
     </button>
+  </div>
+</div>
+
+<!-- Feedback Modal -->
+<div id="feedback-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Help Us Improve</h2>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>We value your feedback. Please let us know what went wrong or how we can improve.</p>
+      <div class="request-id">Request ID: <span id="request-id"></span></div>
+      
+      <div class="feedback-section">
+        <h3>Freeform Feedback</h3>
+        <textarea id="freeform-feedback" placeholder="What could be changed?"></textarea>
+      </div>
+      
+      <div class="feedback-divider">OR</div>
+      
+      <div class="feedback-section">
+        <h3>Reasons</h3>
+        <div class="reason-options">
+          <label class="reason-option">
+            <input type="radio" name="reason" value="incorrect-diagnosis">
+            <span>Incorrect diagnosis or root cause identification</span>
+          </label>
+          <label class="reason-option">
+            <input type="radio" name="reason" value="missing-entity-data">
+            <span>Failed to retrieve or analyze entity data properly</span>
+          </label>
+          <label class="reason-option">
+            <input type="radio" name="reason" value="wrong-environment">
+            <span>Analyzed wrong environment or incorrect data source</span>
+          </label>
+          <label class="reason-option">
+            <input type="radio" name="reason" value="incomplete-analysis">
+            <span>Incomplete analysis of logs, history, or entity details</span>
+          </label>
+          <label class="reason-option">
+            <input type="radio" name="reason" value="unhelpful-recommendations">
+            <span>Provided unhelpful or incorrect recommendations</span>
+          </label>
+          <label class="reason-option">
+            <input type="radio" name="reason" value="other">
+            <span>Other (please specify in feedback details)</span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="feedback-section">
+        <h3>Correct Source Document</h3>
+        <p class="section-description">Include the correct source document identifier if you know one.</p>
+        <textarea id="source-document" placeholder="Source document details..."></textarea>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn-cancel">Cancel</button>
+      <button class="btn-submit">Submit</button>
+    </div>
   </div>
 </div>
 
