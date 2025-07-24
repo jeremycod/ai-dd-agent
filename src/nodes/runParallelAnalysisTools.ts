@@ -1,5 +1,3 @@
-// src/nodes/runParallelAnalysisTools.ts
-
 import { AgentStateData } from '../model/agentState';
 import { AIMessage } from '@langchain/core/messages';
 
@@ -43,7 +41,6 @@ export async function runParallelAnalysisTools(
 
   const allAnalysisPromises: Promise<AnalysisPromiseResult>[] = [];
 
-  // --- Datadog Logs Analysis ---
   if (datadogLogs && datadogLogs.length > 0) {
     logger.info('[Node: runParallelAnalysisTools] Adding Datadog analysis tools.');
     allAnalysisPromises.push(
@@ -59,7 +56,6 @@ export async function runParallelAnalysisTools(
     logger.info('[Node: runParallelAnalysisTools] Datadog analysis skipped (no logs).');
   }
 
-  // --- Entity History Analysis ---
   if (entityHistory && entityHistory.length > 0) {
     logger.info('[Node: runParallelAnalysisTools] Adding Entity History analysis tool.');
     allAnalysisPromises.push(
@@ -73,7 +69,6 @@ export async function runParallelAnalysisTools(
     logger.info('[Node: runParallelAnalysisTools] Entity History analysis skipped (no history).');
   }
 
-  // --- UPS Offer Price Analysis ---
   if (
       queryCategory === 'OFFER_PRICE' &&
       offerPriceDetails &&
@@ -94,7 +89,6 @@ export async function runParallelAnalysisTools(
     logger.info('[Node: runParallelAnalysisTools] UPS Offer Price analysis skipped (no details).');
   }
 
-  // --- Offer Comparison Analysis ---
   if (entityType === 'offer' && entityIds && entityIds.length > 0) {
     logger.info('[Node: runParallelAnalysisTools] Checking for offer comparison opportunities.');
     let anyOfferComparisonAdded = false;
@@ -135,7 +129,6 @@ export async function runParallelAnalysisTools(
   }
 
 
-  // --- Execute all collected promises ---
   if (allAnalysisPromises.length === 0) {
     logger.info('[Node: runParallelAnalysisTools] No specific analysis tools were added to run.');
     return {

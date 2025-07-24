@@ -16,7 +16,6 @@ export async function fetchEntityHistory(state: AgentStateData): Promise<Partial
       ],
     };
   }
-  // Call the getEntityHistory tool
   const toolCallResult = await getEntityHistoryTool.invoke({
     ids: entityIds,
     environment: environment,
@@ -27,8 +26,6 @@ export async function fetchEntityHistory(state: AgentStateData): Promise<Partial
   if (toolCallResult.history.length > 0) {
     summaryMessage += ` Successfully retrieved ${toolCallResult.history.length} history versions.`;
   }
-  // LangGraph expects `messages` to be appended and the next step can use it
-  // For this pattern, we want to store the actual logs separately for analysis.
   return {
     entityHistory: (toolCallResult as { history: Version[] }).history,
     messages: [

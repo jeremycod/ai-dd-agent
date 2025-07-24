@@ -1,5 +1,3 @@
-// src/nodes/fetchParallelData.ts
-
 import { AgentStateData } from '../model/agentState';
 import { fetchEntityHistory } from './fetchEntityHistory';
 import { fetchDatadogLogs } from './fetchDatadogLogs';
@@ -12,9 +10,7 @@ import { fetchOfferServiceOffer } from './fetchOfferServiceOffer';
 
 function messageExists(message: BaseMessage, messageArray: BaseMessage[]): boolean {
   return messageArray.some(existingMsg => {
-
     if (existingMsg === message) return true;
-
 
     if ((existingMsg as any).lc_id && (message as any).lc_id &&
         (existingMsg as any).lc_id[existingMsg.lc_id.length - 1] === (message as any).lc_id[message.lc_id.length - 1]) {
@@ -29,7 +25,7 @@ function messageExists(message: BaseMessage, messageArray: BaseMessage[]): boole
         : null;
 
     if (existingToolUseId && messageToolUseId && existingToolUseId === messageToolUseId) {
-      return true; 
+      return true;
     }
 
     const existingToolCallIds = (existingMsg instanceof AIMessage && existingMsg.tool_calls)

@@ -37,9 +37,6 @@ const configuration = client.createConfiguration({
 
 const logsApi = new LogsApi(configuration);
 
-/**
- * Helper to convert time range string (e.g., "1h", "30m") to milliseconds.
- */
 function parseTimeRange(timeRange: string): { fromMs: number; toMs: number } {
   const toMs = Date.now();
   const timeUnit = timeRange.slice(-1);
@@ -63,7 +60,6 @@ function parseTimeRange(timeRange: string): { fromMs: number; toMs: number } {
 }
 
 export type DatadogLog = v2.Log;
-// --- Tool 1: Get Datadog Logs ---
 export const getDatadogLogsTool = new DynamicStructuredTool({
   name: 'getDatadogLogs',
   description:
@@ -115,7 +111,6 @@ export const getDatadogLogsTool = new DynamicStructuredTool({
   },
 });
 
-// --- Tool 2: Analyze Datadog Errors ---
 export const analyzeDatadogErrorsTool = new DynamicStructuredTool({
   name: 'analyzeDatadogErrors',
   description:
@@ -149,13 +144,10 @@ export const analyzeDatadogErrorsTool = new DynamicStructuredTool({
 
       let logId: string = '_no_id_'; // Default to _no_id_ if no specific ID is found
 
-      // --- NEW ID DETECTION LOGIC ---
-      // 1. Try to find the ID directly in log attributes (less preferred, but still useful)
       const attributeId = log.attributes?.id || log.attributes?.['offer_id'] || log.attributes?.['campaign_id'] || log.attributes?.['entity_id'];
-      if (attributeId && idsToSearch.includes(attributeId)) { // Only use attributeId if it's one of the specific IDs we care about
+      if (attributeId && idsToSearch.includes(attributeId)) {
         logId = attributeId;
       } else {
-        // 2. Search for the provided IDs within the log message
         for (const searchId of idsToSearch) {
           const idRegex = new RegExp(`\\b${searchId}\\b|${searchId}`, 'i');
           if (message.includes(searchId) || idRegex.test(message) || exception.includes(searchId)) {
@@ -164,9 +156,6 @@ export const analyzeDatadogErrorsTool = new DynamicStructuredTool({
           }
         }
       }
-      // --- END NEW ID DETECTION LOGIC ---
-
-      // Initialize structures for this ID if not already done
       if (!errorsById[logId]) {
         errorsById[logId] = [];
         uniqueErrorMessagesById[logId] = new Map<string, number>();
@@ -234,7 +223,6 @@ export const analyzeDatadogErrorsTool = new DynamicStructuredTool({
   },
 });
 
-// --- Tool 3: Analyze Datadog Warnings ---
 export const analyzeDatadogWarningsTool = new DynamicStructuredTool({
   name: 'analyzeDatadogWarnings',
   description:
@@ -268,27 +256,18 @@ export const analyzeDatadogWarningsTool = new DynamicStructuredTool({
 
       let logId: string = '_no_id_'; // Default to _no_id_ if no specific ID is found
 
-      // --- NEW ID DETECTION LOGIC ---
-      // 1. Try to find the ID directly in log attributes (less preferred, but still useful)
       const attributeId = log.attributes?.id || log.attributes?.['offer_id'] || log.attributes?.['campaign_id'] || log.attributes?.['entity_id'];
-      if (attributeId && idsToSearch.includes(attributeId)) { // Only use attributeId if it's one of the specific IDs we care about
+      if (attributeId && idsToSearch.includes(attributeId)) {
         logId = attributeId;
       } else {
-        // 2. Search for the provided IDs within the log message
         for (const searchId of idsToSearch) {
-          // Use a regex to match the ID as a whole word or surrounded by common delimiters
-          // This avoids matching 'abc' in 'abcdef' but matches 'abc' in 'id=abc' or 'msg: abc'
-          const idRegex = new RegExp(`\\b${searchId}\\b|${searchId}`, 'i'); // \b for word boundary, or just substring match
+          const idRegex = new RegExp(`\\b${searchId}\\b|${searchId}`, 'i');
           if (message.includes(searchId) || idRegex.test(message) || exception.includes(searchId)) {
             logId = searchId;
-            break; // Found a matching ID, use this one and stop searching for this log
+            break;
           }
         }
       }
-      // --- END NEW ID DETECTION LOGIC ---
-
-
-      // Initialize structures for this ID if not already done
       if (!warningsById[logId]) {
         warningsById[logId] = [];
         uniqueWarningMessagesById[logId] = new Map<string, number>();

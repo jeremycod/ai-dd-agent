@@ -1,5 +1,3 @@
-// server.ts
-
 import 'dotenv/config'; // Keep this at the very top to load environment variables first
 import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
@@ -10,7 +8,6 @@ import { PROMPT } from './constants';
 import path from 'path';
 import { logger } from './utils/logger';
 
-// --- Import Token Service related parts ---
 import { TokenService } from './utils/auth/TokenService'; // Adjust path
 import { loadSymmetricKey } from './utils/auth/jwtSecret';
 import { generateNewHumanMessage } from './utils/auth/helpers'; // Adjust path
@@ -37,7 +34,7 @@ server.get('/health', (req, res) => {
   });
 });
 
-const conversationStates = new Map<string, AgentStateData>(); // Maps sessionId -> AgentState
+const conversationStates = new Map<string, AgentStateData>();
 
 server.post('/chat', async (req: Request, res: Response) => {
   const sessionId: string = req.body.sessionId || 'default_session';

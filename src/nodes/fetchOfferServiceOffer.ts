@@ -1,12 +1,9 @@
-// src/nodes/fetchOfferServiceOffer.ts
-
 import { AgentStateData } from '../model/agentState';
 import { Offer } from '../model/types/offerService'; // Import Offer type
 import { AIMessage, BaseMessage, ToolMessage } from '@langchain/core/messages';
 import { fetchOfferServiceOfferTool } from '../tools/offerServiceTools'; // Keep importing the tool output type
 import { logger } from '../utils/logger';
 
-// Helper for generating AI messages (if not already in a helper)
 function generateNewAIMessage(content: string): AIMessage {
   return new AIMessage(content);
 }
@@ -46,7 +43,6 @@ export async function fetchOfferServiceOffer(
 
   for (const offerId of entityIds) {
     try {
-      // 1. Invoke the tool
       const toolCallResult: { offer: Offer | null; message: string } =
         await fetchOfferServiceOfferTool.invoke({
           offerId: offerId,
@@ -54,7 +50,6 @@ export async function fetchOfferServiceOffer(
         });
 
 
-      // 3. Based on the tool result, add a clarifying AIMessage and collect data
       if (toolCallResult.offer) {
         // If the tool returns an offer object, it's a success
         fetchedOffers.push(toolCallResult.offer);
@@ -91,7 +86,6 @@ export async function fetchOfferServiceOffer(
     }
   }
 
-  // 4. Generate the final summary AIMessage for this node's operations
   let summaryMessage = `Offer Service fetching completed for ${entityIds.length} offers.`;
   if (fetchedOffers.length > 0) {
     summaryMessage += ` Successfully retrieved ${fetchedOffers.length}.`;

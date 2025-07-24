@@ -10,12 +10,11 @@ export const genieOfferTool = new DynamicStructuredTool({
   name: 'genieOfferTool',
   description:
     'Fetches detailed information about a specific offer by its ID from the GraphQL server. Useful for retrieving offer attributes like products, countries, prices, and transitions.',
-  schema: GetGenieOfferToolSchema as any, // Cast to any is often needed for DynamicStructuredTool's schema due to Zod's complex types
+  schema: GetGenieOfferToolSchema as any,
   func: async ({ offerId, environment }: GetGenieOfferToolSchemaInput) => {
     logger.info(`Executing genieOfferTool for offer ID: ${offerId} in environment ${environment}`);
 
     try {
-      // Map your abstract EnvironmentType to the concrete environment string expected by GraphQLClient
       const environmentMap: Record<EnvironmentType, 'prod' | 'qa' | 'dev'> = {
         production: 'prod',
         staging: 'qa',
@@ -25,20 +24,16 @@ export const genieOfferTool = new DynamicStructuredTool({
 
       const mappedEnvironment = environmentMap[environment as EnvironmentType];
 
-      // Initialize your GraphQLClient
       const client = new GenieOfferClient(mappedEnvironment, DSS_CALLER_CLIENT_ID);
 
-      // Call the fetchOffer method from your GraphQLClient
       const response = await client.fetchOffer(offerId);
 
       if (response.data?.offer) {
-        // Successfully retrieved the offer
         return {
           offer: response.data.offer,
           message: `Successfully retrieved offer with ID: ${offerId}.`,
         };
       } else if (response.errors && response.errors.length > 0) {
-        // Handle GraphQL errors
         const errorMessages = response.errors
           .map((err: { message: string }) => err.message)
           .join('; ');
@@ -48,7 +43,6 @@ export const genieOfferTool = new DynamicStructuredTool({
           message: `Error fetching offer with ID ${offerId}: ${errorMessages}`,
         };
       } else {
-        // Generic error if no data and no explicit errors
         return {
           offer: null,
           message: `Unknown error fetching offer with ID ${offerId}.`,

@@ -24,7 +24,6 @@ export class DataManagerHistoryClient {
     let response: EntityHistoryResponse;
 
     try {
-      // Add a try/catch block here if you want to log / handle errors at this level
       switch (entityType) {
         case 'campaign':
           response = await this.getCampaign(id);
@@ -53,12 +52,9 @@ export class DataManagerHistoryClient {
       console.warn(`No 'versions' array found in history response for ${entityType} ${id}`);
       return [];
     } catch (error) {
-      // This catch block will now catch errors from makeRequest,
-      // and also the explicit throws within this switch statement.
       logger.error(`Error in fetchEntityHistory for ${entityType} ${id}:`, error);
-      // Re-throw if you want the error to propagate further up
       if (error instanceof HttpDataManagerError) {
-        throw error; // Re-throw specific HTTP errors
+        throw error;
       } else if (error instanceof Error) {
         throw new Error(`Failed to fetch entity history: ${error.message}`);
       } else {
@@ -86,12 +82,9 @@ export class DataManagerHistoryClient {
 
   private async makeRequest<T>(url: string): Promise<T> {
     logger.info(`Making request to: ${url}`);
-    // No try/catch here, let errors propagate naturally
     const response = await fetch(url);
     if (!response.ok) {
       const errorBody = await response.text();
-      // This is the only throw in this function.
-      // It will propagate directly out of makeRequest.
       throw new HttpDataManagerError(
         `HTTP error! Status: ${response.status}, Body: ${errorBody}`,
         response.status,
