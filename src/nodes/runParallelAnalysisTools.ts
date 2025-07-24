@@ -7,19 +7,17 @@ import { analyzeDatadogErrorsTool, analyzeDatadogWarningsTool } from '../tools/d
 import { analyzeEntityHistoryTool } from '../tools/entityHistoryTools';
 import { analyzeUPSOfferPriceTool } from '../tools/upsTools';
 import { compareOffersTool } from '../tools/offerComparisonTools';
-import { generateNewAIMessage } from '../utils/auth/helpers'; // Assuming this helper exists
+import { generateNewAIMessage } from '../utils/auth/helpers';
 import { logger } from '../utils/logger';
 
-// Import the specific Offer types needed for comparison logic
 import { Offer as OfferServiceOffer } from '../model/types/offerService';
-import { Offer as GenieOffer } from '../model/types/genieGraphql'; // ADJUST PATH AS NEEDED
+import { Offer as GenieOffer } from '../model/types/genieGraphql';
 
 
-// Define a union type for the results of the analysis promises
 type AnalysisPromiseResult = {
   type: 'datadogErrors' | 'datadogWarnings' | 'entityHistory' | 'upsOfferPrice' | 'offerComparison';
-  id?: string; // Optional for offer comparison
-  result: string | Partial<AgentStateData>; // Result can be a string or a partial state update
+  id?: string;
+  result: string | Partial<AgentStateData>;
 };
 
 export async function runParallelAnalysisTools(
@@ -28,7 +26,7 @@ export async function runParallelAnalysisTools(
   logger.info('[Node: runParallelAnalysisTools] Entering...');
   const {
     datadogLogs,
-    messages, // Keep original messages to append new ones
+    messages,
     entityHistory,
     offerPriceDetails,
     genieOfferDetails,
@@ -38,13 +36,11 @@ export async function runParallelAnalysisTools(
     entityType,
   } = state;
 
-  // Accumulators for the final state updates
   const analysisResultsAccumulator: AgentStateData['analysisResults'] = {
     ...state.analysisResults, // Preserve existing results if any
   };
   const newMessagesAccumulator: AIMessage[] = [];
 
-  // Single array to hold all promises that will be run in parallel
   const allAnalysisPromises: Promise<AnalysisPromiseResult>[] = [];
 
   // --- Datadog Logs Analysis ---
@@ -122,14 +118,12 @@ export async function runParallelAnalysisTools(
         logger.info(`[Node: runParallelAnalysisTools] Added compareOffersTool for offer ID: ${offerId}.`);
         anyOfferComparisonAdded = true;
       } else {
-        // Handle cases where no data is available for comparison for a specific ID
         analysisResultsAccumulator[`offerComparison_${offerId}`] = `No Offer Service or Genie data found for offer ID: ${offerId} to compare.`;
         newMessagesAccumulator.push(generateNewAIMessage(`No data for offer ID ${offerId} to compare.`));
         logger.info(`[Node: runParallelAnalysisTools] No comparison data for offer ID: ${offerId}.`);
       }
     }
     if (!anyOfferComparisonAdded) {
-      // Only add this generic message if no specific comparison promise was added at all
       analysisResultsAccumulator.offerComparison = 'Offer comparison skipped: No relevant offer data found for any provided IDs.';
       newMessagesAccumulator.push(generateNewAIMessage('Offer comparison skipped. No offer data found for comparison.'));
       logger.info('[Node: runParallelAnalysisTools] Offer comparison analysis skipped (no comparison opportunities).');
@@ -158,10 +152,8 @@ export async function runParallelAnalysisTools(
 
   logger.info(`[Node: runParallelAnalysisTools] Running ${allAnalysisPromises.length} analysis tools in parallel.`);
 
-  // Use Promise.allSettled to ensure all promises complete (success or failure)
   const allResults = await Promise.allSettled(allAnalysisPromises);
 
-  // Process all results
   for (const item of allResults) {
     if (item.status === 'fulfilled') {
       const result = item.value; // The resolved value from our promise (type: AnalysisPromiseResult)
@@ -178,17 +170,14 @@ export async function runParallelAnalysisTools(
         case 'upsOfferPrice':
           const upsResult = result.result as Partial<AgentStateData>;
           if (upsResult.analysisResults) {
-            // Merge analysis results from UPS tool
             Object.assign(analysisResultsAccumulator, upsResult.analysisResults);
           }
           if (upsResult.messages) {
-            // Append messages from UPS tool
             newMessagesAccumulator.push(...(upsResult.messages as AIMessage[]));
           }
           break;
         case 'offerComparison':
-          // Store comparison result with the specific offer ID
-          if (result.id) { // Ensure ID is present for offer comparison results
+          if (result.id) {
             analysisResultsAccumulator[`offerComparison_${result.id}`] = result.result as string;
           } else {
             logger.warn(`[Node: runParallelAnalysisTools] Offer comparison result missing ID:`, result);
@@ -198,15 +187,10 @@ export async function runParallelAnalysisTools(
           logger.warn(`[Node: runParallelAnalysisTools] Unknown result type encountered: ${result.type}`);
       }
     } else {
-      // Handle rejected promises (tool invocation failed)
       const reason = item.reason;
       let errorMessage = `Analysis tool failed: ${reason?.message || reason?.name || String(reason)}`;
-      let analysisType = 'unknown'; // Default type for logging/storage
+      let analysisType = 'unknown';
 
-      // Attempt to infer the type of failed analysis for better error messages
-      // This is a bit tricky as the rejected promise doesn't carry the 'type' directly.
-      // In a more robust system, you might wrap the original promise with its type.
-      // For now, we'll log a generic error for the relevant category.
       logger.error(`[Node: runParallelAnalysisTools] A parallel analysis tool rejected:`, reason);
 
       if (reason && typeof reason === 'object') {
@@ -225,12 +209,11 @@ export async function runParallelAnalysisTools(
 
   logger.info('[Node: runParallelAnalysisTools] Parallel analysis completed and results processed.');
 
-  // Return the accumulated analysis results and new messages
   return {
     analysisResults: analysisResultsAccumulator,
     messages: [
-      ...messages, // Keep existing messages
-      ...newMessagesAccumulator, // Add newly generated messages
+      ...messages,
+      ...newMessagesAccumulator,
       generateNewAIMessage('Parallel analysis completed. Proceeding to summarizing findings.'),
     ],
   };

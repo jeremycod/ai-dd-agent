@@ -1,6 +1,6 @@
 import { AgentStateData } from '../model/agentState';
-import { OfferPriceResponse } from '../model/types/UPS'; // Ensure this correctly defines your types
-import { AIMessage, BaseMessage } from '@langchain/core/messages';
+import { OfferPriceResponse } from '../model/types/UPS';
+import {BaseMessage } from '@langchain/core/messages';
 import { upsOfferPriceTool } from '../tools/upsTools';
 import { generateNewAIMessage } from '../utils/auth/helpers'; // Import your tool instance
 import { logger } from '../utils/logger';
@@ -33,24 +33,19 @@ export async function fetchUPSOfferPrice(state: AgentStateData): Promise<Partial
   const newMessages: BaseMessage[] = [];
   const failedFetches: string[] = [];
 
-  // Loop through each entityId and invoke the tool for each one
   for (const offerId of entityIds) {
     try {
-      // Invoke the tool for a single offerId and environment
-      // The tool returns OfferPriceResponse directly or an error string
       const toolCallResult: OfferPriceResponse | string = await upsOfferPriceTool.invoke({
         offerId: offerId,
         environment: environment,
       });
 
       if (typeof toolCallResult === 'string') {
-        // If the tool returns a string, it indicates an error or summary
         newMessages.push(
           generateNewAIMessage(`Tool output for offer ${offerId}: ${toolCallResult}`),
         );
         failedFetches.push(offerId);
       } else {
-        // If it returns an OfferPriceResponse object, it's a success
         offerPrices.push(toolCallResult);
         newMessages.push(
           generateNewAIMessage(`Successfully fetched price details for offer \`${offerId}\`.`),
