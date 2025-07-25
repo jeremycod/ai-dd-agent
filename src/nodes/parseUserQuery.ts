@@ -50,6 +50,23 @@ export async function parseUserQuery(state: AgentStateData): Promise<Partial<Age
 
     agentResponseContent = extractedData.initialResponse;
 
+    // Check for entity type clarification
+    if (
+      extractedData.entityType === 'unknown' &&
+      extractedData.entityIds.length > 0 &&
+      extractedData.category !== 'UNKNOWN_CATEGORY' &&
+      extractedData.category !== 'GENERAL_QUESTION' &&
+      !agentResponseContent.toLowerCase().includes('offer') &&
+      !agentResponseContent.toLowerCase().includes('campaign') &&
+      !agentResponseContent.toLowerCase().includes('product') &&
+      !agentResponseContent.toLowerCase().includes('package')
+    ) {
+      const entityTypeClarificationMsg =
+        ` I see you've provided the ID \`${extractedData.entityIds[0]}\`. Could you please specify if this is an offer, campaign, product, or package?`;
+      agentResponseContent += entityTypeClarificationMsg;
+    }
+
+    // Check for environment clarification
     if (
       extractedData.environment === 'unknown' &&
       extractedData.category !== 'UNKNOWN_CATEGORY' &&
@@ -61,10 +78,9 @@ export async function parseUserQuery(state: AgentStateData): Promise<Partial<Age
       !agentResponseContent.toLowerCase().includes('dev') &&
       !agentResponseContent.toLowerCase().includes('development')
     ) {
-      const clarificationMsg =
-        ' Which environment (production, staging, or development) is this in?';
-      // Append to the LLM's generated response
-      agentResponseContent += clarificationMsg;
+      const environmentClarificationMsg =
+        ' Which environment (production, staging, or development) should I investigate this in?';
+      agentResponseContent += environmentClarificationMsg;
     }
   } catch (error) {
     logger.error(

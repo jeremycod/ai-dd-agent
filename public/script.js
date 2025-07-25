@@ -36,6 +36,7 @@ function addMessage(
   isMarkdown = false,
   addFeedback = false,
   showNumberIcon = false,
+  caseId = null,
 ) {
   if (sender === "agent" || sender === "user") {
     messageCount++;
@@ -115,14 +116,24 @@ function addMessage(
         const feedbackType = this.dataset.feedback;
 
         if (feedbackType === "flag") {
-          openFeedbackModal(content);
+          openFeedbackModal(content, caseId);
           return;
         }
 
         feedbackContainer.querySelectorAll(".feedback-button").forEach((btn) => btn.classList.remove("active"));
         this.classList.add("active");
         
-        console.log(`Feedback received: ${feedbackType}`);
+        // Send simple feedback to backend with case ID
+        const simpleFeedback = {
+          type: feedbackType === 'up' ? 'positive' : 'negative',
+          caseId: caseId,
+          timestamp: new Date().toISOString()
+        };
+        
+        console.log(`Feedback received: ${feedbackType}`, simpleFeedback);
+        
+        // Send to backend
+        sendSimpleFeedbackToBackend(simpleFeedback);
         
         let existingThanks = feedbackArea.querySelector('.feedback-thanks');
         if (!existingThanks) {
@@ -133,7 +144,7 @@ function addMessage(
         }
         
         if (feedbackType === "down") {
-          openFeedbackModal(content);
+          openFeedbackModal(content, caseId);
         }
       });
     });
@@ -224,6 +235,8 @@ async function sendMessage() {
 
     if (response.ok) {
       let messageToDisplay = "";
+      const caseId = data.caseId; // Capture case ID from response
+      console.log('[Frontend] Received case ID from server:', caseId);
 
       if (Array.isArray(data.response)) {
         messageToDisplay = data.response
@@ -255,7 +268,7 @@ async function sendMessage() {
       const showNumber = messageToDisplay.includes(
         "Learning from Production Data",
       );
-      addMessage(messageToDisplay, "agent", true, true, showNumber);
+      addMessage(messageToDisplay, "agent", true, true, showNumber, caseId);
     } else {
       addMessage(
         `Error: ${data.error || "Something went wrong on the server."}`,
@@ -295,18 +308,20 @@ function generateRequestId() {
          Math.random().toString(36).substr(2, 12);
 }
 
-function openFeedbackModal(messageContent) {
+function openFeedbackModal(messageContent, caseId = null) {
   const modal = document.getElementById('feedback-modal');
   const requestIdSpan = document.getElementById('request-id');
   
-  // Generate and display request ID
-  requestIdSpan.textContent = generateRequestId();
+  // Use provided case ID or generate fallback ID
+  requestIdSpan.textContent = caseId || generateRequestId();
   
   // Clear previous form data
   document.getElementById('freeform-feedback').value = '';
-  document.getElementById('source-document').value = '';
   document.querySelectorAll('input[name="reason"]').forEach(radio => {
     radio.checked = false;
+  });
+  document.querySelectorAll('.rating-button').forEach(btn => {
+    btn.classList.remove('selected');
   });
   
   modal.style.display = 'block';
@@ -319,30 +334,89 @@ function closeFeedbackModal() {
   document.body.style.overflow = 'auto'; // Restore scrolling
 }
 
+function showSuccessNotification(message) {
+  const notification = document.createElement('div');
+  notification.className = 'success-notification';
+  notification.textContent = message;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.classList.add('show');
+  }, 100);
+  
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 300);
+  }, 3000);
+}
+
+async function sendSimpleFeedbackToBackend(feedbackData) {
+  try {
+    const response = await fetch('/feedback', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(feedbackData)
+    });
+    
+    if (response.ok) {
+      console.log('Simple feedback sent successfully');
+    } else {
+      console.error('Failed to send simple feedback');
+    }
+  } catch (error) {
+    console.error('Error sending simple feedback:', error);
+  }
+}
+
 function submitFeedback() {
   const freeformFeedback = document.getElementById('freeform-feedback').value.trim();
-  const sourceDocument = document.getElementById('source-document').value.trim();
   const selectedReason = document.querySelector('input[name="reason"]:checked')?.value;
-  const requestId = document.getElementById('request-id').textContent;
+  const selectedRating = document.querySelector('.rating-button.selected')?.dataset.rating;
+  const caseId = document.getElementById('request-id').textContent; // This is now the actual case ID
   
   // Collect feedback data
   const feedbackData = {
-    requestId,
+    caseId, // Use caseId instead of requestId
+    rating: selectedRating,
     freeformFeedback,
     reason: selectedReason,
-    sourceDocument,
     timestamp: new Date().toISOString()
   };
   
-  console.log('Feedback submitted:', feedbackData);
+  console.log('Detailed feedback submitted:', feedbackData);
+  console.log('[Frontend] Sending detailed feedback with case ID:', caseId);
   
-  // Here you would send the feedback to your backend
-  // await sendFeedbackToBackend(feedbackData);
+  // Send detailed feedback to backend
+  sendDetailedFeedbackToBackend(feedbackData);
   
   closeFeedbackModal();
   
-  // Show success message (optional)
-  alert('Thank you for your feedback! We appreciate your input.');
+  // Show success message with custom notification
+  showSuccessNotification('Thank you for your feedback! We appreciate your input.');
+}
+
+async function sendDetailedFeedbackToBackend(feedbackData) {
+  try {
+    const response = await fetch('/feedback/detailed', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(feedbackData)
+    });
+    
+    if (response.ok) {
+      console.log('Detailed feedback sent successfully');
+    } else {
+      console.error('Failed to send detailed feedback');
+    }
+  } catch (error) {
+    console.error('Error sending detailed feedback:', error);
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -370,6 +444,14 @@ document.addEventListener("DOMContentLoaded", () => {
   closeBtn.addEventListener('click', closeFeedbackModal);
   cancelBtn.addEventListener('click', closeFeedbackModal);
   submitBtn.addEventListener('click', submitFeedback);
+  
+  // Rating button listeners
+  document.addEventListener('click', (event) => {
+    if (event.target.classList.contains('rating-button')) {
+      document.querySelectorAll('.rating-button').forEach(btn => btn.classList.remove('selected'));
+      event.target.classList.add('selected');
+    }
+  });
   
   // Close modal when clicking outside
   window.addEventListener('click', (event) => {

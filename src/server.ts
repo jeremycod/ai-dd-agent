@@ -34,7 +34,161 @@ server.get('/health', (req, res) => {
   });
 });
 
+// Test endpoint to manually update a case
+server.post('/test-update/:caseId', async (req: Request, res: Response) => {
+  const { caseId } = req.params;
+  
+  try {
+    const { MongoStorage } = require('./storage/mongodb');
+    const mongoStorage = new MongoStorage(process.env.MONGODB_CONNECTION_STRING || 'mongodb://localhost:27017');
+    await mongoStorage.connect();
+    
+    const testFeedback = {
+      [`test_feedback_${Date.now()}`]: {
+        type: 'positive',
+        timestamp: new Date(),
+        feedbackSource: 'test_endpoint'
+      }
+    };
+    
+    const result = await mongoStorage.updateCaseWithFeedback(caseId, testFeedback, 5);
+    
+    res.json({ 
+      success: true, 
+      caseId,
+      updateResult: result,
+      testFeedback
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// Simple feedback endpoint (thumbs up/down)
+server.post('/feedback', async (req: Request, res: Response) => {
+  console.log('[FEEDBACK ENDPOINT] Simple feedback endpoint called');
+  console.log('[FEEDBACK ENDPOINT] Request body:', req.body);
+  const { type, caseId, timestamp } = req.body;
+  
+  if (!type || !caseId) {
+    return res.status(400).json({ error: 'Type and caseId are required.' });
+  }
+  
+  logger.info(`[Feedback] Simple feedback received: ${type} for case ${caseId}`);
+  
+  // Store feedback in conversation state
+  const sessionId = 'default_session'; // Keep using session for conversation state
+  // But use the actual caseId for MongoDB updates
+  if (conversationStates.has(sessionId)) {
+    const state = conversationStates.get(sessionId)!;
+    const feedbackId = `feedback_${Date.now()}`;
+    state.messageFeedbacks = state.messageFeedbacks || {};
+    state.messageFeedbacks[feedbackId] = {
+      type: type === 'positive' ? 'positive' : 'negative',
+      timestamp: new Date(timestamp),
+      feedbackSource: 'simple_thumbs'
+    };
+    
+    // Update RL reward based on feedback
+    state.overallRlReward = (state.overallRlReward || 0) + (type === 'positive' ? 1 : -1);
+    
+    conversationStates.set(sessionId, state);
+    
+    // Also update the stored case in MongoDB
+    try {
+      console.log('[Server] Simple feedback - Attempting to update MongoDB case:', caseId);
+      const { MongoStorage } = require('./storage/mongodb');
+      const { MemoryService } = require('./storage/memoryService');
+      const mongoStorage = new MongoStorage(process.env.MONGODB_CONNECTION_STRING || 'mongodb://localhost:27017');
+      await mongoStorage.connect();
+      const memoryService = new MemoryService(mongoStorage);
+      
+      // Create feedback object for this specific case
+      const feedbackForCase = {
+        [`feedback_${Date.now()}`]: {
+          type: type === 'positive' ? 'positive' : 'negative',
+          timestamp: new Date(timestamp),
+          feedbackSource: 'simple_thumbs'
+        }
+      };
+      const rewardForCase = type === 'positive' ? 1 : -1;
+      
+      console.log('[Server] Simple feedback - About to call updateCaseWithFeedback with:', {
+        caseId,
+        feedback: feedbackForCase,
+        reward: rewardForCase
+      });
+      const updateResult = await memoryService.updateCaseWithFeedback(caseId, feedbackForCase, rewardForCase);
+      console.log('[Server] Simple feedback - MongoDB update result:', updateResult);
+    } catch (error) {
+      console.error('[Server] Simple feedback - Error updating case:', error);
+    }
+  }
+  
+  console.log('Simple feedback:', { type, caseId, timestamp });
+  res.json({ success: true, message: 'Feedback received' });
+});
+
+// Detailed feedback endpoint (modal form)
+server.post('/feedback/detailed', async (req: Request, res: Response) => {
+  console.log('[FEEDBACK ENDPOINT] Detailed feedback endpoint called');
+  console.log('[FEEDBACK ENDPOINT] Request body:', req.body);
+  const { caseId, rating, freeformFeedback, reason, timestamp } = req.body;
+  
+  if (!caseId) {
+    return res.status(400).json({ error: 'CaseId is required.' });
+  }
+  
+  logger.info(`[Feedback] Detailed feedback received for case ${caseId}`);
+  
+  // Update the stored case in MongoDB directly
+  try {
+    console.log('[Server] Detailed feedback - Attempting to update MongoDB case:', caseId);
+    const { MongoStorage } = require('./storage/mongodb');
+    const { MemoryService } = require('./storage/memoryService');
+    const mongoStorage = new MongoStorage(process.env.MONGODB_CONNECTION_STRING || 'mongodb://localhost:27017');
+    await mongoStorage.connect();
+    const memoryService = new MemoryService(mongoStorage);
+    
+    // Create feedback object for this specific case
+    const feedbackForCase = {
+      [`feedback_${Date.now()}`]: {
+        type: rating && parseInt(rating) >= 3 ? 'positive' : 'negative',
+        rating: rating ? parseInt(rating) : undefined,
+        comment: freeformFeedback,
+        reason: reason ? parseInt(reason) : undefined,
+        timestamp: new Date(timestamp),
+        feedbackSource: 'detailed_modal'
+      }
+    };
+    
+    // Calculate RL reward based on rating
+    let rewardForCase = 0;
+    if (rating) {
+      const ratingValue = parseInt(rating);
+      rewardForCase = ratingValue - 3; // -2 to +2 based on 1-5 scale
+    }
+    
+    console.log('[Server] Detailed feedback - About to call updateCaseWithFeedback with:', {
+      caseId,
+      feedback: feedbackForCase,
+      reward: rewardForCase
+    });
+    const updateResult = await memoryService.updateCaseWithFeedback(caseId, feedbackForCase, rewardForCase);
+    console.log('[Server] Detailed feedback - MongoDB update result:', updateResult);
+  } catch (error) {
+    console.error('[Server] Detailed feedback - Error updating case:', error);
+  }
+  
+  console.log('Detailed feedback:', { caseId, rating, freeformFeedback, reason, timestamp });
+  res.json({ success: true, message: 'Detailed feedback received' });
+});
+
 const conversationStates = new Map<string, AgentStateData>();
+const feedbackStore = new Map<string, any[]>(); // Simple in-memory feedback storage
 
 server.post('/chat', async (req: Request, res: Response) => {
   const sessionId: string = req.body.sessionId || 'default_session';
@@ -70,6 +224,10 @@ server.post('/chat', async (req: Request, res: Response) => {
     currentAgentState.analysisResults = {};
     currentAgentState.runParallelAnalysis = false;
     currentAgentState.queryCategory = 'UNKNOWN_CATEGORY';
+    currentAgentState.messageFeedbacks = {}; // Clear previous feedback for new query
+    currentAgentState.overallRlReward = undefined; // Clear previous reward for new query
+    
+
   } else {
     logger.info(`[Session: ${sessionId}] Initializing new state.`);
     currentAgentState = {
@@ -163,7 +321,14 @@ server.post('/chat', async (req: Request, res: Response) => {
       console.warn('WARN: Final state had no finalSummary and no messages.');
     }
 
-    return res.json({ response: agentResponse });
+    const caseIdToReturn = finalState.generatedCaseId || `case_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    console.log('[Server] Returning case ID to frontend:', caseIdToReturn);
+    console.log('[Server] finalState.generatedCaseId:', finalState.generatedCaseId);
+    
+    return res.json({ 
+      response: agentResponse,
+      caseId: caseIdToReturn
+    });
   } catch (error) {
     logger.error(`[Session: ${sessionId}] ERROR during agent invocation:`, error);
 

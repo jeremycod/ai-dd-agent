@@ -6,13 +6,13 @@
   --text-dark: #333333; /* Main dark text color */
   --text-medium: #666666; /* Secondary text, placeholders */
   --text-light: #999999; /* Even lighter text, like feedback count */
-  --accent-blue: #6c63ff; /* Primary accent blue (for header icon, send button) */
-  --accent-blue-light: #f0f2ff; /* Lighter blue for highlights/backgrounds */
+  --accent-gray: #4a5568; /* Primary accent gray (for header icon, send button) */
+  --accent-gray-light: #f7fafc; /* Lighter gray for highlights/backgrounds */
   --agent-bubble-bg: #f8f8f8; /* Background for agent messages */
   --user-bubble-bg: #dce0ef; /* Background for user messages (assumed from common patterns) */
   --feedback-button-bg: #f0f0f0; /* Background for feedback buttons */
   --feedback-button-hover: #e8e8e8;
-  --feedback-active: #5c54e0; /* Darker accent for active feedback state */
+  --feedback-active: #2d3748; /* Darker accent for active feedback state */
   --code-bg: #eff1f3; /* Light background for code blocks */
   --code-text: #d14; /* Color for inline code */
   --code-block-text: #333333; /* Text for code blocks */
@@ -63,7 +63,7 @@ body {
 }
 
 .chat-header svg {
-  color: var(--accent-blue);
+  color: var(--accent-gray);
   width: 24px;
   height: 24px;
 }
@@ -102,7 +102,7 @@ body {
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  background-color: var(--accent-blue);
+  background-color: var(--accent-gray);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -232,13 +232,13 @@ body {
 
 .feedback-button:hover {
   background-color: var(--feedback-button-hover);
-  border-color: var(--accent-blue);
+  border-color: var(--accent-gray);
   transform: translateY(-1px);
 }
 
 .feedback-button.active {
-  background-color: var(--accent-blue);
-  border-color: var(--accent-blue);
+  background-color: var(--accent-gray);
+  border-color: var(--accent-gray);
   color: white;
 }
 .feedback-button.active svg {
@@ -453,15 +453,15 @@ body {
   opacity: 0.8;
 }
 .input-area input:focus {
-  border-color: var(--accent-blue);
+  border-color: var(--accent-gray);
   box-shadow:
-    0 0 0 2px rgba(108, 99, 255, 0.1),
+    0 0 0 2px rgba(74, 85, 104, 0.1),
     inset 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 .input-area button {
   width: 44px;
   height: 44px;
-  background-color: var(--accent-blue);
+  background-color: var(--accent-gray);
   color: white;
   border: none;
   border-radius: 50%;
@@ -635,8 +635,7 @@ body {
   color: var(--text-medium);
 }
 
-#freeform-feedback,
-#source-document {
+#freeform-feedback {
   width: 100%;
   min-height: 80px;
   padding: 12px;
@@ -648,11 +647,41 @@ body {
   box-sizing: border-box;
 }
 
-#freeform-feedback:focus,
-#source-document:focus {
+#freeform-feedback:focus {
   outline: none;
-  border-color: var(--accent-blue);
-  box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.1);
+  border-color: var(--accent-gray);
+  box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.1);
+}
+
+.rating-scale {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.rating-button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-color);
+  background-color: white;
+  border-radius: 4px;
+  font-size: 1em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-dark);
+}
+
+.rating-button:hover {
+  border-color: var(--accent-gray);
+  background-color: var(--accent-gray-light);
+}
+
+.rating-button.selected {
+  background-color: var(--accent-gray);
+  border-color: var(--accent-gray);
+  color: white !important;
+  font-weight: 600;
 }
 
 .feedback-divider {
@@ -700,8 +729,8 @@ body {
 }
 
 .reason-option:hover {
-  border-color: var(--accent-blue);
-  box-shadow: 0 2px 8px rgba(108, 99, 255, 0.1);
+  border-color: var(--accent-gray);
+  box-shadow: 0 2px 8px rgba(74, 85, 104, 0.1);
 }
 
 .reason-option input[type="radio"] {
@@ -752,6 +781,28 @@ body {
 .btn-submit:hover {
   background-color: #222;
   border-color: #222;
+}
+
+/* Success Notification */
+.success-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #48bb78;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-weight: 500;
+  z-index: 10000;
+  transform: translateX(100%);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.success-notification.show {
+  transform: translateX(0);
+  opacity: 1;
 }
 
 /* Media queries for responsiveness */
@@ -851,7 +902,7 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0; /* Prevent icon from shrinking */
-  color: var(--accent-blue); /* Color for the SVG stroke/fill */
+  color: var(--accent-gray); /* Color for the SVG stroke/fill */
   /* Adjust size based on your SVG viewBox, ensure it matches the heading font size visually */
 }
 .heading-icon svg {

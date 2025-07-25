@@ -24,6 +24,8 @@ The workflow follows these steps:
 5. **Analyze Findings**: Synthesize data to identify patterns, anomalies, or errors.
 6. **Provide Clear Diagnosis**: Explain the root cause or suggest further steps if the issue cannot be pinpointed.
 
+📖 **[Detailed Workflow Documentation](doc/workflow-documentation.md)** - Complete guide to workflow nodes, learning system, and implementation status.
+
 ## Installation
 
 1. Clone the repository:

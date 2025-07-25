@@ -177,7 +177,6 @@ export const GetGenieOfferToolSchema = z.object({
   offerId: z.string().describe('The unique identifier of the offer to retrieve.'),
   environment: z
     .enum(['production', 'staging', 'development', 'unknown'])
-    .default('production')
     .describe(
       'The environment (e.g., "production", "staging", "development") where the offer resides.',
     ),
@@ -190,7 +189,6 @@ export const GetOfferServiceOfferToolSchema = z.object({
   offerId: z.string().describe('The unique identifier of the offer to retrieve.'),
   environment: z
     .enum(['production', 'staging', 'development', 'unknown'])
-    .default('production')
     .describe(
       'The environment (e.g., "production", "staging", "development") where the offer resides.',
     ),

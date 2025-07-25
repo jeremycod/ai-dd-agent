@@ -11,10 +11,37 @@ import { Offer as OfferServiceOffer } from './types/offerService';
 export type FeedbackType = 'positive' | 'negative' | 'neutral';
 
 export type AgentMessageFeedback = {
-  type: FeedbackType;
-  comment?: string;
+  type: FeedbackType; // thumbs up/down -> positive/negative
+  rating?: 1 | 2 | 3 | 4 | 5;
+  comment?: string; // freeform feedback
+  reason?: 1 | 2 | 3 | 4 | 5 | 6; // reasons (1 of 6)
   timestamp: Date;
   feedbackSource?: string;
+};
+
+export type DiagnosticCase = {
+  caseId: string;
+  timestamp: Date;
+  category: QueryCategory;
+  entityType: EntityType;
+  entityIds: string[];
+  environment: EnvironmentType;
+  userQuery: string;
+  toolsUsed: string[];
+  finalSummary?: string;
+  overallRlReward?: number;
+  messageFeedbacks: Record<string, AgentMessageFeedback>;
+};
+
+export type DiagnosticPattern = {
+  patternId: string;
+  category: QueryCategory;
+  entityType: EntityType;
+  environment: EnvironmentType;
+  commonTools: string[];
+  successRate: number;
+  usageCount: number;
+  lastUpdated: Date;
 };
 
 export type AnalysisResults = {
@@ -67,20 +94,28 @@ export type AgentStateData = {
     numPositiveFeedbacks?: number;
     lastAIResponseFeedbackType?: FeedbackType | null;
     numTurnsInConversation?: number;
+    similarCaseCount?: number;
   };
+  
+  // Long-term memory components
+  currentCase?: DiagnosticCase;
+  similarCases?: DiagnosticCase[];
+  relevantPatterns?: DiagnosticPattern[];
   chosenRLAction?: {
     type:
       | 'retrieval_strategy'
       | 'generation_style'
       | 'analysis_depth'
       | 're_query'
-      | 'present_summary';
+      | 'present_summary'
+      | 'memory_lookup';
     value: string;
     producedMessageId?: string;
   };
   rlEpisodeId?: string;
   rlTrainingIteration?: number;
   overallFeedbackAttempts?: number;
+  generatedCaseId?: string;
 };
 
 function getMessageIdentifier(msg: BaseMessage): string {
@@ -269,6 +304,26 @@ export const AgentStateAnnotation = Annotation.Root({
   overallFeedbackAttempts: Annotation<number | undefined, number | undefined>({
     value: (x: number | undefined, y: number | undefined): number | undefined => y ?? x,
     default: () => 0,
+  }),
+
+  currentCase: Annotation<DiagnosticCase | undefined, DiagnosticCase | undefined>({
+    value: (x: DiagnosticCase | undefined, y: DiagnosticCase | undefined): DiagnosticCase | undefined => y ?? x,
+    default: () => undefined,
+  }),
+
+  similarCases: Annotation<DiagnosticCase[] | undefined, DiagnosticCase[] | undefined>({
+    value: (x: DiagnosticCase[] | undefined, y: DiagnosticCase[] | undefined): DiagnosticCase[] | undefined => y ?? x,
+    default: () => undefined,
+  }),
+
+  relevantPatterns: Annotation<DiagnosticPattern[] | undefined, DiagnosticPattern[] | undefined>({
+    value: (x: DiagnosticPattern[] | undefined, y: DiagnosticPattern[] | undefined): DiagnosticPattern[] | undefined => y ?? x,
+    default: () => undefined,
+  }),
+
+  generatedCaseId: Annotation<string | undefined, string | undefined>({
+    value: (x: string | undefined, y: string | undefined): string | undefined => y ?? x,
+    default: () => undefined,
   }),
 });
 

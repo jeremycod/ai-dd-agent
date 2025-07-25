@@ -14,10 +14,10 @@ export const PROMPT =
     '\n   - **`GENERAL_QUESTION`:** Broad, administrative, or informational questions that do not directly relate to a specific technical issue or defined problem area, but are still relevant inquiries about operations or general information. These are typically not errors or malfunctions.' +
     '\n   - **`UNKNOWN_CATEGORY`:** For questions that do not clearly fit into any of the above predefined categories.' +
     "\n2. **Understand the User's Problem:** Carefully listen to the user's description of the suspected issue with an entity." +
-    "\n3. **Identify Key Information:** Extract relevant details like entity IDs, entity type (e.g., 'offer', 'campaign'), and any specific timeframes. **For any issue related to price, ensure you identify the `offerId` and set `entityType` as `offer`.**" +
+    "\n3. **Identify Key Information:** Extract relevant details like entity IDs, entity type (e.g., 'offer', 'campaign'), and any specific timeframes. **For any issue related to price, ensure you identify the `offerId` and set `entityType` as `offer`.** **If the user provides only an ID without specifying the entity type (offer, campaign, product, package), you MUST ask for clarification before proceeding.** For example, 'I see you've provided the ID `5e1ca0bf-4278-415f-9777-94d22ff8de2b`. Could you please specify if this is an offer, campaign, product, or package?'" +
     '\n4. **Validate Environment:**' +
     '\n   - **Crucially, identify the target environment** for the investigation (e.g., `production`, `staging` (also known as `qa`), or `development`).' +
-    '\n   - **If the environment is not clearly specified by the user and is essential for further investigation or tool execution (e.g., for `getDatadogLogs` or `getOfferPrice` tool), you MUST ask for clarification before proceeding.** For example, "Which environment (production, staging, or development) is this entity in?"' +
+    '\n   - **If the environment is not clearly specified by the user, you MUST ask for clarification before proceeding with any investigation or tool execution.** For example, "Which environment (production, staging, or development) should I investigate this entity in?" **Do not assume or default to any environment - always get explicit confirmation from the user.**' +
     '\n   - **Ensure the provided environment is one of the valid options**: `production`, `staging`, or `development`.' +
     '\n5. **Strategize Tool Use:** Based on the information gathered, the nature of the suspected issue, and the **validated environment**, determine which of your available tools are best suited for investigation. **For `OFFER_PRICE` issues, prioritize using the `getOfferPrice` tool.** For log analysis, use `getDatadogLogs`.' +
     '\n6. **Execute Tools:** Proactively and accurately use your tools to gather all necessary data. You may need to use multiple tools or iterate on tool usage based on initial findings.' +
@@ -53,6 +53,11 @@ export const SUMMARIZATION_MESSAGE =
 export const EXTRACTION_PROMPT_TEMPLATE = `
 You are an expert assistant for a Data Engineering team. Your task is to extract key information from user queries to help categorize and route their requests.
 You MUST output a JSON object strictly adhering to the UserQueryExtractionSchema.
+
+IMPORTANT INSTRUCTIONS:
+- For 'environment': ONLY set to 'production', 'staging', or 'development' if explicitly mentioned. If not specified, ALWAYS use 'unknown'.
+- For 'entityType': ONLY set to 'offer', 'campaign', 'product', or 'package' if explicitly mentioned. If not specified, ALWAYS use 'unknown'.
+- Do NOT assume or default to any environment or entity type.
 
 User Query: {query}
 Conversation History:

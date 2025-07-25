@@ -9,7 +9,11 @@ flowchart TD
     A["User Input"] --> B["parse_user_query:
       - Extract category, entity IDs, type, environment, time range
       - Generate initial response"]
-    B --> C{"Environment Known?"}
+    B --> M["memory_retrieval:
+      - Retrieve similar cases from MongoDB
+      - Get relevant patterns
+      - Update RL features"]
+    M --> C{"Environment Known?"}
     C -- Yes --> D["fetch_parallel_data"]
     C -- No --> E["ask_environment_clarification:
       - Request environment specification"]
@@ -39,11 +43,21 @@ flowchart TD
     
     G --> H["respond_to_user:
       - Deliver final summary to user"]
+    H --> S["store_case:
+      - Store diagnostic case in MongoDB
+      - Update success patterns
+      - Learn from feedback"]
     E --> I["END - Awaiting user clarification"]
-    H --> J["END"]
+    S --> J["END"]
+    
+    %% MongoDB Storage
+    DB[("MongoDB\nai-diagnostic-agent")]
+    M -.->|"Read similar cases"| DB
+    S -.->|"Store case & patterns"| DB
     
     style A fill:#D4EDDA,stroke:#28A745,stroke-width:2px,color:#28A745
     style B fill:#E0F2F7,stroke:#3498DB,stroke-width:2px,color:#3498DB
+    style M fill:#E8F5E8,stroke:#28A745,stroke-width:2px,color:#28A745
     style C fill:#FFF3CD,stroke:#FFC107,stroke-width:2px,color:#FFC107
     style D fill:#D1E7DD,stroke:#20C997,stroke-width:2px,color:#20C997
     style E fill:#F8D7DA,stroke:#DC3545,stroke-width:2px,color:#DC3545
@@ -60,6 +74,8 @@ flowchart TD
     style F5 fill:#E0F2F7,stroke:#3498DB,stroke-width:2px,color:#3498DB
     style G fill:#E0F2F7,stroke:#3498DB,stroke-width:2px,color:#3498DB
     style H fill:#E0F2F7,stroke:#3498DB,stroke-width:2px,color:#3498DB
+    style S fill:#E8F5E8,stroke:#28A745,stroke-width:2px,color:#28A745
     style I fill:#D6D6D6,stroke:#6C757D,stroke-width:2px,color:#6C757D
     style J fill:#D6D6D6,stroke:#6C757D,stroke-width:2px,color:#6C757D
+    style DB fill:#FFE6CC,stroke:#FF8C00,stroke-width:2px,color:#FF8C00
 ```
