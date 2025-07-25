@@ -1,5 +1,5 @@
 import { AgentStateData } from '../model/agentState';
-import { getEntityHistoryTool } from '../tools/entityHistoryTools';
+import { getEntityHistoryTool } from '../tools';
 import { Version } from '../model/types/entityHistory';
 import { generateNewAIMessage } from '../utils/auth/helpers';
 import { logger } from '../utils/logger';

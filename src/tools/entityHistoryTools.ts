@@ -1,5 +1,5 @@
 import { DynamicStructuredTool } from '@langchain/core/tools';
-import { DataManagerHistoryClient } from '../clients/DataManagerHistoryClient';
+import { DataManagerHistoryClient } from '../clients';
 import { EnvironmentType } from '../model/types/general';
 import { Version } from '../model/types/entityHistory';
 import {

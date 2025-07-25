@@ -1,5 +1,5 @@
 import { DynamicStructuredTool } from '@langchain/core/tools';
-import { UPSClient } from '../clients/UPSClient';
+import { UPSClient } from '../clients';
 import { OfferPriceResponse } from '../model/types/UPS';
 import { GetUPSOfferPriceToolSchema, GetUPSOfferPriceToolSchemaInput } from '../model/schemas';
 import { AgentStateData } from '../model/agentState'; // Your agent state type

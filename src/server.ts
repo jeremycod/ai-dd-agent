@@ -321,6 +321,16 @@ server.post('/chat', async (req: Request, res: Response) => {
       console.warn('WARN: Final state had no finalSummary and no messages.');
     }
 
+    // Check if this is a clarification response (no case stored yet)
+    const isClairificationResponse = !finalState.generatedCaseId;
+    
+    if (isClairificationResponse) {
+      console.log('[Server] Clarification response - not returning caseId to hide feedback UI');
+      return res.json({ 
+        response: agentResponse
+      });
+    }
+    
     const caseIdToReturn = finalState.generatedCaseId || `case_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     console.log('[Server] Returning case ID to frontend:', caseIdToReturn);
     console.log('[Server] finalState.generatedCaseId:', finalState.generatedCaseId);

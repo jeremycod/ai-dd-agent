@@ -1,4 +1,4 @@
-import { GenieOfferClient } from '../clients/GenieOfferClient'; // Adjust path as needed
+import { GenieOfferClient } from '../clients'; // Adjust path as needed
 import { EnvironmentType } from '../model/types/general'; // Adjust path as needed
 import { GetGenieOfferToolSchema, GetGenieOfferToolSchemaInput } from '../model/schemas';
 import { DynamicStructuredTool } from '@langchain/core/tools';

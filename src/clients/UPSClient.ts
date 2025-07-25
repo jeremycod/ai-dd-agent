@@ -1,4 +1,4 @@
-import { OfferPriceResponse } from '../model/types/UPS'; // Assuming this path is correct
+import { OfferPriceResponse } from '../model'; // Assuming this path is correct
 import { logger } from '../utils/logger';
 export class UPSClient {
   private readonly baseUrl: string;

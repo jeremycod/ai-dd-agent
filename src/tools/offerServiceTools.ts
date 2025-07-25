@@ -6,7 +6,7 @@ import {
   GetOfferServiceOfferToolSchema,
   GetOfferServiceOfferToolSchemaInput,
 } from '../model/schemas';
-import { OfferServiceClient } from '../clients/OfferServiceClient';
+import { OfferServiceClient } from '../clients';
 import { EnvironmentType } from '../model/types/general';
 import { Offer, OfferServiceResponse } from '../model/types/offerService';
 

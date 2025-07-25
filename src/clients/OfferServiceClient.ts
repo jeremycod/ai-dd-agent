@@ -1,7 +1,6 @@
-import { OfferServiceResponse } from '../model/types/offerService';
+import { OfferServiceResponse, GET_OFFER_BY_ID_QUERY, GetOfferByIdVariables } from '../model';
 
 import { logger } from '../utils/logger';
-import { GET_OFFER_BY_ID_QUERY, GetOfferByIdVariables } from '../model/queries/offerService';
 
 export class OfferServiceClient {
   private readonly baseUrl: string;

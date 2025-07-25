@@ -1,6 +1,6 @@
 import { AgentStateData } from '../model/agentState';
 import { logger } from '../utils/logger';
-import { getDatadogLogsTool } from '../tools/datadogLogsTool';
+import { getDatadogLogsTool } from '../tools';
 import { DatadogLog } from '../model/datadog';
 import { v2 } from '@datadog/datadog-api-client';
 import { generateNewAIMessage } from '../utils/auth/helpers';

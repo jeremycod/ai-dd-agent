@@ -1,12 +1,7 @@
 import { z } from 'zod';
 import { StateGraph, END } from '@langchain/langgraph';
 import { AgentStateData, AgentState, AgentStateAnnotation } from './model/agentState';
-import { parseUserQuery } from './nodes/parseUserQuery';
-import { ask_environment_clarification } from './nodes/askEnvironmentClarification';
-import { fetchParallelData } from './nodes/fetchParallelData';
-import { respondToUser } from './nodes/respondToUser';
-import { summarizeFindings } from './nodes/summarizeFindings';
-import { runParallelAnalysisTools } from './nodes/runParallelAnalysisTools';
+import { parseUserQuery, ask_environment_clarification, fetchParallelData, respondToUser, summarizeFindings, runParallelAnalysisTools } from './nodes';
 import { memoryRetrievalWrapper, storeCaseWrapper } from './memoryWorkflow';
 import { logger } from './utils/logger';
 

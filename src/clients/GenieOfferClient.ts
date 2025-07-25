@@ -1,5 +1,4 @@
-import { GraphQLResponse, Offer } from '../model/types/genieGraphql';
-import { GET_OFFER_QUERY } from '../model/queries/genie';
+import { GraphQLResponse, GenieOffer as Offer, GET_OFFER_QUERY } from '../model';
 import { TokenService } from '../utils/auth/TokenService';
 import { logger } from '../utils/logger';
 

@@ -1,6 +1,6 @@
 import { AgentState } from '../model/agentState';
 import { logger } from '../utils/logger';
-import { MemoryService } from '../storage/memoryService';
+import { MemoryService } from '../storage';
 import { generateNewAIMessage } from '../utils/auth/helpers';
 
 export async function memoryRetrievalNode(

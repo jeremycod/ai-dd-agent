@@ -268,7 +268,8 @@ async function sendMessage() {
       const showNumber = messageToDisplay.includes(
         "Learning from Production Data",
       );
-      addMessage(messageToDisplay, "agent", true, true, showNumber, caseId);
+      const shouldShowFeedback = caseId !== undefined && caseId !== null;
+      addMessage(messageToDisplay, "agent", true, shouldShowFeedback, showNumber, caseId);
     } else {
       addMessage(
         `Error: ${data.error || "Something went wrong on the server."}`,

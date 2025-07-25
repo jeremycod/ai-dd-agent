@@ -1,5 +1,5 @@
 import { MongoStorage, MemoryService } from './storage';
-import { memoryRetrievalNode, storeCaseNode } from './nodes/memoryNodes';
+import { memoryRetrievalNode, storeCaseNode } from './nodes';
 import { AgentState } from './model/agentState';
 
 let memoryService: MemoryService | null = null;

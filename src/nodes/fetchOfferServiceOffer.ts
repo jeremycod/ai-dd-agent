@@ -1,7 +1,7 @@
 import { AgentStateData } from '../model/agentState';
 import { Offer } from '../model/types/offerService'; // Import Offer type
 import { AIMessage, BaseMessage, ToolMessage } from '@langchain/core/messages';
-import { fetchOfferServiceOfferTool } from '../tools/offerServiceTools'; // Keep importing the tool output type
+import { fetchOfferServiceOfferTool } from '../tools'; // Keep importing the tool output type
 import { logger } from '../utils/logger';
 
 function generateNewAIMessage(content: string): AIMessage {
