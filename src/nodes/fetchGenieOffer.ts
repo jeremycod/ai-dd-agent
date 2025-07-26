@@ -1,9 +1,7 @@
-import { AgentStateData } from '../model/agentState';
-import { Offer } from '../model/types/genieGraphql'; // Assuming this path is correct for your Offer type
+import { AgentStateData, Offer } from '../model';
 import { BaseMessage } from '@langchain/core/messages';
 import { genieOfferTool } from '../tools';
-import { generateNewAIMessage } from '../utils/auth/helpers'; // Import your genieOfferTool instance
-import { logger } from '../utils/logger';
+import { generateNewAIMessage, logger } from '../utils';
 export async function fetchGenieOffer(state: AgentStateData): Promise<Partial<AgentStateData>> {
   logger.info('[Node: fetchGenieOffer] Attempting to fetch Genie Offer details...');
 

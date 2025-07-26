@@ -1,6 +1,5 @@
-import { GraphQLResponse, GenieOffer as Offer, GET_OFFER_QUERY } from '../model';
-import { TokenService } from '../utils/auth/TokenService';
-import { logger } from '../utils/logger';
+import {GenieOffer as Offer, GET_OFFER_QUERY, GraphQLResponse} from '../model';
+import {logger, TokenService} from '../utils';
 
 export class GenieOfferClient {
   private readonly baseUrl: string;
@@ -85,8 +84,7 @@ export class GenieOfferClient {
         return { errors: [{ message: `HTTP Error ${response.status}: ${errorText}` }] };
       }
 
-      const result: GraphQLResponse<T> = await response.json();
-      return result;
+      return await response.json();
     } catch (error: any) {
       logger.error('GraphQL request network or parsing error:', error);
       return { errors: [{ message: error.message || 'Network error or invalid JSON response' }] };

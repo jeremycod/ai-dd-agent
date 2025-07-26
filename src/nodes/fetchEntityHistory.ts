@@ -1,8 +1,6 @@
-import { AgentStateData } from '../model/agentState';
+import { AgentStateData, Version } from '../model';
 import { getEntityHistoryTool } from '../tools';
-import { Version } from '../model/types/entityHistory';
-import { generateNewAIMessage } from '../utils/auth/helpers';
-import { logger } from '../utils/logger';
+import { generateNewAIMessage, logger } from '../utils';
 export async function fetchEntityHistory(state: AgentStateData): Promise<Partial<AgentStateData>> {
   logger.info('[Node: fetchEntityHistory] Fetching entity history...');
   const { entityIds, entityType, environment, messages } = state;

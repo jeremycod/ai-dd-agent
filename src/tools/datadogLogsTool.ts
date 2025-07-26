@@ -9,11 +9,10 @@ import {
   AnalyzeDatadogWarningsToolSchemaInput,
   GetDataDogLogsToolSchema,
   GetDataDogLogsToolSchemaInput,
-} from '../model/schemas';
+} from '../model';
 import { TIMESTAMP_ASCENDING } from '@datadog/datadog-api-client/dist/packages/datadog-api-client-v2/models/RUMSort';
 import { BaseServerConfiguration } from '@datadog/datadog-api-client/dist/packages/datadog-api-client-common';
-import { logger } from '../utils/logger';
-import {trimErrorMessage} from "../utils/stringHelpers";
+import { logger, trimErrorMessage } from '../utils';
 
 const { LogsApi } = v2;
 

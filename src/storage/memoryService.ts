@@ -1,4 +1,4 @@
-import { AgentState, DiagnosticCase, DiagnosticPattern } from '../model/agentState';
+import { AgentState, DiagnosticCase, DiagnosticPattern } from '../model';
 import { MongoStorage } from './mongodb';
 import { v4 as uuidv4 } from 'uuid';
 

@@ -1,5 +1,5 @@
 import { MongoClient, Db, Collection } from 'mongodb';
-import { DiagnosticCase, DiagnosticPattern } from '../model/agentState';
+import { DiagnosticCase, DiagnosticPattern } from '../model';
 
 export class MongoStorage {
   private client: MongoClient;

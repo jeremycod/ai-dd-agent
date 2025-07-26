@@ -1,9 +1,9 @@
 import { z } from 'zod';
 import { StateGraph, END } from '@langchain/langgraph';
-import { AgentStateData, AgentState, AgentStateAnnotation } from './model/agentState';
+import { AgentStateData, AgentState, AgentStateAnnotation } from './model';
 import { parseUserQuery, ask_environment_clarification, fetchParallelData, respondToUser, summarizeFindings, runParallelAnalysisTools } from './nodes';
 import { memoryRetrievalWrapper, storeCaseWrapper } from './memoryWorkflow';
-import { logger } from './utils/logger';
+import { logger } from './utils';
 
 const workflow = new StateGraph(AgentStateAnnotation)
   .addNode('parse_user_query', parseUserQuery)

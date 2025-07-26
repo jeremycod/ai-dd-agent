@@ -1,5 +1,5 @@
-import { AgentStateData } from '../model/agentState';
-import { logger } from '../utils/logger';
+import { AgentStateData } from '../model';
+import { logger } from '../utils';
 
 export async function ask_environment_clarification(
   state: AgentStateData,

@@ -1,5 +1,5 @@
-import { OfferPriceResponse } from '../model'; // Assuming this path is correct
-import { logger } from '../utils/logger';
+import { OfferPriceResponse } from '../model';
+import { logger } from '../utils';
 export class UPSClient {
   private readonly baseUrl: string;
   private readonly callerClientId: string; // <--- Add this property

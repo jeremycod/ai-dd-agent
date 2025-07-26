@@ -1,11 +1,10 @@
 // src/nodes/summarizeFindings.ts
 
-import { AgentStateData } from '../model/agentState';
+import { AgentStateData } from '../model';
 import { AIMessage, BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { SUMMARIZATION_MESSAGE } from '../constants';
 import { summarizerLLM } from '../anthropicAgent';
-import { generateNewAIMessage, generateNewHumanMessage } from '../utils/auth/helpers';
-import { logger } from '../utils/logger';
+import { generateNewAIMessage, generateNewHumanMessage, logger } from '../utils';
 
 export async function summarizeFindings(state: AgentStateData): Promise<Partial<AgentStateData>> {
   logger.info('[Node: summarizeFindings] Entering...');

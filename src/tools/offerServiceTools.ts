@@ -1,14 +1,15 @@
 // src/tools/offerServiceTools.ts
 
 import { DynamicStructuredTool } from '@langchain/core/tools';
-import { logger } from '../utils/logger';
+import { logger } from '../utils';
 import {
   GetOfferServiceOfferToolSchema,
   GetOfferServiceOfferToolSchemaInput,
-} from '../model/schemas';
+  EnvironmentType,
+  Offer,
+  OfferServiceResponse,
+} from '../model';
 import { OfferServiceClient } from '../clients';
-import { EnvironmentType } from '../model/types/general';
-import { Offer, OfferServiceResponse } from '../model/types/offerService';
 
 // Make sure this type is correctly defined and exported!
 export type FetchOfferServiceToolOutput = {

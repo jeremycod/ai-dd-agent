@@ -1,10 +1,10 @@
-import { AgentStateData } from '../model/agentState';
+import { AgentStateData } from '../model';
 import { fetchEntityHistory } from './fetchEntityHistory';
 import { fetchDatadogLogs } from './fetchDatadogLogs';
 import { fetchUPSOfferPrice } from './fetchUPSOfferPrice';
 import { BaseMessage, AIMessage, ToolMessage, HumanMessage } from '@langchain/core/messages';
 import { fetchGenieOffer } from './fetchGenieOffer';
-import { logger } from '../utils/logger';
+import { logger } from '../utils';
 import { fetchOfferServiceOffer } from './fetchOfferServiceOffer';
 
 

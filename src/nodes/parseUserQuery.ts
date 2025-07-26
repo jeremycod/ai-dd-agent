@@ -1,12 +1,9 @@
-import { AgentStateData } from '../model/agentState';
+import { AgentStateData, UserQueryExtraction } from '../model';
 import { BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
-import { UserQueryExtraction } from '../model/schemas';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { extractionLLM } from '../anthropicAgent';
 import { EXTRACTION_PROMPT_TEMPLATE } from '../constants';
-import { generateNewAIMessage } from '../utils/auth/helpers';
-import { logger } from '../utils/logger';
-import {getDynamicTimeRangeFallback} from "../utils/timeHelpers";
+import { generateNewAIMessage, logger, getDynamicTimeRangeFallback } from '../utils';
 const structuredExtractionChain = PromptTemplate.fromTemplate(EXTRACTION_PROMPT_TEMPLATE).pipe(
   extractionLLM,
 );

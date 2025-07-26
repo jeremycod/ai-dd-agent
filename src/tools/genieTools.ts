@@ -1,8 +1,7 @@
-import { GenieOfferClient } from '../clients'; // Adjust path as needed
-import { EnvironmentType } from '../model/types/general'; // Adjust path as needed
-import { GetGenieOfferToolSchema, GetGenieOfferToolSchemaInput } from '../model/schemas';
+import { GenieOfferClient } from '../clients';
+import { EnvironmentType, GetGenieOfferToolSchema, GetGenieOfferToolSchemaInput } from '../model';
 import { DynamicStructuredTool } from '@langchain/core/tools';
-import { logger } from '../utils/logger';
+import { logger } from '../utils';
 
 const DSS_CALLER_CLIENT_ID = process.env.DSS_CALLER_CLIENT_ID || 'your-default-ai-agent-client-id';
 

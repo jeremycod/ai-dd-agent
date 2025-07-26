@@ -1,5 +1,5 @@
 import { EntityHistoryResponse, Version, EntityType } from '../model';
-import { logger } from '../utils/logger';
+import { logger } from '../utils';
 
 export class HttpDataManagerError extends Error {
   constructor(

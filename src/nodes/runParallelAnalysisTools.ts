@@ -1,12 +1,7 @@
-import { AgentStateData } from '../model/agentState';
+import { AgentStateData, Offer as OfferServiceOffer, Offer as GenieOffer } from '../model';
 import { AIMessage } from '@langchain/core/messages';
-
 import { analyzeDatadogErrorsTool, analyzeDatadogWarningsTool, analyzeEntityHistoryTool, analyzeUPSOfferPriceTool, compareOffersTool } from '../tools';
-import { generateNewAIMessage } from '../utils/auth/helpers';
-import { logger } from '../utils/logger';
-
-import { Offer as OfferServiceOffer } from '../model/types/offerService';
-import { Offer as GenieOffer } from '../model/types/genieGraphql';
+import { generateNewAIMessage, logger } from '../utils';
 
 
 type AnalysisPromiseResult = {

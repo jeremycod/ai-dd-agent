@@ -1,9 +1,7 @@
-import { AgentStateData } from '../model/agentState';
-import { OfferPriceResponse } from '../model/types/UPS';
-import {BaseMessage } from '@langchain/core/messages';
+import { AgentStateData, OfferPriceResponse } from '../model';
+import { BaseMessage } from '@langchain/core/messages';
 import { upsOfferPriceTool } from '../tools';
-import { generateNewAIMessage } from '../utils/auth/helpers'; // Import your tool instance
-import { logger } from '../utils/logger';
+import { generateNewAIMessage, logger } from '../utils';
 export async function fetchUPSOfferPrice(state: AgentStateData): Promise<Partial<AgentStateData>> {
   logger.info('[Node: fetchUPSOfferPrice] Attempting to fetch UPS Offer Price...');
 

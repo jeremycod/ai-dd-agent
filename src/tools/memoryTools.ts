@@ -1,7 +1,7 @@
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
 import { MemoryService } from '../storage/memoryService';
-import { logger } from '../utils/logger';
+import { logger } from '../utils';
 
 const RetrieveSimilarCasesSchema = z.object({
   category: z.string().describe('Query category to search for similar cases'),

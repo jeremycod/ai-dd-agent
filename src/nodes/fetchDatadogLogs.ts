@@ -1,9 +1,7 @@
-import { AgentStateData } from '../model/agentState';
-import { logger } from '../utils/logger';
+import { AgentStateData, DatadogLog } from '../model';
+import { logger, generateNewAIMessage } from '../utils';
 import { getDatadogLogsTool } from '../tools';
-import { DatadogLog } from '../model/datadog';
 import { v2 } from '@datadog/datadog-api-client';
-import { generateNewAIMessage } from '../utils/auth/helpers';
 
 function mapEnvironmentToTag(environment: string): string {
   const environmentMap: Record<string, string> = {

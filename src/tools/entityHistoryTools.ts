@@ -1,14 +1,14 @@
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { DataManagerHistoryClient } from '../clients';
-import { EnvironmentType } from '../model/types/general';
-import { Version } from '../model/types/entityHistory';
 import {
+  EnvironmentType,
+  Version,
   GetEntityHistoryToolSchema,
   GetEntityHistoryToolSchemaInput,
   AnalyzeEntityHistoryToolInputSchema,
   AnalyzeEntityHistoryToolInputSchemaInput,
-} from '../model/schemas';
-import { logger } from '../utils/logger';
+} from '../model';
+import { logger } from '../utils';
 
 export const getEntityHistoryTool = new DynamicStructuredTool({
   name: 'getEntityHistoryTool',

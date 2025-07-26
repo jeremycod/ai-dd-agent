@@ -1,13 +1,8 @@
 // src/tools/offerComparisonTools.ts
 
 import { DynamicStructuredTool } from '@langchain/core/tools';
-import { logger } from '../utils/logger';
-
-import { Offer as OfferServiceOffer } from '../model/types/offerService'; // OfferService's Offer
-import { Offer as GenieOffer, DurationLength } from '../model/types/genieGraphql'; // Added DurationLength
-
-// Import the schema and its inferred type
-import { CompareOffersToolSchema, CompareOffersToolSchemaInput } from '../model/schemas';
+import { logger } from '../utils';
+import { Offer as OfferServiceOffer, Offer as GenieOffer, DurationLength, CompareOffersToolSchema, CompareOffersToolSchemaInput } from '../model';
 
 
 // Helper function to extract relevant pricing info from OfferService response
