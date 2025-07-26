@@ -50,6 +50,7 @@ export const SUMMARIZATION_MESSAGE =
     '\n\n**Always use the full, unshortened ID when referring to any entity (e.g., offer ID, product ID, campaign ID) in your summary. Do not truncate or shorten IDs under any circumstances.**' +
     '\n\n**Special Instruction for Offer Pricing:**' +
     '\n- **If an offer is identified as a `3PP` (Third-Party Partner) or `IAP` (In-App Purchase) type, understand that direct pricing information is typically managed externally (by the partner or app store) and is NOT expected to be present in internal systems. Do NOT flag missing internal price configurations (e.g., "No reference offer price available", "No retail price configured") as issues for `3PP` or `IAP` offers, and do NOT recommend fixing them. Focus on other aspects of the offer or confirmation of external pricing setup if mentioned in the analysis results. The absence of direct internal pricing for `3PP` and `IAP` offers is the expected behavior, not a problem.**';
+
 export const EXTRACTION_PROMPT_TEMPLATE = `
 You are an expert assistant for a Data Engineering team. Your task is to extract key information from user queries to help categorize and route their requests.
 You MUST output a JSON object strictly adhering to the UserQueryExtractionSchema.

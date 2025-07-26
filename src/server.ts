@@ -3,16 +3,16 @@ import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { app } from './workflow'; // Assuming 'app' is your Langchain agent graph
-import { AgentStateData } from './model/agentState';
+import { AgentStateData } from './model';
 import { PROMPT } from './constants';
 import path from 'path';
-import { logger } from './utils/logger';
+import { logger } from './utils';
 
-import { TokenService } from './utils/auth/TokenService'; // Adjust path
-import { loadSymmetricKey } from './utils/auth/jwtSecret';
-import { generateNewHumanMessage } from './utils/auth/helpers'; // Adjust path
+import { TokenService } from './utils'; // Adjust path
+import { loadSymmetricKey } from './utils';
+import { generateNewHumanMessage } from './utils'; // Adjust path
 import { ZodError} from "zod";
-import { safeJsonStringify} from "./utils/errorHelpers";
+import { safeJsonStringify} from "./utils";
 
 const server = express();
 const PORT = 3000;
