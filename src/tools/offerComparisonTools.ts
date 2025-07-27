@@ -2,7 +2,7 @@
 
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { logger } from '../utils';
-import { Offer as OfferServiceOffer, Offer as GenieOffer, DurationLength, CompareOffersToolSchema, CompareOffersToolSchemaInput } from '../model';
+import { OfferServiceOffer, GenieOffer, CompareOffersToolSchema, CompareOffersToolSchemaInput } from '../model';
 
 
 // Helper function to extract relevant pricing info from OfferService response
@@ -10,7 +10,7 @@ function getOfferServicePriceSummary(offer: OfferServiceOffer): string {
     if (!offer.pricing || offer.pricing.length === 0) {
         return "No pricing information available.";
     }
-    return offer.pricing.map(price => {
+    return offer.pricing.map((price: any) => {
         let priceStr = `${price.amount} ${price.currency}`;
         if (price.billingPeriod) priceStr += ` / ${price.billingPeriod}`;
         if (price.discountedDuration) priceStr += ` for ${price.discountedDuration.length} ${price.discountedDuration.unit}`;
@@ -32,7 +32,7 @@ function getGeniePriceSummary(offer: GenieOffer): string {
         }
         if (d2cOffer.offerProducts && d2cOffer.offerProducts.length > 0) {
             summary += ` | Products pricing: `;
-            summary += d2cOffer.offerProducts.map(op => {
+            summary += d2cOffer.offerProducts.map((op: any) => {
                 // FIX 1: Access product name from op.initialPhase?.product, not op.product
                 // Ensure op.initialPhase and op.initialPhase.product exist
                 let productName = op.initialPhase?.product?.name || 'Unknown Product ID: ' + op.productId;
@@ -41,7 +41,7 @@ function getGeniePriceSummary(offer: GenieOffer): string {
                 if (op.initialPhase && op.initialPhase.phaseType === 'DISCOUNT' && op.initialPhase.discount) {
                     // FIX 2 & 3: Narrow op.initialPhase.duration to DurationLength
                     if (op.initialPhase.duration && 'durationLength' in op.initialPhase.duration) {
-                        const duration = op.initialPhase.duration as DurationLength; // Cast to DurationLength
+                        const duration = op.initialPhase.duration as { durationLength?: number; durationUnit?: string };
                         productPriceStr += ` (Discounted: ${op.initialPhase.finalPrice !== undefined ? op.initialPhase.finalPrice / 100 : 'N/A'} for ${duration.durationLength || 'N/A'} ${duration.durationUnit || 'N/A'})`;
                     } else {
                         // Handle DurationDate or missing duration
@@ -68,7 +68,7 @@ export const compareOffersTool = new DynamicStructuredTool({
     name: "compareOfferDetails",
     description: "Compares the details of an offer retrieved from Offer Service and Genie, focusing on discrepancies in prices, products, and general metadata. Use this when both OfferServiceOffer and GenieOffer data are available for the same offer ID.",
     schema: CompareOffersToolSchema as any,
-    func: async ({ offerId, offerServiceOffer, genieOffer }: CompareOffersToolSchemaInput) => {
+    func: async ({ offerId, offerServiceOffer, genieOffer, offerPriceDetails }: CompareOffersToolSchemaInput) => {
         logger.info(`Executing compareOfferDetailsTool for offer ID: ${offerId}`);
 
         let comparisonResult = `Comparison for Offer ID: ${offerId}\n\n`;
@@ -99,35 +99,50 @@ export const compareOffersTool = new DynamicStructuredTool({
             if (gOffer.__typename === 'OfferD2C') {
                 const offerServicePrice = getOfferServicePriceSummary(osOffer);
                 const geniePrice = getGeniePriceSummary(gOffer);
+                let upsPrice = 'N/A';
+                
+                if (offerPriceDetails) {
+                    if (offerPriceDetails.retailPrice) {
+                        upsPrice = `${offerPriceDetails.retailPrice.amount} ${offerPriceDetails.retailPrice.isoFormattedCurrency}`;
+                        if (offerPriceDetails.promotionalPrices && offerPriceDetails.promotionalPrices.length > 0) {
+                            upsPrice += ` (Promo: ${offerPriceDetails.promotionalPrices.map((p: any) => `${p.amount} ${p.isoFormattedCurrency}`).join(', ')})`;
+                        }
+                    }
+                }
 
                 comparisonResult += `\n--- Pricing Comparison ---\n`;
-                if (offerServicePrice === geniePrice) {
-                    comparisonResult += `- Pricing appears consistent. OfferService: [${offerServicePrice}], Genie: [${geniePrice}]\n`;
+                comparisonResult += `  - OfferService Pricing: [${offerServicePrice}]\n`;
+                comparisonResult += `  - Genie Pricing: [${geniePrice}]\n`;
+                comparisonResult += `  - UPS Pricing: [${upsPrice}]\n`;
+                
+                if (offerServicePrice === geniePrice && upsPrice !== 'N/A') {
+                    comparisonResult += `- OfferService and Genie pricing appear consistent. UPS pricing also available for reference.\n`;
                 } else {
-                    comparisonResult += `- Pricing Discrepancy:\n`;
-                    comparisonResult += `  - OfferService Pricing: [${offerServicePrice}]\n`;
-                    comparisonResult += `  - Genie Pricing: [${geniePrice}]\n`;
+                    comparisonResult += `- Pricing discrepancies detected across systems. Review individual pricing details above.\n`;
                 }
             } else {
                 comparisonResult += `\n--- Pricing Information ---\n`;
                 comparisonResult += `- Pricing comparison is not applicable for ${gOffer.__typename} offers as it is managed externally.\n`;
                 comparisonResult += `  - OfferService Pricing Summary: [${getOfferServicePriceSummary(osOffer)}]\n`;
                 comparisonResult += `  - Genie Pricing Summary: [${getGeniePriceSummary(gOffer)}]\n`;
+                if (offerPriceDetails && offerPriceDetails.retailPrice) {
+                    comparisonResult += `  - UPS Pricing: [${offerPriceDetails.retailPrice.amount} ${offerPriceDetails.retailPrice.isoFormattedCurrency}]\n`;
+                }
             }
             // MODIFICATION END: Conditional Pricing Comparison
 
             // Product Comparison (simplified, focusing on product IDs)
-            const offerServiceProductIds = new Set(osOffer.products.map(p => p.product.id));
+            const offerServiceProductIds = new Set(osOffer.products.map((p: any) => p.product.id));
 
             let genieProductIds: Set<string>;
             if (gOffer && gOffer.products) {
                 // p's type will be correctly inferred as Product (Genie's Product) here
-                genieProductIds = new Set(gOffer.products.map(p => p.id));
+                genieProductIds = new Set(gOffer.products.map((p: any) => p.id));
             } else {
-                genieProductIds = new Set();
+                genieProductIds = new Set<string>();
             }
 
-            const missingInGenie = Array.from(offerServiceProductIds).filter(id => !genieProductIds.has(id));
+            const missingInGenie = Array.from(offerServiceProductIds).filter((id: string) => !genieProductIds.has(id));
             const missingInOfferService = Array.from(genieProductIds).filter(id => !offerServiceProductIds.has(id));
 
             comparisonResult += `\n--- Product Comparison ---\n`;
@@ -146,12 +161,12 @@ export const compareOffersTool = new DynamicStructuredTool({
         } else if (osOffer) {
             comparisonResult += `Only Offer Service data found for ID: ${offerId}. (Name: "${osOffer.name}")\n`;
             comparisonResult += `Offer Service Pricing: [${getOfferServicePriceSummary(osOffer)}]\n`;
-            comparisonResult += `Offer Service Products: ${osOffer.products.map(p => p.product.id).join(', ')}\n`;
+            comparisonResult += `Offer Service Products: ${osOffer.products.map((p: any) => p.product.id).join(', ')}\n`;
         } else if (gOffer) {
             comparisonResult += `Only Genie data found for ID: ${offerId}. (Name: "${gOffer.name}")\n`;
             comparisonResult += `Genie Pricing: [${getGeniePriceSummary(gOffer)}]\n`;
             if (gOffer.__typename === 'OfferD2C' && gOffer.products) {
-                comparisonResult += `Genie Products: ${gOffer.products.map(p => p.id).join(', ')}\n`;
+                comparisonResult += `Genie Products: ${gOffer.products.map((p: any) => p.id).join(', ')}\n`;
             } else {
                 comparisonResult += `Genie Products: Not applicable or no products found for this Genie offer type.\n`;
             }

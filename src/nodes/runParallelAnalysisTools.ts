@@ -1,4 +1,4 @@
-import { AgentStateData, Offer as OfferServiceOffer, Offer as GenieOffer } from '../model';
+import { AgentStateData, OfferServiceOffer, GenieOffer } from '../model';
 import { AIMessage } from '@langchain/core/messages';
 import { analyzeDatadogErrorsTool, analyzeDatadogWarningsTool, analyzeEntityHistoryTool, analyzeUPSOfferPriceTool, compareOffersTool } from '../tools';
 import { generateNewAIMessage, logger } from '../utils';
@@ -94,11 +94,13 @@ export async function runParallelAnalysisTools(
       ) || null;
 
       if (currentOfferServiceOffer || currentGenieOffer) {
+        const currentOfferPriceDetails = offerPriceDetails?.[0] || null;
         allAnalysisPromises.push(
             compareOffersTool.invoke({
               offerId: offerId,
               offerServiceOffer: currentOfferServiceOffer,
               genieOffer: currentGenieOffer,
+              offerPriceDetails: currentOfferPriceDetails,
             }).then(res => ({ type: 'offerComparison', id: offerId, result: res })),
         );
         logger.info(`[Node: runParallelAnalysisTools] Added compareOffersTool for offer ID: ${offerId}.`);

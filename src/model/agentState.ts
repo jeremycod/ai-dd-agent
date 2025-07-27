@@ -29,6 +29,7 @@ export type DiagnosticCase = {
   userQuery: string;
   toolsUsed: string[];
   finalSummary?: string;
+  dataForSummaryPrompt?: string;
   overallRlReward?: number;
   messageFeedbacks: Record<string, AgentMessageFeedback>;
 };
@@ -67,6 +68,7 @@ export type AgentStateData = {
   analysisResults: AnalysisResults;
   runParallelAnalysis: boolean;
   finalSummary?: MessageContent;
+  dataForSummaryPrompt?: string;
   queryCategory?: QueryCategory;
   offerPriceDetails?: OfferPriceResponse[];
   genieOfferDetails?: GenieOffer[];
@@ -213,6 +215,11 @@ export const AgentStateAnnotation = Annotation.Root({
       x: MessageContent | undefined,
       y: MessageContent | undefined,
     ): MessageContent | undefined => y ?? x,
+    default: () => undefined,
+  }),
+
+  dataForSummaryPrompt: Annotation<string | undefined, string | undefined>({
+    value: (x: string | undefined, y: string | undefined): string | undefined => y ?? x,
     default: () => undefined,
   }),
 

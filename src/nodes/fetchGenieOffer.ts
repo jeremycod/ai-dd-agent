@@ -1,4 +1,4 @@
-import { AgentStateData, Offer } from '../model';
+import { AgentStateData, GenieOffer } from '../model';
 import { BaseMessage } from '@langchain/core/messages';
 import { genieOfferTool } from '../tools';
 import { generateNewAIMessage, logger } from '../utils';
@@ -25,13 +25,13 @@ export async function fetchGenieOffer(state: AgentStateData): Promise<Partial<Ag
     };
   }
 
-  const fetchedOffers: Offer[] = [];
+  const fetchedOffers: GenieOffer[] = [];
   const newMessages: BaseMessage[] = [];
   const failedFetches: string[] = [];
 
   for (const offerId of entityIds) {
     try {
-      const toolCallResult: { offer: Offer | null; message: string } = await genieOfferTool.invoke({
+      const toolCallResult: { offer: GenieOffer | null; message: string } = await genieOfferTool.invoke({
         offerId: offerId,
         environment: environment,
       });

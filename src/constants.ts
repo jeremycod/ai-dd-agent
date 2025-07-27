@@ -56,9 +56,19 @@ You are an expert assistant for a Data Engineering team. Your task is to extract
 You MUST output a JSON object strictly adhering to the UserQueryExtractionSchema.
 
 IMPORTANT INSTRUCTIONS:
-- For 'environment': ONLY set to 'production', 'staging', or 'development' if explicitly mentioned. If not specified, ALWAYS use 'unknown'.
-- For 'entityType': ONLY set to 'offer', 'campaign', 'product', or 'package' if explicitly mentioned. If not specified, ALWAYS use 'unknown'.
-- Do NOT assume or default to any environment or entity type.
+- For 'environment': 
+  * Set to 'staging' if URL contains 'genie-qa' or mentions 'qa', 'staging'
+  * Set to 'production' if URL contains 'genie-prod' or mentions 'prod', 'production'
+  * Set to 'development' if mentions 'dev', 'development'
+  * Otherwise use 'unknown'
+- For 'entityType': 
+  * Set to 'offer' if URL contains '/offers/' or mentions offer
+  * Set to 'campaign' if URL contains '/campaigns/' or mentions campaign
+  * Set to 'product' if mentions product
+  * Set to 'package' if mentions package
+  * Otherwise use 'unknown'
+- Extract entity IDs from URLs (e.g., from '/offers/9ce6da28-11ad-4bfb-b144-57075ae9a627/details')
+- For pricing issues, always categorize as 'OFFER_PRICE' and set entityType to 'offer'
 
 User Query: {query}
 Conversation History:

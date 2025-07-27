@@ -120,6 +120,8 @@ export const analyzeDatadogErrorsTool = new DynamicStructuredTool({
       return 'No error logs provided for analysis.';
     }
 
+    const IGNORED_ERROR_PATTERNS = ['SEQUELIZE_UNKNOWN_ERROR'];
+
     const trimErrorMessage = (message: string) => {
       return message.split('\n')[0].replace(/Error: |Exception: |\[.*?\]/g, '').trim();
     };
@@ -168,6 +170,11 @@ export const analyzeDatadogErrorsTool = new DynamicStructuredTool({
               status.toLowerCase() === 'emergency' ||
               message.toLowerCase().includes('error'))
       ) {
+        // Skip errors that contain ignored patterns
+        const shouldIgnore = IGNORED_ERROR_PATTERNS.some(pattern => 
+          message.includes(pattern) || exception.includes(pattern)
+        );
+        if (shouldIgnore) continue;
         const trimmedException = trimErrorMessage(exception);
         errorsById[logId].push({ message, service, exception: trimmedException, timestamp: log.attributes?.timestamp });
 

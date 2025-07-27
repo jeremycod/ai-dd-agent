@@ -78,6 +78,7 @@ export async function summarizeFindings(state: AgentStateData): Promise<Partial<
     return {
       finalSummary: finalSummaryText,
       messages: updatedMessages,
+      dataForSummaryPrompt,
     };
   } catch (error) {
     logger.error('[Node: summarizeFindings] Error summarizing findings:', error);

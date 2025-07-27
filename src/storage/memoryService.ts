@@ -33,6 +33,7 @@ export class MemoryService {
         'parseUserQuery', 'memoryRetrieval', 'fetchParallelData', 'runParallelAnalysisTools', 'summarizeFindings', 'respondToUser'
       ].filter((tool, index, arr) => arr.indexOf(tool) === index), // Remove duplicates
       finalSummary: typeof state.finalSummary === 'string' ? state.finalSummary : undefined,
+      dataForSummaryPrompt: state.dataForSummaryPrompt,
       overallRlReward: state.overallRlReward || 0,
       messageFeedbacks: state.messageFeedbacks || {}
     };

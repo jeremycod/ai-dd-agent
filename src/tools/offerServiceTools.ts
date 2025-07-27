@@ -6,14 +6,14 @@ import {
   GetOfferServiceOfferToolSchema,
   GetOfferServiceOfferToolSchemaInput,
   EnvironmentType,
-  Offer,
+  OfferServiceOffer,
   OfferServiceResponse,
 } from '../model';
 import { OfferServiceClient } from '../clients';
 
 // Make sure this type is correctly defined and exported!
 export type FetchOfferServiceToolOutput = {
-  offer: Offer | null;
+  offer: OfferServiceOffer | null;
   message: string;
 };
 
