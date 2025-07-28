@@ -1,7 +1,7 @@
 import 'dotenv/config'; // Keep this at the very top to load environment variables first
 import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { SystemMessage } from '@langchain/core/messages';
 import { app } from './workflow'; // Assuming 'app' is your Langchain agent graph
 import { AgentStateData } from './model';
 import { PROMPT } from './constants';
@@ -9,6 +9,10 @@ import path from 'path';
 import { logger, TokenService, loadSymmetricKey, generateNewHumanMessage } from './utils';
 import { ZodError} from "zod";
 import { safeJsonStringify} from "./utils";
+
+import {MemoryService} from "./storage/memoryService";
+
+import {MongoStorage} from "./storage/mongodb";
 
 const server = express();
 const PORT = 3000;
@@ -96,12 +100,10 @@ server.post('/feedback', async (req: Request, res: Response) => {
     // Also update the stored case in MongoDB
     try {
       console.log('[Server] Simple feedback - Attempting to update MongoDB case:', caseId);
-      const { MongoStorage } = require('./storage/mongodb');
-      const { MemoryService } = require('./storage/memoryService');
+
       const mongoStorage = new MongoStorage(process.env.MONGODB_CONNECTION_STRING || 'mongodb://localhost:27017');
       await mongoStorage.connect();
       const memoryService = new MemoryService(mongoStorage);
-      
       // Create feedback object for this specific case
       const feedbackForCase = {
         [`feedback_${Date.now()}`]: {
@@ -143,8 +145,8 @@ server.post('/feedback/detailed', async (req: Request, res: Response) => {
   // Update the stored case in MongoDB directly
   try {
     console.log('[Server] Detailed feedback - Attempting to update MongoDB case:', caseId);
-    const { MongoStorage } = require('./storage/mongodb');
-    const { MemoryService } = require('./storage/memoryService');
+
+
     const mongoStorage = new MongoStorage(process.env.MONGODB_CONNECTION_STRING || 'mongodb://localhost:27017');
     await mongoStorage.connect();
     const memoryService = new MemoryService(mongoStorage);

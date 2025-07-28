@@ -123,7 +123,7 @@ export const analyzeDatadogErrorsTool = new DynamicStructuredTool({
     const IGNORED_ERROR_PATTERNS = ['SEQUELIZE_UNKNOWN_ERROR'];
 
     const trimErrorMessage = (message: string) => {
-      return message.split('\n')[0].replace(/Error: |Exception: |\[.*?\]/g, '').trim();
+      return message.split('\n')[0].replace(/Error: |Exception: /g, '').trim();
     };
 
     const errorsById: { [id: string]: { message: string; exception: string; service: string; timestamp: string }[] } = {};
@@ -240,7 +240,7 @@ export const analyzeDatadogWarningsTool = new DynamicStructuredTool({
     }
 
     const trimErrorMessage = (message: string) => {
-      return message.split('\n')[0].replace(/Error: |Exception: |\[.*?\]/g, '').trim();
+      return message.split('\n')[0].replace(/Error: |Exception: /g, '').trim();
     };
 
     const warningsById: { [id: string]: { message: string; exception: string; service: string; timestamp: string }[] } = {};
