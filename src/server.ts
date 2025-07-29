@@ -276,10 +276,10 @@ server.post('/chat', async (req: Request, res: Response) => {
           }
         }
         agentResponse = responseParts.join('\n');
-        logger.info('DEBUG: Using finalSummary (parsed from array):', agentResponse);
+        logger.info('DEBUG: Using finalSummary (parsed from array): %s', agentResponse);
       } else if (typeof finalState.finalSummary === 'string') {
         agentResponse = finalState.finalSummary;
-        logger.info('DEBUG: Using finalSummary (simple string):', agentResponse);
+        logger.info('DEBUG: Using finalSummary (simple string): %s', agentResponse);
       } else {
         agentResponse = `[Agent finalSummary was unexpected type: ${typeof finalState.finalSummary}]`;
         console.warn(

@@ -196,19 +196,25 @@ export class MemoryService {
   private async analyzeToolEffectiveness(diagnosticCase: DiagnosticCase, state: AgentState): Promise<EnhancedDiagnosticCase> {
     const toolContributions: { [toolName: string]: any } = {};
     
-    // Analyze each tool's contribution
+    // Get user feedback for this case
+    const userFeedback = this.extractUserFeedback(diagnosticCase.messageFeedbacks);
+    const finalDiagnosisText = typeof state.finalSummary === 'string' ? state.finalSummary : '';
+    
+    // Analyze each tool's contribution with enhanced context
     for (const [toolName, toolResult] of Object.entries(state.analysisResults || {})) {
-      const contribution = this.toolEffectivenessAnalyzer.analyzeToolContribution(toolResult, toolName);
-      const relevance = this.diagnosisRelevanceAnalyzer.analyzeToolRelevanceInDiagnosis(
-        typeof state.finalSummary === 'string' ? state.finalSummary : '', 
-        [{ toolName, ...(toolResult as any) }]
-      )[0];
+      const contribution = this.toolEffectivenessAnalyzer.analyzeToolContribution(
+        toolResult, 
+        toolName, 
+        finalDiagnosisText,
+        userFeedback
+      );
       
+      // Use the relevance score from the enhanced analyzer instead of the old one
       toolContributions[toolName] = {
         contributionScore: contribution.contributionScore,
-        relevanceScore: relevance.relevanceScore,
-        wasUseful: contribution.wasUsefulForDiagnosis && relevance.wasReferencedInDiagnosis,
-        reasoning: [...contribution.reasoning, ...relevance.keywordMatches]
+        relevanceScore: contribution.contributionScore, // Use the same score since it includes relevance
+        wasUseful: contribution.wasUsefulForDiagnosis,
+        reasoning: contribution.reasoning
       };
     }
     
@@ -216,5 +222,17 @@ export class MemoryService {
       ...diagnosticCase,
       toolContributions
     } as EnhancedDiagnosticCase;
+  }
+
+  private extractUserFeedback(messageFeedbacks: Record<string, any>): { rating?: number; type?: string } | undefined {
+    const feedbackEntries = Object.values(messageFeedbacks || {});
+    if (feedbackEntries.length === 0) return undefined;
+    
+    // Get the most recent feedback
+    const latestFeedback = feedbackEntries[feedbackEntries.length - 1];
+    return {
+      rating: latestFeedback.rating,
+      type: latestFeedback.type
+    };
   }
 }
