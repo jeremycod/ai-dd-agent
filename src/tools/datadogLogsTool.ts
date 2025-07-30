@@ -12,7 +12,7 @@ import {
 } from '../model';
 import { TIMESTAMP_ASCENDING } from '@datadog/datadog-api-client/dist/packages/datadog-api-client-v2/models/RUMSort';
 import { BaseServerConfiguration } from '@datadog/datadog-api-client/dist/packages/datadog-api-client-common';
-import { logger, trimErrorMessage } from '../utils';
+import { logger } from '../utils';
 
 const { LogsApi } = v2;
 
