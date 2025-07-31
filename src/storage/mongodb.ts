@@ -143,7 +143,7 @@ export class MongoStorage {
       ...(queryEmbedding && { queryEmbedding })
     };
     
-    logger.info('[MongoStorage] Storing case with embedding in collection:', this.casesCollection.collectionName);
+    logger.info(`[MongoStorage] Storing case with embedding in collection:, ${this.casesCollection.collectionName}`);
     logger.info('[MongoStorage] Case data: %j', { 
       caseId: caseWithEmbedding.caseId, 
       category: caseWithEmbedding.category,

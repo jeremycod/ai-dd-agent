@@ -1,5 +1,12 @@
 import {GenieOffer as Offer, GET_OFFER_QUERY, GraphQLResponse} from '../model';
-import {logger, TokenService} from '../utils';
+import {logger} from '../utils';
+// Conditional auth import
+let TokenService: any;
+if (process.env.CAPTURE_API_RESPONSES === 'true') {
+  TokenService = require('../utils/auth/cryptoAuth').TokenService;
+} else {
+  TokenService = require('../utils/auth/TokenService').TokenService;
+}
 
 export class GenieOfferClient {
   private readonly baseUrl: string;
@@ -47,11 +54,15 @@ export class GenieOfferClient {
     try {
       // The TokenService will check if the existing token is valid/expired.
       // If expired, it will automatically generate a new one using your symmetric key.
-      token = await TokenService.getInstance().getValidToken({
-        // Optionally pass dynamic claims if your token needs to be specific
-        // to the GraphQL client's operation or a specific session.
-        // e.g., sub: this.callerClientId, scopes: ['read:offer']
-      });
+      if (process.env.CAPTURE_API_RESPONSES === 'true') {
+        token = await TokenService.getInstance().getValidToken();
+      } else {
+        token = await TokenService.getInstance().getValidToken({
+          // Optionally pass dynamic claims if your token needs to be specific
+          // to the GraphQL client's operation or a specific session.
+          // e.g., sub: this.callerClientId, scopes: ['read:offer']
+        });
+      }
     } catch (authError: any) {
       logger.error('Failed to obtain a valid authentication token:', authError);
       return {
@@ -80,7 +91,7 @@ export class GenieOfferClient {
       if (!response.ok) {
         const errorText = response.statusText;
         // Consider logging more details like response.status and the full errorText
-        logger.error(`GraphQL HTTP Error ${response.status}:`, errorText);
+        logger.error(`GraphQL HTTP Error ${response.status}: ${errorText}`);
         return { errors: [{ message: `HTTP Error ${response.status}: ${errorText}` }] };
       }
 
