@@ -53,7 +53,7 @@ function parseTimeRange(timeRange: string): { fromMs: number; toMs: number } {
       fromMs = toMs - timeValue * 24 * 3600 * 1000;
       break;
     default:
-      fromMs = toMs - 3600 * 1000; // Default to 1 hour
+      fromMs = toMs - 3600 * 1000;
   }
   return { fromMs, toMs };
 }
@@ -76,7 +76,6 @@ export const getDatadogLogsTool = new DynamicStructuredTool({
     );
     const { fromMs, toMs } = parseTimeRange(timeRange);
 
-    // Build the Datadog query string
     let ddQuery = `(${ids.join(' OR ')})`;
     if (additionalQuery) {
       ddQuery += ` ${additionalQuery}`;
@@ -131,7 +130,7 @@ export const analyzeDatadogErrorsTool = new DynamicStructuredTool({
     const serviceErrorCountsById: { [id: string]: { [key: string]: number } } = {};
 
     // Determine the set of IDs to actively search for
-    const idsToSearch = Array.isArray(ids) && ids.length > 0 ? ids : []; // Now it's the actual IDs we will search for in message
+    const idsToSearch = Array.isArray(ids) && ids.length > 0 ? ids : [];
 
     for (const log of logs) {
       const message = log.attributes?.message || 'No message';
@@ -143,7 +142,7 @@ export const analyzeDatadogErrorsTool = new DynamicStructuredTool({
       const status = log.attributes?.status;
       const service = log.attributes?.service || 'unknown_service';
 
-      let logId: string = '_no_id_'; // Default to _no_id_ if no specific ID is found
+      let logId: string = '_no_id_';
 
       const attributeId = log.attributes?.id || log.attributes?.['offer_id'] || log.attributes?.['campaign_id'] || log.attributes?.['entity_id'];
       if (attributeId && idsToSearch.includes(attributeId)) {
@@ -170,7 +169,6 @@ export const analyzeDatadogErrorsTool = new DynamicStructuredTool({
               status.toLowerCase() === 'emergency' ||
               message.toLowerCase().includes('error'))
       ) {
-        // Skip errors that contain ignored patterns
         const shouldIgnore = IGNORED_ERROR_PATTERNS.some(pattern => 
           message.includes(pattern) || exception.includes(pattern)
         );
@@ -247,9 +245,7 @@ export const analyzeDatadogWarningsTool = new DynamicStructuredTool({
     const uniqueWarningMessagesById: { [id: string]: Map<string, number> } = {};
     const serviceWarningCountsById: { [id: string]: { [key: string]: number } } = {};
 
-    // Determine the set of IDs to actively search for
-    // If 'ids' is not provided or empty, we default to looking for _no_id_
-    const idsToSearch = Array.isArray(ids) && ids.length > 0 ? ids : []; // Now it's the actual IDs we will search for in message
+    const idsToSearch = Array.isArray(ids) && ids.length > 0 ? ids : [];
 
     for (const log of logs) {
       const message = log.attributes?.message || 'No message';
@@ -260,7 +256,7 @@ export const analyzeDatadogWarningsTool = new DynamicStructuredTool({
       const status = log.attributes?.status;
       const service = log.attributes?.service || 'unknown_service';
 
-      let logId: string = '_no_id_'; // Default to _no_id_ if no specific ID is found
+      let logId: string = '_no_id_';
 
       const attributeId = log.attributes?.id || log.attributes?.['offer_id'] || log.attributes?.['campaign_id'] || log.attributes?.['entity_id'];
       if (attributeId && idsToSearch.includes(attributeId)) {
@@ -304,7 +300,6 @@ export const analyzeDatadogWarningsTool = new DynamicStructuredTool({
     }
 
     let overallSummary = '';
-    // Only process IDs for which we actually found logs
     const allProcessedIds = Object.keys(warningsById).filter(id => warningsById[id].length > 0);
 
     if (allProcessedIds.length === 0) {

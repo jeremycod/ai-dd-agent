@@ -18,7 +18,7 @@ export const genieOfferTool = new DynamicStructuredTool({
         production: 'prod',
         staging: 'qa',
         development: 'dev',
-        unknown: 'prod', // Default or handle as appropriate for your setup
+        unknown: 'prod',
       };
 
       const mappedEnvironment = environmentMap[environment as EnvironmentType];
@@ -38,7 +38,7 @@ export const genieOfferTool = new DynamicStructuredTool({
           .join('; ');
         logger.error('GraphQL errors:', response.errors);
         return {
-          offer: null, // Indicate no offer found
+          offer: null,
           message: `Error fetching offer with ID ${offerId}: ${errorMessages}`,
         };
       } else {

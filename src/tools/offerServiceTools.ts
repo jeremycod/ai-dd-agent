@@ -11,7 +11,7 @@ import {
 } from '../model';
 import { OfferServiceClient } from '../clients';
 
-// Make sure this type is correctly defined and exported!
+
 export type FetchOfferServiceToolOutput = {
   offer: OfferServiceOffer | null;
   message: string;
@@ -22,12 +22,10 @@ export const fetchOfferServiceOfferTool = new DynamicStructuredTool({
   description:
     "Retrieves detailed information about a specific offer from the Offer Service using its ID. Use this when the user's query is about 'offers' and specific offer IDs are available.",
   schema: GetOfferServiceOfferToolSchema as any,
-  // Ensure the func's return type matches FetchOfferServiceToolOutput
   func: async ({
     offerId,
     environment,
   }: GetOfferServiceOfferToolSchemaInput): Promise<FetchOfferServiceToolOutput> => {
-    // <--- THIS IS CRUCIAL
     logger.info(
       `Executing getOfferServiceOfferTool for offer ID: ${offerId} in environment ${environment} `,
     );

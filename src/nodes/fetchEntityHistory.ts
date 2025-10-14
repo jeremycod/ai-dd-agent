@@ -29,7 +29,7 @@ export async function fetchEntityHistory(state: AgentStateData): Promise<Partial
     messages: [
       ...messages,
       generateNewAIMessage('Fetched Entity History. Proceeding to parallel analysis.'),
-    ], // Add tool output to history for LLM context
+    ],
     analysisResults: {
         ...state.analysisResults,
         entityHistory: summaryMessage,

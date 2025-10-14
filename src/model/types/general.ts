@@ -20,6 +20,6 @@ export const QUERY_CATEGORY_VALUES = [
   'unclassified',
 ] as const;
 
-export type EntityType = (typeof ENTITY_TYPE_VALUES)[number]; // "campaign" | "offer" | ...
-export type EnvironmentType = (typeof ENVIRONMENT_TYPE_VALUES)[number]; // "production" | "staging" | ...
-export type QueryCategory = (typeof QUERY_CATEGORY_VALUES)[number]; // "ENTITY_STATUS" | "UI_ISSUE" | ...
+export type EntityType = (typeof ENTITY_TYPE_VALUES)[number];
+export type EnvironmentType = (typeof ENVIRONMENT_TYPE_VALUES)[number];
+export type QueryCategory = (typeof QUERY_CATEGORY_VALUES)[number];
