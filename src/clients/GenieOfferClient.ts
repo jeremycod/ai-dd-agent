@@ -1,11 +1,24 @@
 import {GenieOffer as Offer, GET_OFFER_QUERY, GraphQLResponse} from '../model';
-import {logger, TokenService} from '../utils';
+import {logger} from '../utils';
+// Conditional auth import
+let TokenService: any;
+if (process.env.CAPTURE_API_RESPONSES === 'true') {
+  TokenService = require('../utils/auth/cryptoAuth').TokenService;
+} else {
+  TokenService = require('../utils/auth/TokenService').TokenService;
+}
 
 export class GenieOfferClient {
   private readonly baseUrl: string;
   private readonly callerClientId: string;
 
-
+  /**
+   * Initializes the GraphQLClient.
+   * @param environment The deployment environment ('prod', 'qa', 'dev').
+   * @param callerClientId A unique identifier for the client making the request (e.g., your application name).
+   * @param baseDomain (Optional) The base domain for your GraphQL endpoint. Defaults to 'dpegrid.net'.
+   * Useful for testing or if your domain structure differs.
+   */
   constructor(environment: 'prod' | 'qa' | 'dev', callerClientId: string) {
 
     let envKey = '';
@@ -26,7 +39,12 @@ export class GenieOfferClient {
     this.callerClientId = callerClientId;
   }
 
-
+  /**
+   * Internal helper to make authenticated GraphQL requests.
+   * @param query The GraphQL query string.
+   * @param variables The variables to pass to the GraphQL query.
+   * @returns A promise resolving to the GraphQL response.
+   */
   private async graphqlRequest<T>(
     query: string,
     variables: Record<string, any> = {},
@@ -34,7 +52,17 @@ export class GenieOfferClient {
 
     let token: string;
     try {
-      token = await TokenService.getInstance().getValidToken({});
+      // The TokenService will check if the existing token is valid/expired.
+      // If expired, it will automatically generate a new one using your symmetric key.
+      if (process.env.CAPTURE_API_RESPONSES === 'true') {
+        token = await TokenService.getInstance().getValidToken();
+      } else {
+        token = await TokenService.getInstance().getValidToken({
+          // Optionally pass dynamic claims if your token needs to be specific
+          // to the GraphQL client's operation or a specific session.
+          // e.g., sub: this.callerClientId, scopes: ['read:offer']
+        });
+      }
     } catch (authError: any) {
       logger.error('Failed to obtain a valid authentication token:', authError);
       return {
@@ -74,7 +102,13 @@ export class GenieOfferClient {
     }
   }
 
-
+  /**
+   * Fetches an offer by its ID from the GraphQL endpoint.
+   * Requires a JWT token to be set.
+   *
+   * @param offerId The ID of the offer to fetch.
+   * @returns A Promise that resolves to the Offer data or an error.
+   */
   public async fetchOffer(offerId: string): Promise<GraphQLResponse<{ offer: Offer }>> {
     return this.graphqlRequest<{ offer: Offer }>(GET_OFFER_QUERY, { offerId });
   }

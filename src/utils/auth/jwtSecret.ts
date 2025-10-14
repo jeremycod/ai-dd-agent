@@ -2,9 +2,11 @@
 import { importJWK, type JWK } from 'jose';
 import { logger } from '../logger';
 
-const JWT_JWK_STRING =
-  process.env.GENIE_JWT_JWK ||
-  '{"kty":"oct","k":"7Og6VnjjEtbcMb_OpGksOtstSZvMzsv0QTKcmAAsuFo","alg":"A256GCM"}';
+const JWT_JWK_STRING = process.env.GENIE_JWT_JWK;
+
+if (!JWT_JWK_STRING) {
+  throw new Error('GENIE_JWT_JWK environment variable is required');
+}
 
 let _jwtSecretKey: Uint8Array | undefined;
 
@@ -15,7 +17,7 @@ export const loadSymmetricKey = async () => {
     logger.info('JWT symmetric key loaded successfully from JWK.');
     logger.info('Loaded Symmetric Key Byte Length:', _jwtSecretKey.byteLength);
     if (_jwtSecretKey.byteLength !== 32) {
-      console.warn(
+      logger.warn(
         'Warning: Symmetric key length is not 32 bytes (256-bit). This might be an issue for A256GCM.',
       );
     }

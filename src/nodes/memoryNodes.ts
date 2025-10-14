@@ -36,7 +36,7 @@ export async function memoryRetrievalNode(
     logger.info(`[Node: memoryRetrievalNode] Found ${similarCases.length} similar cases and ${relevantPatterns.length} patterns`);
 
     return {
-      similarCases,
+      similarCases: similarCases as any,
       relevantPatterns,
       rlFeatures: {
         ...state.rlFeatures,

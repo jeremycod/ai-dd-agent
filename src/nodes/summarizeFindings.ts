@@ -8,7 +8,7 @@ import { generateNewAIMessage, generateNewHumanMessage, logger } from '../utils'
 
 export async function summarizeFindings(state: AgentStateData): Promise<Partial<AgentStateData>> {
   logger.info('[Node: summarizeFindings] Entering...');
-  const { messages, userQuery, analysisResults, entityIds, entityType } = state;
+  const { messages, userQuery, analysisResults, entityIds, entityType, similarCases, relevantPatterns } = state;
 
   // Define the SystemMessage specifically for the summarization task.
   // This will be the FIRST message sent to the Anthropic LLM for this call.
@@ -39,6 +39,46 @@ export async function summarizeFindings(state: AgentStateData): Promise<Partial<
   // --- End of Changes for Offer Comparison ---
 
 
+  // Build historical context from similar cases
+  let historicalContext = '';
+  if (similarCases && similarCases.length > 0) {
+    historicalContext = `\n\nHistorical Context from Similar Cases:\n`;
+    similarCases.slice(0, 3).forEach((similarCase: any, index: number) => {
+      historicalContext += `\n${index + 1}. Previous Case: "${similarCase.userQuery}"\n`;
+      historicalContext += `   - Diagnosis: ${similarCase.finalSummary || 'No summary available'}\n`;
+      historicalContext += `   - Tools Used: ${similarCase.toolsUsed?.join(', ') || 'Unknown'}\n`;
+      
+      // Use overallRlReward to indicate success (positive = successful)
+      if (similarCase.overallRlReward !== undefined) {
+        const successIndicator = similarCase.overallRlReward > 0 ? 'Successful' : 
+                                similarCase.overallRlReward < 0 ? 'Unsuccessful' : 'Neutral';
+        historicalContext += `   - Outcome: ${successIndicator} (reward: ${similarCase.overallRlReward})\n`;
+      }
+      
+      // Include tool effectiveness if available (from enhanced cases)
+      if (similarCase.toolContributions) {
+        const effectiveTools = Object.entries(similarCase.toolContributions)
+          .filter(([_, contrib]: [string, any]) => contrib.wasUseful)
+          .map(([toolName, _]) => toolName);
+        if (effectiveTools.length > 0) {
+          historicalContext += `   - Most Effective Tools: ${effectiveTools.join(', ')}\n`;
+        }
+      }
+    });
+  }
+
+  // Build pattern context
+  let patternContext = '';
+  if (relevantPatterns && relevantPatterns.length > 0) {
+    patternContext = `\n\nRelevant Patterns:\n`;
+    relevantPatterns.forEach((pattern: any, index: number) => {
+      patternContext += `\n${index + 1}. Pattern for ${pattern.category} in ${pattern.environment}:\n`;
+      patternContext += `   - Common Tools: ${pattern.commonTools?.join(', ') || 'None'}\n`;
+      patternContext += `   - Success Rate: ${Math.round((pattern.successRate || 0) * 100)}%\n`;
+      patternContext += `   - Usage Count: ${pattern.usageCount || 0}\n`;
+    });
+  }
+
   const dataForSummaryPrompt = `
     Based on the following user query and the subsequent analysis results, provide a concise summary of the problems found and potential next steps.
     
@@ -49,8 +89,11 @@ export async function summarizeFindings(state: AgentStateData): Promise<Partial<
     - Datadog Warnings: ${analysisResults.datadogWarnings || 'N/A'}
     - History of recent changes: ${analysisResults.entityHistory || 'N/A'}
     ${offerComparisonSummary}
+    ${historicalContext}
+    ${patternContext}
 
-    Synthesize this information, highlighting critical issues and proposing actionable advice.
+    Synthesize this information, highlighting critical issues and proposing actionable advice. 
+    Pay special attention to patterns from similar historical cases and whether the current issue matches known patterns.
   `;
 
   // Filter out ANY existing SystemMessages from the state.messages array.

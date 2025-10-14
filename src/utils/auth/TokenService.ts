@@ -67,8 +67,8 @@ export class TokenService {
     try {
       const symmetricKey = getSymmetricKey();
 
-      logger.info('JWE Plaintext Payload (JSON string) being encrypted:', jwePayload);
-      logger.info('Symmetric Key (bytes):', symmetricKey.byteLength);
+      logger.info('Generating JWE token with payload structure');
+      logger.info('Using symmetric key for encryption');
 
       token = await new jose.CompactEncrypt(
         new TextEncoder().encode(JSON.stringify(jwePayload)), // Plaintext is the stringified JSON object

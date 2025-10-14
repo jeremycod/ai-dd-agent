@@ -3,8 +3,10 @@ import { UPSClient } from '../clients';
 import { OfferPriceResponse, GetUPSOfferPriceToolSchema, GetUPSOfferPriceToolSchemaInput, AgentStateData, PackagePrice } from '../model';
 import { AIMessage } from '@langchain/core/messages';
 import { generateNewAIMessage, logger } from '../utils';
+import { ApiCaptureWrapper } from '../services/apiCaptureWrapper';
 
 const DSS_CALLER_CLIENT_ID = process.env.DSS_CALLER_CLIENT_ID || 'your-default-ai-agent-client-id';
+const apiCapture = new ApiCaptureWrapper();
 
 export const upsOfferPriceTool = new DynamicStructuredTool({
   name: 'getOfferPrice',
@@ -37,10 +39,18 @@ export const upsOfferPriceTool = new DynamicStructuredTool({
     const client = new UPSClient(upsEnvironment, DSS_CALLER_CLIENT_ID);
 
     try {
-      const priceDetails: OfferPriceResponse = await client.fetchOfferPrice(offerId);
+      const originalCall = async () => {
+        return await client.fetchOfferPrice(offerId);
+      };
+      
+      const priceDetails: OfferPriceResponse = await apiCapture.wrapUPSCall(
+        originalCall,
+        offerId,
+        environment
+      );
       logger.info(
-        `DEBUG: Successfully fetched price for ${offerId}:`,
-        JSON.stringify(priceDetails),
+        `DEBUG: Successfully fetched price for ${offerId}:,
+        ${JSON.stringify(priceDetails)}`,
       );
 
       return priceDetails;

@@ -2,8 +2,10 @@ import { GenieOfferClient } from '../clients';
 import { EnvironmentType, GetGenieOfferToolSchema, GetGenieOfferToolSchemaInput } from '../model';
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { logger } from '../utils';
+import { ApiCaptureWrapper } from '../services/apiCaptureWrapper';
 
 const DSS_CALLER_CLIENT_ID = process.env.DSS_CALLER_CLIENT_ID || 'your-default-ai-agent-client-id';
+const apiCapture = new ApiCaptureWrapper();
 
 export const genieOfferTool = new DynamicStructuredTool({
   name: 'genieOfferTool',
@@ -25,7 +27,15 @@ export const genieOfferTool = new DynamicStructuredTool({
 
       const client = new GenieOfferClient(mappedEnvironment, DSS_CALLER_CLIENT_ID);
 
-      const response = await client.fetchOffer(offerId);
+      const originalCall = async () => {
+        return await client.fetchOffer(offerId);
+      };
+      
+      const response = await apiCapture.wrapGenieCall(
+        originalCall,
+        offerId,
+        environment
+      );
 
       if (response.data?.offer) {
         return {

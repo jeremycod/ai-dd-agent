@@ -9,7 +9,7 @@ export const generateNewAIMessage = (content: string): AIMessage => {
   });
 };
 
-export const generateNewHumanMessage = (content: string): AIMessage => {
+export const generateNewHumanMessage = (content: string): HumanMessage => {
   return new HumanMessage({
     content: content,
     additional_kwargs: {

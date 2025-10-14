@@ -1,17 +1,40 @@
 import 'dotenv/config'; // Keep this at the very top to load environment variables first
 import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { SystemMessage } from '@langchain/core/messages';
 import { app } from './workflow'; // Assuming 'app' is your Langchain agent graph
 import { AgentStateData } from './model';
 import { PROMPT } from './constants';
 import path from 'path';
-import { logger, TokenService, loadSymmetricKey, generateNewHumanMessage } from './utils';
+import { logger, generateNewHumanMessage } from './utils';
+// Conditional auth import based on capture mode
+let TokenService: any;
+let loadSymmetricKey: any;
+
+if (process.env.CAPTURE_API_RESPONSES === 'true') {
+  // Use crypto auth for API capture mode
+  const cryptoAuth = require('./utils/auth/cryptoAuth');
+  TokenService = cryptoAuth.TokenService;
+  loadSymmetricKey = cryptoAuth.loadSymmetricKey;
+} else {
+  // Use original TokenService for production
+  const originalAuth = require('./utils/auth/TokenService');
+  const jwtSecret = require('./utils/auth/jwtSecret');
+  TokenService = originalAuth.TokenService;
+  loadSymmetricKey = jwtSecret.loadSymmetricKey;
+}
 import { ZodError} from "zod";
 import { safeJsonStringify} from "./utils";
 
+import {MemoryService} from "./storage/memoryService";
+
+import {MongoStorage} from "./storage/mongodb";
+
+// Initialize TokenService immediately when module loads
+TokenService.initializeInstance();
+
 const server = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 server.use(bodyParser.json());
 server.use(express.static(path.join(__dirname, '..', 'public')));
@@ -96,12 +119,10 @@ server.post('/feedback', async (req: Request, res: Response) => {
     // Also update the stored case in MongoDB
     try {
       console.log('[Server] Simple feedback - Attempting to update MongoDB case:', caseId);
-      const { MongoStorage } = require('./storage/mongodb');
-      const { MemoryService } = require('./storage/memoryService');
+
       const mongoStorage = new MongoStorage(process.env.MONGODB_CONNECTION_STRING || 'mongodb://localhost:27017');
       await mongoStorage.connect();
       const memoryService = new MemoryService(mongoStorage);
-      
       // Create feedback object for this specific case
       const feedbackForCase = {
         [`feedback_${Date.now()}`]: {
@@ -143,8 +164,8 @@ server.post('/feedback/detailed', async (req: Request, res: Response) => {
   // Update the stored case in MongoDB directly
   try {
     console.log('[Server] Detailed feedback - Attempting to update MongoDB case:', caseId);
-    const { MongoStorage } = require('./storage/mongodb');
-    const { MemoryService } = require('./storage/memoryService');
+
+
     const mongoStorage = new MongoStorage(process.env.MONGODB_CONNECTION_STRING || 'mongodb://localhost:27017');
     await mongoStorage.connect();
     const memoryService = new MemoryService(mongoStorage);
@@ -274,10 +295,10 @@ server.post('/chat', async (req: Request, res: Response) => {
           }
         }
         agentResponse = responseParts.join('\n');
-        logger.info('DEBUG: Using finalSummary (parsed from array):', agentResponse);
+        logger.info('DEBUG: Using finalSummary (parsed from array): %s', agentResponse);
       } else if (typeof finalState.finalSummary === 'string') {
         agentResponse = finalState.finalSummary;
-        logger.info('DEBUG: Using finalSummary (simple string):', agentResponse);
+        logger.info('DEBUG: Using finalSummary (simple string): %s', agentResponse);
       } else {
         agentResponse = `[Agent finalSummary was unexpected type: ${typeof finalState.finalSummary}]`;
         console.warn(
@@ -402,20 +423,14 @@ async function startServer() {
     await loadSymmetricKey();
     logger.info('JWT symmetric key loaded and ready for signing.');
 
-    // Initialize the TokenService
-    TokenService.initializeInstance();
-    logger.info('TokenService initialized.');
-
     // Get the initial token immediately upon startup.
-    // This will generate the first JWT and store it in memory.
-    // You can add any default claims that your service needs for its JWTs.
-    await TokenService.getInstance().getValidToken({
-      sub: 'genie-ai-agent-service', // Subject for this service's token
-      // Example: If your Scala app uses a 'clientId' claim for service identification
-      // clientId: 'genie-agent-backend',
-      // Example: If your tokens need specific roles or scopes
-      // roles: ['agent', 'read:all', 'write:some']
-    });
+    if (process.env.CAPTURE_API_RESPONSES === 'true') {
+      await TokenService.getInstance().getValidToken();
+    } else {
+      await TokenService.getInstance().getValidToken({
+        sub: 'genie-ai-agent-service'
+      });
+    }
     logger.info('Initial JWT token generated for Genie services.');
 
     // Start listening for HTTP requests only after token is successfully obtained

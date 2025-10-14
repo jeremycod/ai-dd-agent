@@ -1,14 +1,11 @@
-import { ChatAnthropic } from '@langchain/anthropic';
+import { AIServiceFactory } from './services';
 import { UserQueryExtractionSchema, UserQueryExtraction } from './model';
 
-export const extractionLLM = new ChatAnthropic({
-  model: 'claude-3-5-sonnet-latest',
-  temperature: 0,
-  apiKey: process.env.ANTHROPIC_API_KEY,
-}).withStructuredOutput<UserQueryExtraction>(UserQueryExtractionSchema);
+const aiFactory = AIServiceFactory.getInstance();
 
-export const summarizerLLM = new ChatAnthropic({
-  model: 'claude-3-5-sonnet-latest',
-  temperature: 0,
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+export const extractionLLM = aiFactory.createStructuredLLM<UserQueryExtraction>(
+  UserQueryExtractionSchema,
+  { temperature: 0 }
+);
+
+export const summarizerLLM = aiFactory.createLLM({ temperature: 0 });

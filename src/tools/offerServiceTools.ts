@@ -10,12 +10,15 @@ import {
   OfferServiceResponse,
 } from '../model';
 import { OfferServiceClient } from '../clients';
+import { ApiCaptureWrapper } from '../services/apiCaptureWrapper';
 
 
 export type FetchOfferServiceToolOutput = {
   offer: OfferServiceOffer | null;
   message: string;
 };
+
+const apiCapture = new ApiCaptureWrapper();
 
 export const fetchOfferServiceOfferTool = new DynamicStructuredTool({
   name: 'fetchOfferServiceOffer',
@@ -39,7 +42,16 @@ export const fetchOfferServiceOfferTool = new DynamicStructuredTool({
 
       const mappedEnvironment = environmentMap[environment];
       const offerServiceClient = new OfferServiceClient(mappedEnvironment);
-      const response: OfferServiceResponse = await offerServiceClient.getOfferById(offerId);
+      
+      const originalCall = async () => {
+        return await offerServiceClient.getOfferById(offerId);
+      };
+      
+      const response: OfferServiceResponse = await apiCapture.wrapOfferServiceCall(
+        originalCall,
+        offerId,
+        environment
+      );
 
       if (!response.success) {
         return {

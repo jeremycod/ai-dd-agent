@@ -1,9 +1,30 @@
 import { AgentState, DiagnosticCase, DiagnosticPattern } from '../model';
 import { MongoStorage } from './mongodb';
+import { 
+  AIServiceFactory,
+  EmbeddingService, 
+  ToolEffectivenessAnalyzer, 
+  DiagnosisRelevanceAnalyzer,
+  ProgressiveToolSelector,
+  EnhancedDiagnosticCase,
+  ToolSelectionPlan
+} from '../services';
 import { v4 as uuidv4 } from 'uuid';
+import { logger } from '../utils';
 
 export class MemoryService {
-  constructor(public storage: MongoStorage) {}
+  private embeddingService: EmbeddingService;
+  private toolEffectivenessAnalyzer: ToolEffectivenessAnalyzer;
+  private diagnosisRelevanceAnalyzer: DiagnosisRelevanceAnalyzer;
+  private progressiveToolSelector: ProgressiveToolSelector;
+  
+  constructor(public storage: MongoStorage) {
+    const aiFactory = AIServiceFactory.getInstance();
+    this.embeddingService = aiFactory.createEmbeddingService();
+    this.toolEffectivenessAnalyzer = new ToolEffectivenessAnalyzer();
+    this.diagnosisRelevanceAnalyzer = new DiagnosisRelevanceAnalyzer();
+    this.progressiveToolSelector = new ProgressiveToolSelector();
+  }
 
   async storeCaseFromState(state: AgentState): Promise<void> {
     console.log('[MemoryService] storeCaseFromState called');
@@ -39,8 +60,20 @@ export class MemoryService {
     };
 
     console.log('[MemoryService] Storing case:', diagnosticCase.caseId);
-    await this.storage.storeCase(diagnosticCase);
-    console.log('[MemoryService] Case stored successfully');
+    
+    // Analyze tool effectiveness
+    const enhancedCase = await this.analyzeToolEffectiveness(diagnosticCase, state);
+    
+    // Generate embedding for the case
+    try {
+      const queryEmbedding = await this.embeddingService.generateQueryEmbedding(state.userQuery);
+      await this.storage.storeCaseWithEmbedding(enhancedCase as any, queryEmbedding);
+      console.log('[MemoryService] Enhanced case stored with embedding successfully');
+    } catch (error) {
+      logger.error('[MemoryService] Error generating embedding, storing without: %j', error);
+      await this.storage.storeCase(enhancedCase as any);
+      console.log('[MemoryService] Enhanced case stored without embedding');
+    }
     
     // Update the state with the generated case ID for frontend use
     (state as any).generatedCaseId = generatedCaseId;
@@ -53,9 +86,28 @@ export class MemoryService {
     console.log('[MemoryService] Pattern updated successfully');
   }
 
-  async retrieveSimilarCases(state: AgentState): Promise<DiagnosticCase[]> {
-    if (!state.queryCategory) return [];
+  async retrieveSimilarCases(state: AgentState): Promise<DiagnosticCase[] | EnhancedDiagnosticCase[]> {
+    if (!state.queryCategory || !state.userQuery) return [];
 
+    try {
+      // Try vector search first
+      const queryEmbedding = await this.embeddingService.generateQueryEmbedding(state.userQuery);
+      const vectorResults = await this.storage.findSimilarCasesByEmbedding(
+        queryEmbedding,
+        state.queryCategory,
+        0.7,
+        5
+      );
+      
+      if (vectorResults.length > 0) {
+        logger.info('[MemoryService] Found %d similar cases using vector search', vectorResults.length);
+        return vectorResults;
+      }
+    } catch (error) {
+      logger.warn('[MemoryService] Vector search failed, falling back to exact matching: %j', error);
+    }
+
+    // Fallback to exact matching
     return await this.storage.findSimilarCases(
       state.queryCategory,
       state.entityType,
@@ -134,5 +186,53 @@ export class MemoryService {
     } catch (error) {
       console.error('[MemoryService] Error updating case with feedback:', error);
     }
+  }
+
+  async getToolSelectionPlan(state: AgentState): Promise<ToolSelectionPlan> {
+    const similarCases = await this.retrieveSimilarCases(state) as EnhancedDiagnosticCase[];
+    return this.progressiveToolSelector.selectToolsForCase(state, similarCases);
+  }
+
+  private async analyzeToolEffectiveness(diagnosticCase: DiagnosticCase, state: AgentState): Promise<EnhancedDiagnosticCase> {
+    const toolContributions: { [toolName: string]: any } = {};
+    
+    // Get user feedback for this case
+    const userFeedback = this.extractUserFeedback(diagnosticCase.messageFeedbacks);
+    const finalDiagnosisText = typeof state.finalSummary === 'string' ? state.finalSummary : '';
+    
+    // Analyze each tool's contribution with enhanced context
+    for (const [toolName, toolResult] of Object.entries(state.analysisResults || {})) {
+      const contribution = this.toolEffectivenessAnalyzer.analyzeToolContribution(
+        toolResult, 
+        toolName, 
+        finalDiagnosisText,
+        userFeedback
+      );
+      
+      // Use the relevance score from the enhanced analyzer instead of the old one
+      toolContributions[toolName] = {
+        contributionScore: contribution.contributionScore,
+        relevanceScore: contribution.contributionScore, // Use the same score since it includes relevance
+        wasUseful: contribution.wasUsefulForDiagnosis,
+        reasoning: contribution.reasoning
+      };
+    }
+    
+    return {
+      ...diagnosticCase,
+      toolContributions
+    } as EnhancedDiagnosticCase;
+  }
+
+  private extractUserFeedback(messageFeedbacks: Record<string, any>): { rating?: number; type?: string } | undefined {
+    const feedbackEntries = Object.values(messageFeedbacks || {});
+    if (feedbackEntries.length === 0) return undefined;
+    
+    // Get the most recent feedback
+    const latestFeedback = feedbackEntries[feedbackEntries.length - 1];
+    return {
+      rating: latestFeedback.rating,
+      type: latestFeedback.type
+    };
   }
 }

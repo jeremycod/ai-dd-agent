@@ -12,7 +12,8 @@ import {
 } from '../model';
 import { TIMESTAMP_ASCENDING } from '@datadog/datadog-api-client/dist/packages/datadog-api-client-v2/models/RUMSort';
 import { BaseServerConfiguration } from '@datadog/datadog-api-client/dist/packages/datadog-api-client-common';
-import { logger, trimErrorMessage } from '../utils';
+import { logger } from '../utils';
+import { ApiCaptureWrapper } from '../services/apiCaptureWrapper';
 
 const { LogsApi } = v2;
 
@@ -35,6 +36,7 @@ const configuration = client.createConfiguration({
 });
 
 const logsApi = new LogsApi(configuration);
+const apiCapture = new ApiCaptureWrapper();
 
 function parseTimeRange(timeRange: string): { fromMs: number; toMs: number } {
   const toMs = Date.now();
@@ -82,19 +84,28 @@ export const getDatadogLogsTool = new DynamicStructuredTool({
     }
 
     try {
-      const response = await logsApi.listLogs({
-        body: {
-          filter: {
-            query: ddQuery,
-            from: new Date(fromMs).toISOString(),
-            to: new Date(toMs).toISOString(),
+      const originalCall = async () => {
+        return await logsApi.listLogs({
+          body: {
+            filter: {
+              query: ddQuery,
+              from: new Date(fromMs).toISOString(),
+              to: new Date(toMs).toISOString(),
+            },
+            page: {
+              limit: limit,
+            },
+            sort: TIMESTAMP_ASCENDING,
           },
-          page: {
-            limit: limit,
-          },
-          sort: TIMESTAMP_ASCENDING,
-        },
-      });
+        });
+      };
+      
+      const response = await apiCapture.wrapDatadogCall(
+        originalCall,
+        ids.join(','),
+        timeRange
+      );
+      
       return {
         datadogLogs: response.data || [],
         message: `Successfully retrieved ${response.data?.length || 0} logs for ${entityType} IDs: ${ids.join(', ')}.`,
@@ -122,7 +133,7 @@ export const analyzeDatadogErrorsTool = new DynamicStructuredTool({
     const IGNORED_ERROR_PATTERNS = ['SEQUELIZE_UNKNOWN_ERROR'];
 
     const trimErrorMessage = (message: string) => {
-      return message.split('\n')[0].replace(/Error: |Exception: |\[.*?\]/g, '').trim();
+      return message.split('\n')[0].replace(/Error: |Exception: /g, '').trim();
     };
 
     const errorsById: { [id: string]: { message: string; exception: string; service: string; timestamp: string }[] } = {};
@@ -238,7 +249,7 @@ export const analyzeDatadogWarningsTool = new DynamicStructuredTool({
     }
 
     const trimErrorMessage = (message: string) => {
-      return message.split('\n')[0].replace(/Error: |Exception: |\[.*?\]/g, '').trim();
+      return message.split('\n')[0].replace(/Error: |Exception: /g, '').trim();
     };
 
     const warningsById: { [id: string]: { message: string; exception: string; service: string; timestamp: string }[] } = {};

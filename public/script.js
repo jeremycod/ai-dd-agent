@@ -2,7 +2,8 @@ const messagesDiv = document.getElementById("messages");
 const userInput = document.getElementById("user-input");
 const sendButton = document.getElementById("send-button");
 
-const API_URL = "http://localhost:3000/chat"; // Ensure this URL matches your backend
+// Dynamically determine the API URL based on current page location
+const API_URL = `${window.location.protocol}//${window.location.hostname}:${window.location.port}/chat`;
 
 const md = new markdownit({
   html: false, // Sanitize HTML if present in markdown
@@ -355,7 +356,7 @@ function showSuccessNotification(message) {
 
 async function sendSimpleFeedbackToBackend(feedbackData) {
   try {
-    const response = await fetch('/feedback', {
+    const response = await fetch(`${window.location.protocol}//${window.location.hostname}:${window.location.port}/feedback`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -402,7 +403,7 @@ function submitFeedback() {
 
 async function sendDetailedFeedbackToBackend(feedbackData) {
   try {
-    const response = await fetch('/feedback/detailed', {
+    const response = await fetch(`${window.location.protocol}//${window.location.hostname}:${window.location.port}/feedback/detailed`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

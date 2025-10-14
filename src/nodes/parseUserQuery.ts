@@ -117,7 +117,7 @@ export async function parseUserQuery(state: AgentStateData): Promise<Partial<Age
 
   const finalTimeRange = extractedData.timeRange || state.timeRange || getDynamicTimeRangeFallback();
 
-  logger.info('Final agentResponseContent for AIMessage:', agentResponseContent);
+  logger.info(`Final agentResponseContent for AIMessage: ${agentResponseContent}`);
   const newMessages: BaseMessage[] = [generateNewAIMessage(agentResponseContent)];
 
   return {
