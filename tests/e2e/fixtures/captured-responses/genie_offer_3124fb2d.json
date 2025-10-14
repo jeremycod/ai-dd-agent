@@ -1,0 +1,1034 @@
+{
+  "api": "genie_offer",
+  "method": "POST",
+  "url": "/graphql",
+  "params": {
+    "offerId": "42a9f4c7-0787-4f52-b7b9-9bbf1982528a",
+    "environment": "staging"
+  },
+  "response": {
+    "data": {
+      "offer": {
+        "__typename": "OfferD2C",
+        "id": "42a9f4c7-0787-4f52-b7b9-9bbf1982528a",
+        "name": "ESPN+ UFC PPV 303 Yearly Bundle - 134.98 USD",
+        "description": "ESPN+ Annual and UFC PPV Bundle",
+        "billingType": "DIRECT_BILLING",
+        "startDate": "2024-05-28T12:18-04:00",
+        "endDate": "2024-07-15T23:59-04:00",
+        "referenceLinks": [
+          {
+            "key": "Jira",
+            "url": "https://jira.disneystreaming.com/browse/COMOPS-2834"
+          }
+        ],
+        "packageId": "espn_standalone",
+        "products": [
+          {
+            "id": "14236208-7582-3792-9c9b-4ac9f4b57069",
+            "name": "ESPN Select",
+            "entitlements": [
+              {
+                "id": "14236208-7582-3792-9c9b-4ac9f4b57069",
+                "name": "ESPN_PLUS"
+              }
+            ],
+            "tierDefinitions": []
+          },
+          {
+            "id": "d905197e-a2fb-3f8b-bf3b-e1adb45d5f7f",
+            "name": "ESPN+ UFC PPV 303",
+            "entitlements": [
+              {
+                "id": "31da6b4d-d794-3b68-952e-295e78c81502",
+                "name": "ESPN_PLUS_UFC_PPV_303"
+              }
+            ],
+            "tierDefinitions": []
+          }
+        ],
+        "countries": [
+          {
+            "id": "UM"
+          },
+          {
+            "id": "PR"
+          },
+          {
+            "id": "AS"
+          },
+          {
+            "id": "VI"
+          },
+          {
+            "id": "MP"
+          },
+          {
+            "id": "GU"
+          },
+          {
+            "id": "US"
+          }
+        ],
+        "createdBy": "abhishek.chauhan@disneystreaming.com",
+        "createdDate": "2024-06-14T19:22:58.958Z",
+        "status": "LIVE",
+        "brands": [
+          "ESPN"
+        ],
+        "updatedBy": "abhishek.chauhan@disneystreaming.com",
+        "updatedDate": "2024-06-14T19:22:58.958Z",
+        "priceType": "RETAIL",
+        "transitions": [
+          {
+            "transitionOffer": {
+              "id": "705aec22-7fab-4d0d-b197-c86f31456de5",
+              "name": "ESPN+ Yearly Bundle $109.99 USD - signup",
+              "brands": [
+                "ESPN"
+              ],
+              "startDate": "2023-10-12T03:00-04:00",
+              "endDate": "2024-10-17T07:00Z",
+              "countries": [
+                {
+                  "id": "UM"
+                },
+                {
+                  "id": "PR"
+                },
+                {
+                  "id": "AS"
+                },
+                {
+                  "id": "VI"
+                },
+                {
+                  "id": "MP"
+                },
+                {
+                  "id": "GU"
+                },
+                {
+                  "id": "US"
+                }
+              ],
+              "packageId": "espn_standalone",
+              "package": null,
+              "products": [
+                {
+                  "id": "14236208-7582-3792-9c9b-4ac9f4b57069",
+                  "name": "ESPN Select"
+                }
+              ],
+              "currency": {
+                "code": "USD"
+              }
+            },
+            "transitionDate": null,
+            "transitionDateOperator": null,
+            "transitionReason": "PROMOTION_EXPIRATION",
+            "eligibility": {
+              "includedCohorts": [],
+              "excludedCohorts": []
+            }
+          }
+        ],
+        "initialPrice": 15687,
+        "billingFrequency": "YEAR",
+        "currency": {
+          "code": "USD"
+        },
+        "referenceOffers": [
+          {
+            "id": "705aec22-7fab-4d0d-b197-c86f31456de5",
+            "name": "ESPN+ Yearly Bundle $109.99 USD - signup",
+            "billingType": "DIRECT_BILLING",
+            "startDate": "2023-10-12T03:00-04:00",
+            "endDate": "2024-10-17T07:00Z",
+            "referenceLinks": [
+              {
+                "key": "Jira",
+                "url": "https://jira.disneystreaming.com/browse/COMOPS-1441"
+              }
+            ],
+            "products": [
+              {
+                "id": "14236208-7582-3792-9c9b-4ac9f4b57069",
+                "name": "ESPN Select",
+                "entitlements": [
+                  {
+                    "id": "14236208-7582-3792-9c9b-4ac9f4b57069",
+                    "name": "ESPN_PLUS"
+                  }
+                ]
+              }
+            ],
+            "countries": [
+              {
+                "id": "UM"
+              },
+              {
+                "id": "PR"
+              },
+              {
+                "id": "AS"
+              },
+              {
+                "id": "VI"
+              },
+              {
+                "id": "MP"
+              },
+              {
+                "id": "GU"
+              },
+              {
+                "id": "US"
+              }
+            ],
+            "createdBy": "Amanda.Gianni@disneystreaming.com",
+            "createdDate": "2024-10-14T18:58:22.291Z",
+            "status": "LIVE",
+            "brands": [
+              "ESPN"
+            ],
+            "priceType": "RETAIL"
+          },
+          {
+            "id": "913996a8-53d2-43d8-ab92-472e1441c50c",
+            "name": "ESPN+ UFC PPV 303 Standalone - 79.99 USD",
+            "billingType": "DIRECT_BILLING",
+            "startDate": "2024-05-24T19:57:12.063Z",
+            "endDate": "2024-07-15T23:59-04:00",
+            "referenceLinks": [
+              {
+                "key": "Jira",
+                "url": "https://jira.disneystreaming.com/browse/COMOPS-2832"
+              }
+            ],
+            "products": [
+              {
+                "id": "d905197e-a2fb-3f8b-bf3b-e1adb45d5f7f",
+                "name": "ESPN+ UFC PPV 303",
+                "entitlements": [
+                  {
+                    "id": "31da6b4d-d794-3b68-952e-295e78c81502",
+                    "name": "ESPN_PLUS_UFC_PPV_303"
+                  }
+                ]
+              }
+            ],
+            "countries": [
+              {
+                "id": "UM"
+              },
+              {
+                "id": "PR"
+              },
+              {
+                "id": "AS"
+              },
+              {
+                "id": "VI"
+              },
+              {
+                "id": "MP"
+              },
+              {
+                "id": "GU"
+              },
+              {
+                "id": "US"
+              }
+            ],
+            "createdBy": "Amanda.Gianni@disneystreaming.com",
+            "createdDate": "2024-05-24T19:57:12.063Z",
+            "status": "LIVE",
+            "brands": [
+              "ESPN"
+            ],
+            "priceType": "RETAIL"
+          }
+        ],
+        "offerProducts": [
+          {
+            "referenceOfferId": "705aec22-7fab-4d0d-b197-c86f31456de5",
+            "productId": "14236208-7582-3792-9c9b-4ac9f4b57069",
+            "price": {
+              "retailPrice": null,
+              "offerDiscount": {
+                "discountAmount": 3184
+              },
+              "referenceOfferProductPriceAmount": 13188,
+              "offerProductPriceAmount": 10004
+            },
+            "initialPhase": {
+              "id": "21ac5cd5-a48b-3ea0-8722-ae3a1d265771",
+              "phaseType": "RETAIL",
+              "discount": null,
+              "finalPrice": 10004,
+              "currency": {
+                "code": "USD"
+              },
+              "isUnlimited": false,
+              "isOneTime": false,
+              "duration": {
+                "durationLength": 1,
+                "durationUnit": "YEAR"
+              },
+              "product": {
+                "id": "14236208-7582-3792-9c9b-4ac9f4b57069",
+                "name": "ESPN Select",
+                "type": "BASE",
+                "entitlements": [
+                  {
+                    "id": "14236208-7582-3792-9c9b-4ac9f4b57069",
+                    "name": "ESPN_PLUS"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "referenceOfferId": "913996a8-53d2-43d8-ab92-472e1441c50c",
+            "productId": "d905197e-a2fb-3f8b-bf3b-e1adb45d5f7f",
+            "price": {
+              "retailPrice": null,
+              "offerDiscount": {
+                "discountAmount": 2316
+              },
+              "referenceOfferProductPriceAmount": 7999,
+              "offerProductPriceAmount": 5683
+            },
+            "initialPhase": {
+              "id": "ced1b2d4-5df6-3b41-9fb0-a2f6054a00c4",
+              "phaseType": "RETAIL",
+              "discount": null,
+              "finalPrice": 5683,
+              "currency": {
+                "code": "USD"
+              },
+              "isUnlimited": false,
+              "isOneTime": true,
+              "duration": null,
+              "product": {
+                "id": "d905197e-a2fb-3f8b-bf3b-e1adb45d5f7f",
+                "name": "ESPN+ UFC PPV 303",
+                "type": "PAY_PER_VIEW",
+                "entitlements": [
+                  {
+                    "id": "31da6b4d-d794-3b68-952e-295e78c81502",
+                    "name": "ESPN_PLUS_UFC_PPV_303"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    "extensions": {
+      "tracing": {
+        "version": 1,
+        "startTime": "2025-07-31T06:26:39.449Z",
+        "endTime": "2025-07-31T06:26:39.515Z",
+        "duration": 65894513,
+        "parsing": {
+          "startOffset": 54370,
+          "duration": 1337152
+        },
+        "validation": {
+          "startOffset": 1574243,
+          "duration": 2725264
+        },
+        "execution": {
+          "resolvers": [
+            {
+              "path": [
+                "offer"
+              ],
+              "parentType": "Queries",
+              "fieldName": "offer",
+              "returnType": "Offer",
+              "startOffset": 5218099,
+              "duration": 60525154
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts"
+              ],
+              "parentType": "OfferD2C",
+              "fieldName": "offerProducts",
+              "returnType": "[OfferProduct!]",
+              "startOffset": 10290807,
+              "duration": 55380176
+            },
+            {
+              "path": [
+                "offer",
+                "referenceOffers"
+              ],
+              "parentType": "OfferD2C",
+              "fieldName": "referenceOffers",
+              "returnType": "[Offer!]",
+              "startOffset": 10302887,
+              "duration": 42245533
+            },
+            {
+              "path": [
+                "offer",
+                "initialPrice"
+              ],
+              "parentType": "OfferD2C",
+              "fieldName": "initialPrice",
+              "returnType": "Int",
+              "startOffset": 10313867,
+              "duration": 55224555
+            },
+            {
+              "path": [
+                "offer",
+                "brands"
+              ],
+              "parentType": "Offer",
+              "fieldName": "brands",
+              "returnType": "[Brand!]",
+              "startOffset": 10325287,
+              "duration": 154400
+            },
+            {
+              "path": [
+                "offer",
+                "transitions"
+              ],
+              "parentType": "Offer",
+              "fieldName": "transitions",
+              "returnType": "[Transition!]",
+              "startOffset": 10339187,
+              "duration": 30975904
+            },
+            {
+              "path": [
+                "offer",
+                "countries"
+              ],
+              "parentType": "Offer",
+              "fieldName": "countries",
+              "returnType": "[Country!]",
+              "startOffset": 10350867,
+              "duration": 169860
+            },
+            {
+              "path": [
+                "offer",
+                "products"
+              ],
+              "parentType": "Offer",
+              "fieldName": "products",
+              "returnType": "[Product!]",
+              "startOffset": 10381687,
+              "duration": 30930264
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                1,
+                "price"
+              ],
+              "parentType": "OfferProduct",
+              "fieldName": "price",
+              "returnType": "Price",
+              "startOffset": 15771377,
+              "duration": 46651560
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                1,
+                "initialPhase"
+              ],
+              "parentType": "OfferProduct",
+              "fieldName": "initialPhase",
+              "returnType": "Phase",
+              "startOffset": 15771557,
+              "duration": 46661000
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                0,
+                "initialPhase"
+              ],
+              "parentType": "OfferProduct",
+              "fieldName": "initialPhase",
+              "returnType": "Phase",
+              "startOffset": 15779707,
+              "duration": 49760845
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                0,
+                "price"
+              ],
+              "parentType": "OfferProduct",
+              "fieldName": "price",
+              "returnType": "Price",
+              "startOffset": 15787207,
+              "duration": 49794516
+            },
+            {
+              "path": [
+                "offer",
+                "transitions",
+                0,
+                "eligibility"
+              ],
+              "parentType": "Transition",
+              "fieldName": "eligibility",
+              "returnType": "CohortEligibility!",
+              "startOffset": 15847937,
+              "duration": 232830
+            },
+            {
+              "path": [
+                "offer",
+                "transitions",
+                0,
+                "transitionOffer"
+              ],
+              "parentType": "Transition",
+              "fieldName": "transitionOffer",
+              "returnType": "Offer",
+              "startOffset": 15858957,
+              "duration": 25415074
+            },
+            {
+              "path": [
+                "offer",
+                "transitions",
+                0,
+                "eligibility",
+                "includedCohorts"
+              ],
+              "parentType": "CohortEligibility",
+              "fieldName": "includedCohorts",
+              "returnType": "[Cohort!]",
+              "startOffset": 15942007,
+              "duration": 77160
+            },
+            {
+              "path": [
+                "offer",
+                "transitions",
+                0,
+                "eligibility",
+                "excludedCohorts"
+              ],
+              "parentType": "CohortEligibility",
+              "fieldName": "excludedCohorts",
+              "returnType": "[Cohort!]",
+              "startOffset": 15944497,
+              "duration": 74640
+            },
+            {
+              "path": [
+                "offer",
+                "transitions",
+                0,
+                "transitionOffer",
+                "products"
+              ],
+              "parentType": "Offer",
+              "fieldName": "products",
+              "returnType": "[Product!]",
+              "startOffset": 18640852,
+              "duration": 22525009
+            },
+            {
+              "path": [
+                "offer",
+                "transitions",
+                0,
+                "transitionOffer",
+                "countries"
+              ],
+              "parentType": "Offer",
+              "fieldName": "countries",
+              "returnType": "[Country!]",
+              "startOffset": 18645962,
+              "duration": 118850
+            },
+            {
+              "path": [
+                "offer",
+                "transitions",
+                0,
+                "transitionOffer",
+                "brands"
+              ],
+              "parentType": "Offer",
+              "fieldName": "brands",
+              "returnType": "[Brand!]",
+              "startOffset": 18654492,
+              "duration": 93920
+            },
+            {
+              "path": [
+                "offer",
+                "products",
+                0,
+                "entitlements"
+              ],
+              "parentType": "Product",
+              "fieldName": "entitlements",
+              "returnType": "[Entitlement!]",
+              "startOffset": 29401630,
+              "duration": 11778991
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                0,
+                "price",
+                "retailPrice"
+              ],
+              "parentType": "Price",
+              "fieldName": "retailPrice",
+              "returnType": "RetailPrice",
+              "startOffset": 29432470,
+              "duration": 116320
+            },
+            {
+              "path": [
+                "offer",
+                "products",
+                1,
+                "entitlements"
+              ],
+              "parentType": "Product",
+              "fieldName": "entitlements",
+              "returnType": "[Entitlement!]",
+              "startOffset": 29433760,
+              "duration": 11721241
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                0,
+                "price",
+                "referenceOfferProductPriceAmount"
+              ],
+              "parentType": "Price",
+              "fieldName": "referenceOfferProductPriceAmount",
+              "returnType": "Int",
+              "startOffset": 29452380,
+              "duration": 35499282
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                0,
+                "price",
+                "offerDiscount"
+              ],
+              "parentType": "Price",
+              "fieldName": "offerDiscount",
+              "returnType": "Discount",
+              "startOffset": 29474190,
+              "duration": 27523018
+            },
+            {
+              "path": [
+                "offer",
+                "referenceOffers",
+                0,
+                "brands"
+              ],
+              "parentType": "Offer",
+              "fieldName": "brands",
+              "returnType": "[Brand!]",
+              "startOffset": 29499920,
+              "duration": 121720
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                1,
+                "initialPhase",
+                "product"
+              ],
+              "parentType": "Phase",
+              "fieldName": "product",
+              "returnType": "Product",
+              "startOffset": 29518630,
+              "duration": 12044561
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                0,
+                "price",
+                "offerProductPriceAmount"
+              ],
+              "parentType": "Price",
+              "fieldName": "offerProductPriceAmount",
+              "returnType": "Int",
+              "startOffset": 29545850,
+              "duration": 35946442
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                1,
+                "initialPhase",
+                "finalPrice"
+              ],
+              "parentType": "Phase",
+              "fieldName": "finalPrice",
+              "returnType": "Int",
+              "startOffset": 29546880,
+              "duration": 32836477
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                0,
+                "initialPhase",
+                "product"
+              ],
+              "parentType": "Phase",
+              "fieldName": "product",
+              "returnType": "Product",
+              "startOffset": 29565280,
+              "duration": 12099442
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                1,
+                "initialPhase",
+                "currency"
+              ],
+              "parentType": "Phase",
+              "fieldName": "currency",
+              "returnType": "Currency",
+              "startOffset": 29575580,
+              "duration": 100540
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                1,
+                "price",
+                "retailPrice"
+              ],
+              "parentType": "Price",
+              "fieldName": "retailPrice",
+              "returnType": "RetailPrice",
+              "startOffset": 29608530,
+              "duration": 88750
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                1,
+                "price",
+                "referenceOfferProductPriceAmount"
+              ],
+              "parentType": "Price",
+              "fieldName": "referenceOfferProductPriceAmount",
+              "returnType": "Int",
+              "startOffset": 29614750,
+              "duration": 27338348
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                0,
+                "initialPhase",
+                "currency"
+              ],
+              "parentType": "Phase",
+              "fieldName": "currency",
+              "returnType": "Currency",
+              "startOffset": 29629210,
+              "duration": 119730
+            },
+            {
+              "path": [
+                "offer",
+                "referenceOffers",
+                1,
+                "brands"
+              ],
+              "parentType": "Offer",
+              "fieldName": "brands",
+              "returnType": "[Brand!]",
+              "startOffset": 29630700,
+              "duration": 214341
+            },
+            {
+              "path": [
+                "offer",
+                "referenceOffers",
+                0,
+                "countries"
+              ],
+              "parentType": "Offer",
+              "fieldName": "countries",
+              "returnType": "[Country!]",
+              "startOffset": 29638800,
+              "duration": 135781
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                1,
+                "initialPhase",
+                "discount"
+              ],
+              "parentType": "Phase",
+              "fieldName": "discount",
+              "returnType": "Discount",
+              "startOffset": 29649870,
+              "duration": 195391
+            },
+            {
+              "path": [
+                "offer",
+                "referenceOffers",
+                1,
+                "countries"
+              ],
+              "parentType": "Offer",
+              "fieldName": "countries",
+              "returnType": "[Country!]",
+              "startOffset": 29691290,
+              "duration": 172961
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                1,
+                "initialPhase",
+                "phaseType"
+              ],
+              "parentType": "Phase",
+              "fieldName": "phaseType",
+              "returnType": "PhaseTypeEnum",
+              "startOffset": 29709410,
+              "duration": 477011
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                1,
+                "price",
+                "offerDiscount"
+              ],
+              "parentType": "Price",
+              "fieldName": "offerDiscount",
+              "returnType": "Discount",
+              "startOffset": 29714180,
+              "duration": 27196248
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                1,
+                "price",
+                "offerProductPriceAmount"
+              ],
+              "parentType": "Price",
+              "fieldName": "offerProductPriceAmount",
+              "returnType": "Int",
+              "startOffset": 29729810,
+              "duration": 32628087
+            },
+            {
+              "path": [
+                "offer",
+                "referenceOffers",
+                0,
+                "products"
+              ],
+              "parentType": "Offer",
+              "fieldName": "products",
+              "returnType": "[Product!]",
+              "startOffset": 29755211,
+              "duration": 11749190
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                0,
+                "initialPhase",
+                "finalPrice"
+              ],
+              "parentType": "Phase",
+              "fieldName": "finalPrice",
+              "returnType": "Int",
+              "startOffset": 29763711,
+              "duration": 35733621
+            },
+            {
+              "path": [
+                "offer",
+                "referenceOffers",
+                1,
+                "products"
+              ],
+              "parentType": "Offer",
+              "fieldName": "products",
+              "returnType": "[Product!]",
+              "startOffset": 29779121,
+              "duration": 22719519
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                0,
+                "initialPhase",
+                "discount"
+              ],
+              "parentType": "Phase",
+              "fieldName": "discount",
+              "returnType": "Discount",
+              "startOffset": 29792731,
+              "duration": 94220
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                0,
+                "initialPhase",
+                "phaseType"
+              ],
+              "parentType": "Phase",
+              "fieldName": "phaseType",
+              "returnType": "PhaseTypeEnum",
+              "startOffset": 29798751,
+              "duration": 434800
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                0,
+                "initialPhase",
+                "product",
+                "entitlements"
+              ],
+              "parentType": "Product",
+              "fieldName": "entitlements",
+              "returnType": "[Entitlement!]",
+              "startOffset": 41298511,
+              "duration": 258170
+            },
+            {
+              "path": [
+                "offer",
+                "referenceOffers",
+                0,
+                "products",
+                0,
+                "entitlements"
+              ],
+              "parentType": "Product",
+              "fieldName": "entitlements",
+              "returnType": "[Entitlement!]",
+              "startOffset": 41322201,
+              "duration": 148410
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                1,
+                "initialPhase",
+                "product",
+                "entitlements"
+              ],
+              "parentType": "Product",
+              "fieldName": "entitlements",
+              "returnType": "[Entitlement!]",
+              "startOffset": 41343431,
+              "duration": 172440
+            },
+            {
+              "path": [
+                "offer",
+                "referenceOffers",
+                1,
+                "products",
+                0,
+                "entitlements"
+              ],
+              "parentType": "Product",
+              "fieldName": "entitlements",
+              "returnType": "[Entitlement!]",
+              "startOffset": 52264579,
+              "duration": 195251
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                0,
+                "price",
+                "offerDiscount",
+                "discountAmount"
+              ],
+              "parentType": "Discount",
+              "fieldName": "discountAmount",
+              "returnType": "Int",
+              "startOffset": 52350529,
+              "duration": 4577029
+            },
+            {
+              "path": [
+                "offer",
+                "offerProducts",
+                1,
+                "price",
+                "offerDiscount",
+                "discountAmount"
+              ],
+              "parentType": "Discount",
+              "fieldName": "discountAmount",
+              "returnType": "Int",
+              "startOffset": 52415850,
+              "duration": 4456938
+            }
+          ]
+        }
+      }
+    }
+  },
+  "timestamp": "2025-07-31T06:26:39.473Z",
+  "statusCode": 200
+}

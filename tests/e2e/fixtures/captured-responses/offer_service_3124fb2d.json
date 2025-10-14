@@ -1,0 +1,74 @@
+{
+  "api": "offer_service",
+  "method": "GET",
+  "url": "/api/v1/offers",
+  "params": {
+    "offerId": "42a9f4c7-0787-4f52-b7b9-9bbf1982528a",
+    "environment": "staging"
+  },
+  "response": {
+    "success": true,
+    "data": {
+      "offers": [
+        {
+          "id": "42a9f4c7-0787-4f52-b7b9-9bbf1982528a",
+          "name": "ESPN+ UFC PPV 303 Yearly Bundle - 134.98 USD",
+          "products": [
+            {
+              "product": {
+                "id": "14236208-7582-3792-9c9b-4ac9f4b57069"
+              }
+            },
+            {
+              "product": {
+                "id": "d905197e-a2fb-3f8b-bf3b-e1adb45d5f7f"
+              }
+            }
+          ],
+          "pricing": [
+            {
+              "amount": 134.98,
+              "billingPeriod": null,
+              "currency": "USD",
+              "reason": null,
+              "discountedDuration": null,
+              "freeTrialDuration": null,
+              "product": []
+            },
+            {
+              "amount": 109.99,
+              "billingPeriod": "YEAR",
+              "currency": "USD",
+              "reason": "PROMOTION_EXPIRATION",
+              "discountedDuration": null,
+              "freeTrialDuration": null,
+              "product": []
+            }
+          ],
+          "packages": [
+            {
+              "id": "espn_standalone",
+              "name": "ESPN+ Standalone"
+            },
+            {
+              "id": "ufc_ppv_303",
+              "name": "ESPN+ UFC PPV 303"
+            }
+          ],
+          "labels": [
+            "annual",
+            "base",
+            "espn",
+            "ppv",
+            "ppv_d905197e-a2fb-3f8b-bf3b-e1adb45d5f7f",
+            "retail",
+            "ufc"
+          ],
+          "accountingEntity": null
+        }
+      ]
+    }
+  },
+  "timestamp": "2025-07-31T06:26:39.424Z",
+  "statusCode": 200
+}
