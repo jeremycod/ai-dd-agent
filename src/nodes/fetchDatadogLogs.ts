@@ -31,8 +31,7 @@ export async function fetchDatadogLogs(state: AgentStateData): Promise<Partial<A
   }
   const services = ['genie', 'genieserver'];
   const subquery = generateServiceSubquery(services);
-  // --- MISSING PART: Invoke the tool to get toolCallResult ---
-  const environmentQuery = mapEnvironmentToTag(state.environment || 'production'); // Assuming 'environment' is on AgentStateData
+  const environmentQuery = mapEnvironmentToTag(state.environment || 'production');
   const additionalQuery = `${subquery} ${environmentQuery}`;
   const toolCallResult = await getDatadogLogsTool.invoke({
     ids: entityIds,
@@ -40,27 +39,19 @@ export async function fetchDatadogLogs(state: AgentStateData): Promise<Partial<A
     timeRange: timeRange,
     additionalQuery: additionalQuery,
   });
-  // --- END MISSING PART ---
 
   const mappedDatadogLogs: DatadogLog[] = (toolCallResult.datadogLogs as v2.Log[]).map(
     (log: v2.Log) => {
-      const logAttributes = log.attributes || {}; // Ensure attributes is an object, even if undefined
+      const logAttributes = log.attributes || {};
 
-      // --- Logic to determine 'exception' value ---
       let exceptionValue: string = '';
-      // Example: If log status is 'error' or 'crit', and message contains "exception" or "error"
       if (logAttributes.status && ['error', 'crit'].includes(logAttributes.status.toLowerCase())) {
         if (logAttributes.message && /(exception|error)/i.test(logAttributes.message)) {
-          exceptionValue = logAttributes.message; // Use full message as exception
+          exceptionValue = logAttributes.message;
         } else {
-          exceptionValue = `Log status: ${logAttributes.status}`; // Generic exception based on status
+          exceptionValue = `Log status: ${logAttributes.status}`;
         }
       }
-      // You could also check other custom fields, e.g.,
-      // if (logAttributes.error_details) { exceptionValue = logAttributes.error_details; }
-      // --- End exception logic ---
-
-      // Prepare additionalAttributes by excluding known fields
       const { message, status, service, host, tags, timestamp, ...additionalAttrs } = logAttributes;
 
       return {
@@ -73,10 +64,10 @@ export async function fetchDatadogLogs(state: AgentStateData): Promise<Partial<A
           timestamp: timestamp || new Date().toISOString(),
           host: host || 'unknown',
           message: message || '',
-          exception: exceptionValue, // Assign the derived exception value
-          additionalAttributes: additionalAttrs, // Assign the remaining dynamic attributes
+          exception: exceptionValue,
+          additionalAttributes: additionalAttrs,
         },
-      } as DatadogLog; // Cast the constructed object to DatadogLog
+      } as DatadogLog;
     },
   );
   let summaryMessage = `Datadog logs fetching completed for ${entityIds.length} entities.`;
@@ -95,4 +86,4 @@ export async function fetchDatadogLogs(state: AgentStateData): Promise<Partial<A
       datadogLogs: summaryMessage,
     },
   };
-} // This closing brace was missing for the fetchDatadogLogs function
+}

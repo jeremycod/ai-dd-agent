@@ -20,7 +20,7 @@ export class GenieOfferClient {
    * Useful for testing or if your domain structure differs.
    */
   constructor(environment: 'prod' | 'qa' | 'dev', callerClientId: string) {
-    // Construct the base URL similarly to your UPSClient example
+
     let envKey = '';
     switch (environment) {
       case 'prod':
@@ -49,7 +49,7 @@ export class GenieOfferClient {
     query: string,
     variables: Record<string, any> = {},
   ): Promise<GraphQLResponse<T>> {
-    // --- CRITICAL CHANGE: Get token from TokenService ---
+
     let token: string;
     try {
       // The TokenService will check if the existing token is valid/expired.
@@ -79,7 +79,7 @@ export class GenieOfferClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`, // Use the token obtained from TokenService
+          Authorization: `Bearer ${token}`,
           'x-dss-caller-client-id': this.callerClientId,
         },
         body: JSON.stringify({
@@ -90,8 +90,8 @@ export class GenieOfferClient {
 
       if (!response.ok) {
         const errorText = response.statusText;
-        // Consider logging more details like response.status and the full errorText
-        logger.error(`GraphQL HTTP Error ${response.status}: ${errorText}`);
+
+        logger.error(`GraphQL HTTP Error ${response.status}:`, errorText);
         return { errors: [{ message: `HTTP Error ${response.status}: ${errorText}` }] };
       }
 
@@ -113,6 +113,5 @@ export class GenieOfferClient {
     return this.graphqlRequest<{ offer: Offer }>(GET_OFFER_QUERY, { offerId });
   }
 
-  // You can add other GraphQL methods here, e.g., fetchProducts, createOffer, etc.
-  // public async fetchProducts(...): Promise<GraphQLResponse<...>> { ... }
+
 }

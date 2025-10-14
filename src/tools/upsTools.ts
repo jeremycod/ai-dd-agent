@@ -14,9 +14,8 @@ export const upsOfferPriceTool = new DynamicStructuredTool({
     'Retrieves the price details for a specific offer ID from the Unified Pricing Service (UPS). ' +
     'Requires an `offerId` and the `environment` (production, staging, or development) where the offer resides. ' +
     'Returns structured price information, including amount, currency, and billing period if applicable.',
-  schema: GetUPSOfferPriceToolSchema as any, // Use the defined input schema
+  schema: GetUPSOfferPriceToolSchema as any,
   func: async ({ offerId, environment }: GetUPSOfferPriceToolSchemaInput) => {
-    // Arguments will be type-checked by schema
     logger.info(
       `DEBUG: getUPSOfferPriceTool called for Offer ID: ${offerId} in environment: ${environment}`,
     );
@@ -33,7 +32,7 @@ export const upsOfferPriceTool = new DynamicStructuredTool({
         upsEnvironment = 'dev';
         break;
       default:
-        // This case should ideally not be reached due to z.enum, but good for robustness
+
         throw new Error(`Invalid or unsupported environment for UPSClient: ${environment}`);
     }
 
@@ -53,8 +52,7 @@ export const upsOfferPriceTool = new DynamicStructuredTool({
         `DEBUG: Successfully fetched price for ${offerId}:,
         ${JSON.stringify(priceDetails)}`,
       );
-      // Ensure the returned object conforms to OfferPriceOutputSchema if you're using it for validation
-      // For a simple pass-through, just return priceDetails
+
       return priceDetails;
     } catch (error: any) {
       logger.error(`Error in fetchOfferPriceTool for ${offerId} in ${environment}:`, error);
@@ -72,7 +70,7 @@ export async function analyzeUPSOfferPriceTool(
 ): Promise<Partial<AgentStateData>> {
   logger.info('[Tool: analyzeUPSOfferPriceTool] Analyzing UPS Offer Price details...');
 
-  const { offerPriceDetails, queryCategory, entityIds } = state; // Also get entityIds for context
+  const { offerPriceDetails, queryCategory, entityIds } = state;
 
   if (!offerPriceDetails || offerPriceDetails.length === 0) {
     const message = 'No offer price details were provided for analysis.';
@@ -89,14 +87,13 @@ export async function analyzeUPSOfferPriceTool(
   let analysisSummary = 'Summary of UPS Offer Price Analysis:\n';
   const messages: AIMessage[] = [];
 
-  // Iterate over each OfferPriceResponse we received (each should correspond to one requested entityId)
+
   offerPriceDetails.forEach((priceResponse: OfferPriceResponse, index: number) => {
-    // Try to link this priceResponse back to the original entityId
-    const currentOfferId = entityIds[index] || 'Unknown Offer ID'; // Link by index or try to find in packagePrices
+    const currentOfferId = entityIds[index] || 'Unknown Offer ID';
 
     analysisSummary += `\n--- Analysis for Offer ID: ${currentOfferId} ---\n`;
 
-    // 1. Analyze Retail Price
+
     const retailPrice = priceResponse.retailPrice;
     if (retailPrice && retailPrice.amount !== undefined && retailPrice.amount !== null) {
       analysisSummary += `  Retail Price: ${retailPrice.amount} ${retailPrice.isoFormattedCurrency}\n`;
@@ -112,7 +109,7 @@ export async function analyzeUPSOfferPriceTool(
       );
     }
 
-    // 2. Analyze Promotional Prices (if any)
+
     if (priceResponse.promotionalPrices && priceResponse.promotionalPrices.length > 0) {
       analysisSummary += `  Promotional Prices:\n`;
       priceResponse.promotionalPrices.forEach((promo) => {
@@ -127,7 +124,7 @@ export async function analyzeUPSOfferPriceTool(
       analysisSummary += `  No promotional prices found.\n`;
     }
 
-    // 3. Analyze Package Prices (if any) - This is where the original 'offerId' might truly reside in the response
+
     if (priceResponse.packagePrices && priceResponse.packagePrices.length > 0) {
       analysisSummary += `  Package Prices:\n`;
       priceResponse.packagePrices.forEach((pkg: PackagePrice) => {
@@ -148,7 +145,7 @@ export async function analyzeUPSOfferPriceTool(
       analysisSummary += `  No package prices found.\n`;
     }
 
-    // If the query was specifically about 'OFFER_PRICE' and a price was expected
+
     if (queryCategory === 'OFFER_PRICE') {
       const hasAnyPrice =
         (retailPrice && retailPrice.amount !== undefined && retailPrice.amount !== null) ||

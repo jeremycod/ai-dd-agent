@@ -8,7 +8,6 @@ export async function memoryRetrievalNode(
 ): Promise<Partial<AgentState>> {
   logger.info('[Node: memoryRetrievalNode] Entering...');
   
-  // Track this action
   const action = {
     nodeName: 'memoryRetrievalNode',
     actionDescription: 'Retrieved similar cases and patterns from memory',
@@ -30,10 +29,8 @@ export async function memoryRetrievalNode(
   }
 
   try {
-    // Retrieve similar cases
     const similarCases = await memoryService.retrieveSimilarCases(state as any);
     
-    // Retrieve relevant patterns
     const relevantPatterns = await memoryService.getRelevantPatterns(state as any);
 
     logger.info(`[Node: memoryRetrievalNode] Found ${similarCases.length} similar cases and ${relevantPatterns.length} patterns`);
@@ -75,7 +72,6 @@ export async function storeCaseNode(
 ): Promise<Partial<AgentState>> {
   logger.info('[Node: storeCaseNode] Entering...');
   
-  // Track this action
   const action = {
     nodeName: 'storeCaseNode',
     actionDescription: 'Stored diagnostic case and updated patterns in memory',
@@ -90,7 +86,6 @@ export async function storeCaseNode(
   }
 
   try {
-    // Store the current case for future learning
     await memoryService.storeCaseFromState(state as any);
     
     logger.info('[Node: storeCaseNode] Successfully stored case in memory');

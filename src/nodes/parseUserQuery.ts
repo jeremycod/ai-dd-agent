@@ -28,15 +28,14 @@ export async function parseUserQuery(state: AgentStateData): Promise<Partial<Age
     entityType: 'unknown',
     environment: 'unknown',
     timeRange: '24h',
-    initialResponse: "I'm currently processing your request.", // Default processing message
+    initialResponse: "I'm currently processing your request.",
   };
 
-  let agentResponseContent: string = extractedData.initialResponse; // Initialize from default extractedData
+  let agentResponseContent: string = extractedData.initialResponse;
 
   try {
-    // Filter out any SystemMessages that might be in the state if not needed by LLM/model
     const historyMessages = state.messages
-      .filter((msg: BaseMessage) => !(msg instanceof SystemMessage)) // Keep only Human and AI messages
+      .filter((msg: BaseMessage) => !(msg instanceof SystemMessage))
       .map((msg) => `${msg instanceof HumanMessage ? 'Human' : 'AI'}: ${msg.content}`)
       .join('\n');
 
@@ -47,11 +46,11 @@ export async function parseUserQuery(state: AgentStateData): Promise<Partial<Age
 
     agentResponseContent = extractedData.initialResponse;
 
-    // Only ask for clarification if we're missing required information
+
     const needsClarification = extractedData.entityType === 'unknown' || extractedData.environment === 'unknown';
     
     if (needsClarification) {
-      // Check for entity type clarification
+
       if (
         extractedData.entityType === 'unknown' &&
         extractedData.entityIds.length > 0 &&
@@ -67,7 +66,7 @@ export async function parseUserQuery(state: AgentStateData): Promise<Partial<Age
         agentResponseContent += entityTypeClarificationMsg;
       }
 
-      // Check for environment clarification
+
       if (
         extractedData.environment === 'unknown' &&
         extractedData.category !== 'UNKNOWN_CATEGORY' &&
@@ -109,12 +108,12 @@ export async function parseUserQuery(state: AgentStateData): Promise<Partial<Age
   const finalEntityType =
     extractedData.entityType && extractedData.entityType !== 'unknown'
       ? extractedData.entityType
-      : state.entityType; // Retain from previous state
+      : state.entityType;
 
   const finalEnvironment =
     extractedData.environment && extractedData.environment !== 'unknown'
       ? extractedData.environment
-      : state.environment; // Retain from previous state
+      : state.environment;
 
   const finalTimeRange = extractedData.timeRange || state.timeRange || getDynamicTimeRangeFallback();
 
@@ -122,7 +121,7 @@ export async function parseUserQuery(state: AgentStateData): Promise<Partial<Age
   const newMessages: BaseMessage[] = [generateNewAIMessage(agentResponseContent)];
 
   return {
-    messages: [...state.messages, ...newMessages], // Append LLM's response to history
+    messages: [...state.messages, ...newMessages],
     queryCategory: extractedData.category,
     entityIds: finalEntityIds,
     entityType: finalEntityType,

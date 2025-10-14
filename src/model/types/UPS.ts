@@ -5,11 +5,11 @@ export type DurationUnit = 'MONTH' | 'YEAR' | 'WEEK' | 'DAY';
 export interface CurrencyAmount {
   amount: number;
   isoFormattedCurrency: string;
-  billingPeriod: BillingPeriod | null; // Use the defined type
+  billingPeriod: BillingPeriod | null;
 }
 
 export interface DiscountDuration {
-  unit: DurationUnit | null; // Use the defined type
+  unit: DurationUnit | null;
   length: number;
   isoFormatted: string | null;
 }
@@ -17,8 +17,8 @@ export interface DiscountDuration {
 export interface PromotionalPrice {
   amount: number;
   isoFormattedCurrency: string;
-  billingPeriod: BillingPeriod | null; // Use the defined type
-  phaseType: PhaseType | null; // Use the defined type
+  billingPeriod: BillingPeriod | null;
+  phaseType: PhaseType | null;
   discountDuration: DiscountDuration | null;
   billingFrequency: number;
 }

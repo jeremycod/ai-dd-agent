@@ -27,7 +27,7 @@ export async function runParallelAnalysisTools(
   } = state;
 
   const analysisResultsAccumulator: AgentStateData['analysisResults'] = {
-    ...state.analysisResults, // Preserve existing results if any
+    ...state.analysisResults,
   };
   const newMessagesAccumulator: AIMessage[] = [];
 
@@ -143,7 +143,7 @@ export async function runParallelAnalysisTools(
 
   for (const item of allResults) {
     if (item.status === 'fulfilled') {
-      const result = item.value; // The resolved value from our promise (type: AnalysisPromiseResult)
+      const result = item.value;
       switch (result.type) {
         case 'datadogErrors':
           analysisResultsAccumulator.datadogErrors = result.result as string;

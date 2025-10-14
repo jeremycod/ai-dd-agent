@@ -11,10 +11,10 @@ import { Offer as OfferServiceOffer } from './types/offerService';
 export type FeedbackType = 'positive' | 'negative' | 'neutral';
 
 export type AgentMessageFeedback = {
-  type: FeedbackType; // thumbs up/down -> positive/negative
+  type: FeedbackType;
   rating?: 1 | 2 | 3 | 4 | 5;
-  comment?: string; // freeform feedback
-  reason?: 1 | 2 | 3 | 4 | 5 | 6; // reasons (1 of 6)
+  comment?: string;
+  reason?: 1 | 2 | 3 | 4 | 5 | 6;
   timestamp: Date;
   feedbackSource?: string;
 };
@@ -334,9 +334,5 @@ export const AgentStateAnnotation = Annotation.Root({
   }),
 });
 
-/**
- * AgentState is the convenience type for nodes and application logic.
- * It is derived from AgentStateAnnotation.State, which correctly unwraps the channels
- * to give you AgentStateData.
- */
+
 export type AgentState = typeof AgentStateAnnotation.State;

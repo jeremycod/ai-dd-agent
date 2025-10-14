@@ -5,16 +5,11 @@ export class OfferServiceClient {
   private readonly baseUrl: string;
 
   constructor(environment: 'prod' | 'qa' | 'dev') {
-    // Note: The environment variable is nested within the subdomain for this URL
+
     this.baseUrl = `http://default.offer-service.offermgmt.bamtech.${environment}.us-east-1.bamgrid.net/graphql`;
   }
 
-  /**
-   * Fetches offer data from the GraphQL service.
-   * @param offerId The ID of the offer to retrieve.
-   * @returns A Promise that resolves to an OfferServiceResponse object.
-   * @throws Will throw an error if the network request fails or the GraphQL response contains errors.
-   */
+
   async getOfferById(offerId: string): Promise<OfferServiceResponse> {
     const variables: GetOfferByIdVariables = { offerId: offerId };
     const requestBody = {
@@ -24,12 +19,10 @@ export class OfferServiceClient {
 
     try {
       const response = await fetch(this.baseUrl, {
-        method: 'POST', // GraphQL APIs typically use POST
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Accept: 'application/json', // Indicate that we prefer JSON response
-          // Add any authorization headers if required by your API
-          // 'Authorization': 'Bearer YOUR_AUTH_TOKEN',
+          Accept: 'application/json',
         },
         body: JSON.stringify(requestBody),
       });
@@ -48,20 +41,20 @@ export class OfferServiceClient {
         logger.warn(`GraphQL errors for offer ${offerId}: ${JSON.stringify(data.errors)}`);
         return {
           success: false,
-          data: data.data, // Still return data if partially available
+          data: data.data,
           errors: data.errors,
-          error: data.errors.map((e) => e.message).join('; '), // Combine messages for a single error string
+          error: data.errors.map((e) => e.message).join('; '),
         };
       }
 
-      // If no GraphQL errors and data.offers is present, consider it a success
+
       if (data.data && data.data.offers && data.data.offers.length > 0) {
         return {
-          success: true, // <--- success is defined here
+          success: true,
           data: data.data,
         };
       } else {
-        // Case where GraphQL call was successful but no offer data found
+
         return {
           success: false,
           data: data.data,

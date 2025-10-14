@@ -5,7 +5,7 @@ import { generateNewAIMessage, logger } from '../utils';
 export async function fetchGenieOffer(state: AgentStateData): Promise<Partial<AgentStateData>> {
   logger.info('[Node: fetchGenieOffer] Attempting to fetch Genie Offer details...');
 
-  const { environment, entityIds, messages } = state; // Destructure callerClientId
+  const { environment, entityIds, messages } = state;
 
   // Basic validation checks
   if (!environment || environment === 'unknown') {
