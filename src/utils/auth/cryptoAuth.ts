@@ -33,7 +33,7 @@ export class CryptoTokenService {
     try {
       console.log('Raw JWK string:', JWT_JWK_STRING);
       const jwk = JSON.parse(JWT_JWK_STRING);
-      // Decode base64url key
+
       const keyBase64 = jwk.k.replace(/-/g, '+').replace(/_/g, '/');
       this.symmetricKey = Buffer.from(keyBase64, 'base64');
       logger.info('Symmetric key loaded successfully from JWK');
@@ -56,27 +56,27 @@ export class CryptoTokenService {
       initials: (process.env.DEFAULT_JWE_GIVENNAME?.charAt(0) || 'T') + (process.env.DEFAULT_JWE_SURNAME?.charAt(0) || 'U'),
       roles: process.env.DEFAULT_JWE_ROLES?.split(',').map(r => r.trim()) || ['USER'],
       profile: process.env.DEFAULT_JWE_PROFILE || 'main',
-      expiryDate: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+      expiryDate: Date.now() + (24 * 60 * 60 * 1000)
     };
 
     try {
-      // Create JWE using Node.js crypto
+
       const plaintext = JSON.stringify(payload);
-      const iv = crypto.randomBytes(12); // 96-bit IV for GCM
+      const iv = crypto.randomBytes(12);
       const cipher = crypto.createCipheriv('aes-256-gcm', this.symmetricKey!, iv);
       
       let encrypted = cipher.update(plaintext, 'utf8', 'base64url');
       encrypted += cipher.final('base64url');
       const authTag = cipher.getAuthTag();
 
-      // Create JWE compact serialization
+
       const header = {
         alg: 'dir',
         enc: 'A256GCM'
       };
       
       const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
-      const encodedKey = ''; // Empty for direct encryption
+      const encodedKey = '';
       const encodedIV = iv.toString('base64url');
       const encodedCiphertext = encrypted;
       const encodedTag = authTag.toString('base64url');
@@ -84,7 +84,7 @@ export class CryptoTokenService {
       const token = `${encodedHeader}.${encodedKey}.${encodedIV}.${encodedCiphertext}.${encodedTag}`;
       
       this.currentToken = token;
-      this.tokenExpiryTime = payload.expiryDate - (5 * 60 * 1000); // 5 min buffer
+      this.tokenExpiryTime = payload.expiryDate - (5 * 60 * 1000);
       
       logger.info('Successfully generated JWE token using Node.js crypto');
       return token;
@@ -99,7 +99,7 @@ export class CryptoTokenService {
   }
 
   public async getValidToken(): Promise<string> {
-    // Check for manual token override (for API capture mode)
+
     const manualToken = process.env.GENIE_MANUAL_TOKEN;
     if (manualToken && process.env.CAPTURE_API_RESPONSES === 'true') {
       logger.info('Using manual token override for API capture mode');

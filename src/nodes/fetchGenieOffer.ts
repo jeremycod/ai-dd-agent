@@ -7,7 +7,7 @@ export async function fetchGenieOffer(state: AgentStateData): Promise<Partial<Ag
 
   const { environment, entityIds, messages } = state;
 
-  // Basic validation checks
+
   if (!environment || environment === 'unknown') {
     return {
       messages: [

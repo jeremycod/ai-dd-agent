@@ -2,9 +2,9 @@ import { logger } from '../utils';
 import { AgentState } from '../model';
 
 export interface ToolSelectionPlan {
-  tier1: string[];  // High effectiveness (>70%)
-  tier2: string[];  // Medium effectiveness (40-70%)
-  tier3: string[];  // Low effectiveness (<40%)
+  tier1: string[];
+  tier2: string[];
+  tier3: string[];
 }
 
 export interface ToolStats {
@@ -56,7 +56,7 @@ export class ProgressiveToolSelector {
       };
     }
     
-    // Calculate tool effectiveness from similar cases
+
     const toolStats = this.calculateToolStats(similarCases);
     
     const plan: ToolSelectionPlan = {
@@ -65,7 +65,7 @@ export class ProgressiveToolSelector {
       tier3: toolStats.filter(t => t.effectivenessScore < 0.4).map(t => t.toolName)
     };
 
-    // Ensure all tools are included somewhere
+
     const allSelectedTools = [...plan.tier1, ...plan.tier2, ...plan.tier3];
     const missingTools = this.ALL_TOOLS.filter(tool => !allSelectedTools.includes(tool));
     plan.tier2.push(...missingTools);
@@ -100,7 +100,7 @@ export class ProgressiveToolSelector {
       usageCount: stats.total
     }));
 
-    // Sort by effectiveness score descending
+
     toolStats.sort((a, b) => b.effectivenessScore - a.effectivenessScore);
 
     logger.info('[ProgressiveToolSelector] Tool effectiveness stats: %j', 
@@ -116,11 +116,11 @@ export class ProgressiveToolSelector {
 
   getRecommendedExecutionStrategy(plan: ToolSelectionPlan): string {
     if (plan.tier1.length >= 6) {
-      return 'parallel_all'; // Most tools are effective, run in parallel
+      return 'parallel_all';
     } else if (plan.tier1.length >= 3) {
-      return 'tiered_parallel'; // Some clear winners, use tiered approach
+      return 'tiered_parallel';
     } else {
-      return 'sequential_validation'; // Few effective tools, validate results before proceeding
+      return 'sequential_validation';
     }
   }
 }

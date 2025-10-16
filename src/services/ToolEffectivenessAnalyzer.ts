@@ -17,17 +17,17 @@ export class ToolEffectivenessAnalyzer {
     let score = 0;
     const reasoning: string[] = [];
 
-    // 1. Data quality indicators (30% weight)
+
     const dataQualityScore = this.calculateDataQuality(toolResult, toolName, reasoning);
     score += dataQualityScore * 0.3;
 
-    // 2. Relevance to final diagnosis (50% weight) - MOST IMPORTANT
+
     const relevanceScore = this.calculateRelevanceToFinalDiagnosis(
       toolResult, toolName, finalDiagnosis, reasoning
     );
     score += relevanceScore * 0.5;
 
-    // 3. User feedback correlation (20% weight)
+
     const feedbackScore = this.calculateFeedbackCorrelation(
       toolResult, toolName, userFeedback, reasoning
     );
@@ -42,7 +42,7 @@ export class ToolEffectivenessAnalyzer {
       toolName,
       contributionScore,
       reasoning,
-      wasUsefulForDiagnosis: contributionScore > 0.5 // Higher threshold
+      wasUsefulForDiagnosis: contributionScore > 0.5
     };
   }
 
@@ -54,7 +54,7 @@ export class ToolEffectivenessAnalyzer {
       return 0;
     }
     
-    // Handle string results (most analysis tools return strings)
+
     if (typeof toolResult === 'string') {
       if (toolResult.trim().length === 0) {
         reasoning.push('empty_string_result');
@@ -72,13 +72,13 @@ export class ToolEffectivenessAnalyzer {
       return 0.6;
     }
     
-    // Handle object results
+
     if (typeof toolResult === 'object' && Object.keys(toolResult).length === 0) {
       reasoning.push('empty_object_returned');
       return 0.1;
     }
 
-    // Error indicators (negative)
+
     if (toolResult?.errors?.length > 0) {
       reasoning.push('had_errors');
       return 0.2;
@@ -160,7 +160,7 @@ export class ToolEffectivenessAnalyzer {
         break;
 
       default:
-        // Generic scoring for unknown tools
+
         if (toolResult?.analysis || toolResult?.summary) {
           score += 0.3;
           reasoning.push('provided_analysis');
@@ -192,11 +192,11 @@ export class ToolEffectivenessAnalyzer {
     const diagnosisLower = finalDiagnosis.toLowerCase();
     let relevanceScore = 0;
     
-    // Convert tool result to searchable text
+
     const toolResultText = typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult);
     const toolResultLower = toolResultText.toLowerCase();
 
-    // Check if tool's key data appears in final diagnosis
+
     switch (toolName) {
       case 'fetchDatadogLogs':
       case 'analyzeDatadogErrorsTool':
@@ -234,20 +234,20 @@ export class ToolEffectivenessAnalyzer {
         break;
 
       default:
-        // Generic relevance check
+
         if (toolResult.analysis && diagnosisLower.includes(toolResult.analysis.toLowerCase().substring(0, 50))) {
           relevanceScore = 0.6;
           reasoning.push('tool_analysis_referenced');
         }
     }
 
-    // Check if specific tool result data appears in diagnosis
+
     if (toolResult.entityId && diagnosisLower.includes(toolResult.entityId.toLowerCase())) {
       relevanceScore = Math.max(relevanceScore, 0.7);
       reasoning.push('entity_id_referenced');
     }
     
-    // Generic text overlap check for string results
+
     if (typeof toolResult === 'string' && toolResult.length > 20) {
       const toolWords = toolResult.toLowerCase().split(/\s+/).filter(word => word.length > 3);
       const diagnosisWords = diagnosisLower.split(/\s+/);
@@ -270,18 +270,18 @@ export class ToolEffectivenessAnalyzer {
     reasoning: string[] = []
   ): number {
     if (!userFeedback) {
-      return 0.5; // Neutral if no feedback
+      return 0.5;
     }
 
-    // If user gave positive feedback and tool found issues, it was likely helpful
+
     if (userFeedback.type === 'positive' || (userFeedback.rating && userFeedback.rating >= 4)) {
       reasoning.push('positive_user_feedback');
       return 0.8;
     }
 
-    // If user gave negative feedback, tools that found issues might still be valuable
+
     if (userFeedback.type === 'negative' || (userFeedback.rating && userFeedback.rating <= 2)) {
-      // Tools that identified problems are still valuable even if overall case failed
+
       if (this.toolFoundIssues(toolResult, toolName)) {
         reasoning.push('found_issues_despite_negative_feedback');
         return 0.6;
@@ -290,7 +290,7 @@ export class ToolEffectivenessAnalyzer {
       return 0.2;
     }
 
-    return 0.5; // Neutral
+    return 0.5;
   }
 
   private toolFoundIssues(toolResult: any, toolName: string): boolean {

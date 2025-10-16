@@ -1,4 +1,4 @@
-// src/tools/offerServiceTools.ts
+
 
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { logger } from '../utils';

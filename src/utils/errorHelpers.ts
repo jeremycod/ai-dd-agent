@@ -1,45 +1,80 @@
 import {ZodError} from "zod";
 import {logger} from './logger';
 
-export function safeJsonStringify(obj: any, indent = 2): string {
+export function safeJsonStringify(obj: any, indent = 2, maxDepth = 10, maxProperties = 1000): string {
     const cache = new Set();
-    const replacer = (key: string, value: any) => {
+    let propertyCount = 0;
+    
+    const replacer = (key: string, value: any, depth = 0) => {
+
+        if (depth > maxDepth) {
+            return '[Max depth exceeded]';
+        }
+        
+
+        if (propertyCount > maxProperties) {
+            return '[Max properties exceeded]';
+        }
+        
         if (typeof value === 'object' && value !== null) {
+            propertyCount++;
+            
             if (cache.has(value)) {
-                // Circular reference found, discard key
-                return;
+
+                return '[Circular reference]';
             }
-            // Store value in our collection
+
             cache.add(value);
 
-            // --- NEW: Handle Error instances explicitly ---
+
             if (value instanceof Error) {
-                // Create a plain object to include non-enumerable Error properties
-                const errorLike = {
+                const errorLike: Record<string, any> = {
                     name: value.name,
                     message: value.message,
-                    stack: value.stack,
-                    // Copy any other enumerable properties (like ZodError.issues)
-                    ...(Object.getOwnPropertyNames(value).reduce((acc: Record<string, any>, propName) => {
-                        // Ensure we don't overwrite name, message, stack
-                        if (!['name', 'message', 'stack'].includes(propName)) {
-                            acc[propName] = (value as any)[propName];
-                        }
-                        return acc;
-                    }, {}))
+                    stack: value.stack ? value.stack.split('\n').slice(0, 10).join('\n') : undefined
                 };
-                // If it's a ZodError, ensure 'issues' is copied
-                if (value instanceof ZodError && value.issues) {
-                    (errorLike as any).issues = value.issues;
+                
+
+                try {
+                    const propNames = Object.getOwnPropertyNames(value).slice(0, 50);
+                    for (const propName of propNames) {
+                        if (!['name', 'message', 'stack'].includes(propName)) {
+                            errorLike[propName] = (value as any)[propName];
+                        }
+                    }
+                } catch (e) {
+                    errorLike._propertyEnumerationError = 'Failed to enumerate properties';
                 }
-                // If it's a LangChain error that might have a 'toolInput' or 'cause'
+                
+
+                if (value instanceof ZodError && value.issues) {
+                    errorLike.issues = value.issues;
+                }
                 if ((value as any).toolInput) {
-                    (errorLike as any).toolInput = (value as any).toolInput;
+                    errorLike.toolInput = (value as any).toolInput;
                 }
                 if ((value as any).cause) {
-                    (errorLike as any).cause = (value as any).cause; // Recursively stringify cause later if it's an object
+                    errorLike.cause = (value as any).cause;
                 }
                 return errorLike;
+            }
+            
+
+            if (Array.isArray(value)) {
+                if (value.length > 100) {
+                    return [...value.slice(0, 100), `[... ${value.length - 100} more items]`];
+                }
+            }
+            
+
+            if (Object.keys(value).length > 100) {
+                const limitedObj: Record<string, any> = {};
+                const keys = Object.keys(value).slice(0, 100);
+                for (const k of keys) {
+                    limitedObj[k] = value[k];
+                }
+                limitedObj._truncated = `Object had ${Object.keys(value).length} properties, showing first 100`;
+                return limitedObj;
             }
         }
         return value;
@@ -48,8 +83,8 @@ export function safeJsonStringify(obj: any, indent = 2): string {
     try {
         return JSON.stringify(obj, replacer, indent);
     } catch (e) {
-        // Fallback for extreme cases where stringify still fails (e.g., deeply nested non-serializable objects)
-        logger.error('Failed to stringify object for logging:', e);
-        return '[Failed to stringify object]';
+
+        logger.error('Failed to stringify object for logging:', e instanceof Error ? e.message : String(e));
+        return `[Failed to stringify object: ${e instanceof Error ? e.message : String(e)}]`;
     }
 }

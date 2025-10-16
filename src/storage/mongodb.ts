@@ -2,7 +2,7 @@ import { MongoClient, Db, Collection } from 'mongodb';
 import { DiagnosticCase, DiagnosticPattern } from '../model';
 import { logger } from '../utils';
 
-// Extend DiagnosticCase interface to include vector embedding and tool contributions
+
 interface DiagnosticCaseWithEmbedding extends DiagnosticCase {
   queryEmbedding?: number[];
   similarityScore?: number;
@@ -50,11 +50,11 @@ export class MongoStorage {
     await this.patternsCollection.createIndex({ category: 1, entityType: 1, environment: 1 }, { unique: true });
     await this.patternsCollection.createIndex({ successRate: -1 });
     
-    // Vector search index will be created manually in MongoDB Atlas UI
-    // Index name: "vector_index"
-    // Field: "queryEmbedding"
-    // Type: "vector"
-    // Dimensions: 1536 (for OpenAI text-embedding-3-small)
+
+
+
+
+
     logger.info('[MongoStorage] Vector search index should be created manually in Atlas for queryEmbedding field');
   }
 
@@ -91,7 +91,7 @@ export class MongoStorage {
     limit: number = 10
   ): Promise<DiagnosticCase[]> {
     try {
-      // Use MongoDB Atlas Vector Search
+
       const pipeline: any[] = [
         {
           $vectorSearch: {
@@ -109,7 +109,7 @@ export class MongoStorage {
         }
       ];
 
-      // Add category filter if provided
+
       if (category) {
         pipeline.push({
           $match: {
@@ -132,7 +132,7 @@ export class MongoStorage {
       return results as DiagnosticCase[];
     } catch (error) {
       logger.warn('[MongoStorage] Vector search failed, falling back to exact matching:', error);
-      // Fallback to exact matching if vector search fails
+
       return this.findSimilarCases(category || '', '', '', limit);
     }
   }
@@ -197,7 +197,7 @@ export class MongoStorage {
     logger.info('[MongoStorage] messageFeedbacks to update: %j', messageFeedbacks);
     logger.info('[MongoStorage] overallRlReward to update: %s', overallRlReward);
     
-    // First, check if the case exists
+
     const existingCase = await this.casesCollection.findOne({ caseId: caseId });
     if (!existingCase) {
       console.error('[MongoStorage] Case not found for update:', caseId);
@@ -209,7 +209,7 @@ export class MongoStorage {
     const updateOperations: any = {};
     
     if (messageFeedbacks && Object.keys(messageFeedbacks).length > 0) {
-      // Merge new feedback with existing feedback
+
       Object.keys(messageFeedbacks).forEach(key => {
         updateOperations[`messageFeedbacks.${key}`] = messageFeedbacks[key];
       });
@@ -228,7 +228,7 @@ export class MongoStorage {
     
     logger.info('[MongoStorage] Feedback update result: %j', { acknowledged: result.acknowledged, modifiedCount: result.modifiedCount, matchedCount: result.matchedCount });
     
-    // Verify the update worked
+
     const updatedCase = await this.casesCollection.findOne({ caseId: caseId });
     logger.info('[MongoStorage] Case after update - messageFeedbacks: %j', Object.keys(updatedCase?.messageFeedbacks || {}));
     logger.info('[MongoStorage] Case after update - overallRlReward: %s', updatedCase?.overallRlReward);

@@ -1,4 +1,4 @@
-// src/utils/auth/jwtSecret.ts
+
 import { importJWK, type JWK } from 'jose';
 import { logger } from '../logger';
 
@@ -34,7 +34,7 @@ export const getSymmetricKey = (): Uint8Array => {
   return _jwtSecretKey;
 };
 
-// REMOVE OR COMMENT OUT THESE, AS THEY ARE NOT USED IN THE PAYLOAD STRUCTURE
-// export const JWT_ISSUER = process.env.JWT_ISSUER || 'your-node-app-issuer';
-// export const JWT_AUDIENCE = process.env.JWT_AUDIENCE || 'your-graphql-api';
-// export const JWT_EXPIRATION_TIME_SECONDS = 24 * 60 * 60; // No longer directly used as 'exp'
+
+
+
+

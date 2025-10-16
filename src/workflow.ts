@@ -20,7 +20,7 @@ workflow.setEntryPoint('parse_user_query');
 workflow.addConditionalEdges(
   'parse_user_query',
   (state: AgentStateData) => {
-    // Check if clarification is needed for entity type or environment
+
     const needsEntityTypeClarification = state.entityType === 'unknown' && state.entityIds.length > 0;
     const needsEnvironmentClarification = state.environment === 'unknown';
     

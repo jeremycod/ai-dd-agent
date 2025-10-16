@@ -1,8 +1,8 @@
-// utils/auth/TokenService.ts
 
-import { getSymmetricKey } from './jwtSecret'; // Import the new key loading
+
+import { getSymmetricKey } from './jwtSecret';
 import * as jose from 'jose';
-import { setToken, getToken, removeToken } from './genie'; // Your in-memory token functions
+import { setToken, getToken, removeToken } from './genie';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../logger';
 
@@ -10,12 +10,12 @@ const EXPIRY_TIME_MS = 24 * 60 * 60 * 1000;
 export class TokenService {
   private static instance: TokenService;
   private currentToken: string | null = null;
-  private tokenExpiryTime: number | null = null; // Unix timestamp (milliseconds) when token expires
+  private tokenExpiryTime: number | null = null;
 
   private constructor() {
     this.currentToken = getToken();
-    // For simplicity, we assume if currentToken exists from `getToken()`, it's valid for initial checks.
-    // In a production setup, you might try to decode it and get its expiry.
+
+
   }
 
   public static initializeInstance(): void {
@@ -36,7 +36,7 @@ export class TokenService {
   private async generateNewToken(dynamicPayload: Record<string, any> = {}): Promise<string> {
     logger.info('[TokenService] Generating new JWE token locally...');
 
-    // Mimic the payload structure from the working consumer's buildJwePayload
+
     const defaultName = process.env.DEFAULT_JWE_NAME || 'test_user';
     const defaultEmail = process.env.DEFAULT_JWE_EMAIL || 'test@example.com';
     const defaultGivenname = process.env.DEFAULT_JWE_GIVENNAME || 'Test';
@@ -53,14 +53,14 @@ export class TokenService {
       email: dynamicPayload.email || defaultEmail,
       givenname: dynamicPayload.givenname || defaultGivenname,
       surname: dynamicPayload.surname || defaultSurname,
-      // Initials will still be derived dynamically
+
       initials:
         (dynamicPayload.givenname?.charAt(0) || defaultGivenname.charAt(0)) +
         (dynamicPayload.surname?.charAt(0) || defaultSurname.charAt(0)),
-      roles: dynamicPayload.roles || defaultRoles, // Use the parsed default roles array
+      roles: dynamicPayload.roles || defaultRoles,
       profile: dynamicPayload.profile || defaultProfile,
-      expiryDate: new Date(Date.now() + EXPIRY_TIME_MS).valueOf(), // Milliseconds
-      // If backend expects jti, you might add: jti: uuidv4(),
+      expiryDate: new Date(Date.now() + EXPIRY_TIME_MS).valueOf(),
+
     };
 
     let token: string;
@@ -71,31 +71,31 @@ export class TokenService {
       logger.info('Using symmetric key for encryption');
 
       token = await new jose.CompactEncrypt(
-        new TextEncoder().encode(JSON.stringify(jwePayload)), // Plaintext is the stringified JSON object
+        new TextEncoder().encode(JSON.stringify(jwePayload)),
       )
         .setProtectedHeader({
-          alg: 'dir', // Key Management Algorithm: Direct Encryption
-          enc: 'A256GCM', // Content Encryption Algorithm: AES GCM using 256-bit key
-          // typ: 'JWT', // REMOVED: If the inner payload is just a JSON, not a full JWT
-          // If backend's AuthenticationCommon does not parse this as a full JWT,
-          // then 'typ: JWT' would be incorrect and cause issues.
+          alg: 'dir',
+          enc: 'A256GCM',
+
+
+
         })
         .encrypt(symmetricKey);
 
       this.currentToken = token;
-      // Note: Token expiry time now based on 'expiryDate' in payload, not standard 'exp'
-      this.tokenExpiryTime = jwePayload.expiryDate - 5 * 60 * 1000; // 5 minutes buffer
+
+      this.tokenExpiryTime = jwePayload.expiryDate - 5 * 60 * 1000;
       setToken(token);
       logger.info('[TokenService] Successfully generated and set new JWE token.');
 
-      // --- Client-side self-verification (Crucial for debugging) ---
+
       try {
-        // For jwtDecrypt to work, the inner content must actually be a valid JWT
-        // with standard claims (iss, aud, exp, iat).
-        // Since your backend's buildJwePayload doesn't include these standard JWT claims,
-        // we need to use generic decrypt if we want to confirm the raw JSON payload.
+
+
+
+
         const { plaintext, protectedHeader } = await jose.compactDecrypt(token, symmetricKey);
-        const decryptedJson = JSON.parse(new TextDecoder().decode(plaintext)); // Decode bytes to string, then parse JSON
+        const decryptedJson = JSON.parse(new TextDecoder().decode(plaintext));
 
         logger.info('CLIENT-SIDE SELF-DECRYPTION SUCCESSFUL!');
         if (

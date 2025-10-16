@@ -1,4 +1,4 @@
-// src/model/types/genieService.ts
+
 
 export type OfferBillingType = 'ONE_TIME' | 'RECURRING' | 'FREE' | 'DIRECT_BILLING';
 export type PriceType = 'NET' | 'GROSS' | 'PROMO' | 'RETAIL';
@@ -129,7 +129,7 @@ export interface OfferProduct {
   initialPhase?: ProductPhase;
 }
 
-// These are the specific discriminated union types
+
 export interface OfferD2C {
   __typename: 'OfferD2C';
   initialPrice: number;

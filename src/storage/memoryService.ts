@@ -52,7 +52,7 @@ export class MemoryService {
       toolsUsed: [
         ...(state.currentEpisodeActions?.map(action => action.nodeName) || []),
         'parseUserQuery', 'memoryRetrieval', 'fetchParallelData', 'runParallelAnalysisTools', 'summarizeFindings', 'respondToUser'
-      ].filter((tool, index, arr) => arr.indexOf(tool) === index), // Remove duplicates
+      ].filter((tool, index, arr) => arr.indexOf(tool) === index),
       finalSummary: typeof state.finalSummary === 'string' ? state.finalSummary : undefined,
       dataForSummaryPrompt: state.dataForSummaryPrompt,
       overallRlReward: state.overallRlReward || 0,
@@ -61,10 +61,10 @@ export class MemoryService {
 
     console.log('[MemoryService] Storing case:', diagnosticCase.caseId);
     
-    // Analyze tool effectiveness
+
     const enhancedCase = await this.analyzeToolEffectiveness(diagnosticCase, state);
     
-    // Generate embedding for the case
+
     try {
       const queryEmbedding = await this.embeddingService.generateQueryEmbedding(state.userQuery);
       await this.storage.storeCaseWithEmbedding(enhancedCase as any, queryEmbedding);
@@ -75,11 +75,11 @@ export class MemoryService {
       console.log('[MemoryService] Enhanced case stored without embedding');
     }
     
-    // Update the state with the generated case ID for frontend use
+
     (state as any).generatedCaseId = generatedCaseId;
     console.log('[MemoryService] Set generatedCaseId in state:', generatedCaseId);
     
-    // Store in conversation state for server access (will be handled by server)
+
     
     console.log('[MemoryService] Updating pattern...');
     await this.updatePattern(diagnosticCase);
@@ -90,7 +90,7 @@ export class MemoryService {
     if (!state.queryCategory || !state.userQuery) return [];
 
     try {
-      // Try vector search first
+
       const queryEmbedding = await this.embeddingService.generateQueryEmbedding(state.userQuery);
       const vectorResults = await this.storage.findSimilarCasesByEmbedding(
         queryEmbedding,
@@ -107,7 +107,7 @@ export class MemoryService {
       logger.warn('[MemoryService] Vector search failed, falling back to exact matching: %j', error);
     }
 
-    // Fallback to exact matching
+
     return await this.storage.findSimilarCases(
       state.queryCategory,
       state.entityType,
@@ -139,7 +139,7 @@ export class MemoryService {
     const isSuccess = reward > 0;
 
     if (existingPattern) {
-      // Update existing pattern
+
       const newUsageCount = existingPattern.usageCount + 1;
       const newSuccessRate = ((existingPattern.successRate * existingPattern.usageCount) + (isSuccess ? 1 : 0)) / newUsageCount;
 
@@ -153,7 +153,7 @@ export class MemoryService {
 
       await this.storage.storePattern(updatedPattern);
     } else {
-      // Create new pattern
+
       const newPattern: DiagnosticPattern = {
         patternId: uuidv4(),
         category: diagnosticCase.category,
@@ -180,7 +180,7 @@ export class MemoryService {
     console.log('[MemoryService] RL Reward:', overallRlReward);
     
     try {
-      // Find and update the case in MongoDB
+
       const result = await this.storage.updateCaseWithFeedback(caseId, messageFeedbacks, overallRlReward);
       console.log('[MemoryService] Case updated with feedback:', result);
     } catch (error) {
@@ -196,11 +196,11 @@ export class MemoryService {
   private async analyzeToolEffectiveness(diagnosticCase: DiagnosticCase, state: AgentState): Promise<EnhancedDiagnosticCase> {
     const toolContributions: { [toolName: string]: any } = {};
     
-    // Get user feedback for this case
+
     const userFeedback = this.extractUserFeedback(diagnosticCase.messageFeedbacks);
     const finalDiagnosisText = typeof state.finalSummary === 'string' ? state.finalSummary : '';
     
-    // Analyze each tool's contribution with enhanced context
+
     for (const [toolName, toolResult] of Object.entries(state.analysisResults || {})) {
       const contribution = this.toolEffectivenessAnalyzer.analyzeToolContribution(
         toolResult, 
@@ -209,10 +209,10 @@ export class MemoryService {
         userFeedback
       );
       
-      // Use the relevance score from the enhanced analyzer instead of the old one
+
       toolContributions[toolName] = {
         contributionScore: contribution.contributionScore,
-        relevanceScore: contribution.contributionScore, // Use the same score since it includes relevance
+        relevanceScore: contribution.contributionScore,
         wasUseful: contribution.wasUsefulForDiagnosis,
         reasoning: contribution.reasoning
       };
@@ -228,7 +228,7 @@ export class MemoryService {
     const feedbackEntries = Object.values(messageFeedbacks || {});
     if (feedbackEntries.length === 0) return undefined;
     
-    // Get the most recent feedback
+
     const latestFeedback = feedbackEntries[feedbackEntries.length - 1];
     return {
       rating: latestFeedback.rating,

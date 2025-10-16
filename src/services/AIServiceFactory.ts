@@ -1,7 +1,7 @@
 import { EmbeddingService, EmbeddingProvider } from './EmbeddingService';
 import { logger } from '../utils';
 
-// Conditional imports to avoid missing module errors
+
 let ChatAnthropic: any;
 let ChatOpenAI: any;
 

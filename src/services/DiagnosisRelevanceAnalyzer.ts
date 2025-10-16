@@ -42,7 +42,7 @@ export class DiagnosisRelevanceAnalyzer {
     let score = 0;
     const summaryLower = summary.toLowerCase();
     
-    // Check if tool data appears in summary
+
     if (toolResult.entityId && summaryLower.includes(toolResult.entityId.toLowerCase())) {
       score += 0.4;
     }
@@ -57,7 +57,7 @@ export class DiagnosisRelevanceAnalyzer {
       score += 0.3;
     }
 
-    // Tool-specific relevance checks
+
     score += this.analyzeToolSpecificRelevance(summaryLower, toolResult);
     
     return Math.min(1, score);
@@ -124,7 +124,7 @@ export class DiagnosisRelevanceAnalyzer {
     const matches: string[] = [];
     const summaryLower = summary.toLowerCase();
 
-    // Common keywords to look for
+
     const keywords = [
       toolResult.entityId,
       toolResult.price?.toString(),

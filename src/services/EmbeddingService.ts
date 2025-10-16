@@ -1,7 +1,7 @@
 import { logger } from '../utils';
 import { AgentState } from '../model';
 
-// Conditional imports to avoid missing module errors
+
 let OpenAI: any;
 try {
   OpenAI = require('openai');
@@ -86,7 +86,7 @@ export class EmbeddingService {
   }
 
   private async generateVoyageEmbedding(text: string): Promise<number[]> {
-    // Voyage AI API call (alternative to OpenAI embeddings)
+
     const response = await fetch('https://api.voyageai.com/v1/embeddings', {
       method: 'POST',
       headers: {
@@ -120,7 +120,7 @@ export class EmbeddingService {
     if (state.environment) parts.push(`Environment: ${state.environment}`);
     if (state.userQuery) parts.push(`Query: ${state.userQuery}`);
     
-    // Add error information if available
+
     if (state.datadogLogs?.length) {
       const errorMessages = state.datadogLogs
         .filter((log: any) => log.status === 'error')

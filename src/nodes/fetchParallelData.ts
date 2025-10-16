@@ -40,7 +40,7 @@ function messageExists(message: BaseMessage, messageArray: BaseMessage[]): boole
     }
 
     if (existingMsg.getType() !== message.getType()) return false;
-    if (existingMsg.name !== message.name) return false; // Important for ToolMessages
+    if (existingMsg.name !== message.name) return false;
 
     try {
       return JSON.stringify(existingMsg.content) === JSON.stringify(message.content);
@@ -69,7 +69,7 @@ export async function fetchParallelData(state: AgentStateData): Promise<Partial<
       '[Node: fetchGenieOffer] Query is for offer issue. Adding fetchGenieOffer to parallel calls.',
     );
     const genieOfferPromises = state.entityIds.map(
-      (offerId) => fetchGenieOffer({ ...state, entityIds: [offerId] }), // Pass a state with only one ID for this specific call
+      (offerId) => fetchGenieOffer({ ...state, entityIds: [offerId] }),
     );
     promises.push(...genieOfferPromises);
     calledFunctions.push(`fetchGenieOffer (for ${state.entityIds.length} IDs)`);
@@ -166,7 +166,7 @@ export async function fetchParallelData(state: AgentStateData): Promise<Partial<
     Object.assign(combinedState, result);
   }
 
-  // Assign the accumulated and deduplicated messages
+
   combinedState.messages = newMessagesForThisNode;
   logger.debug('[Node: fetchParallelData] Combined State BEFORE return:', JSON.stringify(combinedState, null, 2));
   return combinedState;

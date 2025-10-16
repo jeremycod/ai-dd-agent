@@ -2,9 +2,7 @@ import { AgentState } from '../model';
 import { MemoryService } from '../storage';
 import { logger } from '../utils';
 
-/**
- * Node that uses progressive tool selection to optimize diagnostic workflow
- */
+
 export async function intelligentToolSelectionNode(
   state: AgentState,
   memoryService: MemoryService
@@ -12,7 +10,7 @@ export async function intelligentToolSelectionNode(
   logger.info('[Node: intelligentToolSelectionNode] Entering...');
   
   try {
-    // Get tool selection plan based on historical effectiveness
+
     const toolSelectionPlan = await memoryService.getToolSelectionPlan(state);
     
     logger.info('[intelligentToolSelectionNode] Tool selection plan: %j', {
@@ -21,7 +19,7 @@ export async function intelligentToolSelectionNode(
       tier3Count: toolSelectionPlan.tier3.length
     });
     
-    // Store the plan in state for use by parallel execution nodes
+
     return {
       messages: [
         ...state.messages,
@@ -35,7 +33,7 @@ export async function intelligentToolSelectionNode(
   } catch (error) {
     logger.error('[intelligentToolSelectionNode] Error in tool selection: %j', error);
     
-    // Fallback to running all tools
+
     return {
       messages: [
         ...state.messages,

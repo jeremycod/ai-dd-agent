@@ -29,8 +29,8 @@ export const getEntityHistoryTool = new DynamicStructuredTool({
       };
 
       const mappedEnvironment = environmentMap[environment];
-      const client = new DataManagerHistoryClient(mappedEnvironment); // Initialize the client with the environment
-      const response: Version[] = await client.fetchEntityHistory(entityType, ids[0], limit); // Replace with the correct method
+      const client = new DataManagerHistoryClient(mappedEnvironment);
+      const response: Version[] = await client.fetchEntityHistory(entityType, ids[0], limit);
       return {
         history: response || [],
         message: `Successfully retrieved ${response?.length || 0} history records for ${entityType} IDs: ${ids.join(', ')}.`,
@@ -45,7 +45,7 @@ export const getEntityHistoryTool = new DynamicStructuredTool({
   },
 });
 
-// Export the tool definition
+
 export const analyzeEntityHistoryTool = new DynamicStructuredTool({
   name: 'analyzeEntityHistory',
   description:
@@ -60,55 +60,55 @@ export const analyzeEntityHistoryTool = new DynamicStructuredTool({
       return 'No entity history records provided for analysis.';
     }
 
-    const now = currentTime ? new Date(currentTime) : new Date('2025-07-04T16:23:47-07:00'); // Use provided current time or the context's time
+    const now = currentTime ? new Date(currentTime) : new Date('2025-07-04T16:23:47-07:00');
     const criticalChanges: string[] = [];
 
-    // --- NEW: Define field name prefixes or exact names to EXCLUDE from analysis ---
-    const excludedFieldPrefixes = ['legacy', 'internal_']; // Example: 'internal_audit_field'
-    const excludedExactFieldNames = ['metadata -> lastModifiedDate']; // Example: Specific field to ignore
-    // You could also use regex for more complex patterns:
-    // const excludedFieldRegex = /^legacy|internal_/;
+
+    const excludedFieldPrefixes = ['legacy', 'internal_'];
+    const excludedExactFieldNames = ['metadata -> lastModifiedDate'];
+
+
 
     for (const record of entityHistory) {
-      // We don't need recordDate if we're not using it for filtering records, only for date diffs
+
       const changesFoundForRecord: string[] = [];
 
       for (const diff of record.differences) {
         const { fieldName, oldValue, newValue } = diff;
 
-        // 1. Check for exclusion by prefix
+
         if (excludedFieldPrefixes.some((prefix) => fieldName.startsWith(prefix))) {
           logger.info(`DEBUG: Skipping field '${fieldName}' due to excluded prefix.`);
           continue;
         }
 
-        // 2. Check for exclusion by exact name
+
         if (excludedExactFieldNames.includes(fieldName)) {
           logger.info(`DEBUG: Skipping field '${fieldName}' due to exact exclusion.`);
           continue;
         }
 
-        // --- GENERAL CRITICAL CHANGE LOGIC FOR NON-EXCLUDED FIELDS ---
 
-        // Rule A: General change detection (any non-excluded field that changes)
+
+
         if (oldValue !== newValue) {
           let changeDescription = `Field **${fieldName}** changed: from \`${oldValue || 'N/A'}\` to \`${newValue || 'N/A'}\`.`;
           changesFoundForRecord.push(changeDescription);
         }
 
-        // Rule B: Check for deletions (oldValue existed, newValue is empty/null/Set())
-        // This rule applies to any non-excluded field
+
+
         if (oldValue && (newValue === null || newValue === '' || newValue === 'Set()')) {
           let deletionDescription = `Field **${fieldName}** was cleared/deleted: old value was \`${oldValue}\`.`;
-          // Add this as a separate, potentially more critical note if it wasn't just a "change"
-          // You might want to remove Rule A's description if this is preferred for deletions
+
+
           if (!changesFoundForRecord.includes(deletionDescription)) {
-            // Avoid duplicates if Rule A already caught it
+
             changesFoundForRecord.push(deletionDescription);
           }
         }
 
-        // Rule C: Special handling for date fields (applies to any date-like field not excluded)
+
         if (fieldName.includes('startDate') || fieldName.includes('start_date')) {
           if (newValue && new Date(newValue) > now) {
             changesFoundForRecord.push(
@@ -132,7 +132,7 @@ export const analyzeEntityHistoryTool = new DynamicStructuredTool({
           }
         }
 
-        // Rule D: Special handling for 'is_active' or status fields (applies generally)
+
         if (fieldName.includes('is_active') || fieldName.includes('status')) {
           if (
             newValue &&
@@ -155,14 +155,14 @@ export const analyzeEntityHistoryTool = new DynamicStructuredTool({
           }
         }
 
-        // Rule E: Add more specific rules for other "critical by nature" changes
-        // Example: If a "products" or "pricing" field is touched, regardless of old/new values, it might be critical
+
+
         if (
           fieldName.includes('products') ||
           fieldName.includes('pricing') ||
           fieldName.includes('eligibility')
         ) {
-          // This could be further refined by parsing JSON and comparing contents
+
           if (oldValue !== newValue) {
             changesFoundForRecord.push(
               `   - Detected change in critical structure: **${fieldName}** (products/pricing/eligibility). Requires deeper look.`,

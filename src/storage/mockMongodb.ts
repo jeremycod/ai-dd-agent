@@ -5,11 +5,11 @@ export class MockMongoStorage {
   private patterns: DiagnosticPattern[] = [];
 
   async connect(): Promise<void> {
-    // Mock connection
+
   }
 
   async disconnect(): Promise<void> {
-    // Mock disconnection
+
   }
 
   async storeCase(diagnosticCase: DiagnosticCase): Promise<void> {

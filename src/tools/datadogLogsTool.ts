@@ -23,8 +23,8 @@ const DATADOG_SITE = process.env.DATADOG_SITE || 'datadoghq.com';
 
 if (!DATADOG_API_KEY || !DATADOG_APP_KEY) {
   logger.error('Datadog API and Application keys are required.');
-  // In a real app, you might throw or handle this more gracefully
-  // process.exit(1);
+
+
 }
 
 const configuration = client.createConfiguration({
@@ -140,7 +140,7 @@ export const analyzeDatadogErrorsTool = new DynamicStructuredTool({
     const uniqueErrorMessagesById: { [id: string]: Map<string, number> } = {};
     const serviceErrorCountsById: { [id: string]: { [key: string]: number } } = {};
 
-    // Determine the set of IDs to actively search for
+
     const idsToSearch = Array.isArray(ids) && ids.length > 0 ? ids : [];
 
     for (const log of logs) {

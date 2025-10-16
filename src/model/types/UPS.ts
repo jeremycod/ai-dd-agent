@@ -1,4 +1,4 @@
-/// UPS client types
+
 export type BillingPeriod = 'MONTH' | 'YEAR' | 'WEEK' | 'DAY';
 export type PhaseType = 'PREPAID' | 'RECURRING' | 'TRIAL';
 export type DurationUnit = 'MONTH' | 'YEAR' | 'WEEK' | 'DAY';

@@ -1,6 +1,6 @@
 import {GenieOffer as Offer, GET_OFFER_QUERY, GraphQLResponse} from '../model';
 import {logger} from '../utils';
-// Conditional auth import
+
 let TokenService: any;
 if (process.env.CAPTURE_API_RESPONSES === 'true') {
   TokenService = require('../utils/auth/cryptoAuth').TokenService;
@@ -52,15 +52,15 @@ export class GenieOfferClient {
 
     let token: string;
     try {
-      // The TokenService will check if the existing token is valid/expired.
-      // If expired, it will automatically generate a new one using your symmetric key.
+
+
       if (process.env.CAPTURE_API_RESPONSES === 'true') {
         token = await TokenService.getInstance().getValidToken();
       } else {
         token = await TokenService.getInstance().getValidToken({
-          // Optionally pass dynamic claims if your token needs to be specific
-          // to the GraphQL client's operation or a specific session.
-          // e.g., sub: this.callerClientId, scopes: ['read:offer']
+
+
+
         });
       }
     } catch (authError: any) {

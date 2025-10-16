@@ -2,7 +2,7 @@ export * from './entityHistory';
 export * from './general';
 export * from './offerComparison';
 
-// Genie types
+
 export {
   Currency as GenieCurrency,
   Duration as GenieDuration,
@@ -12,7 +12,7 @@ export {
   GraphQLResponse
 } from './genieGraphql';
 
-// OfferService types
+
 export {
   Currency as OfferServiceCurrency,
   Duration as OfferServiceDuration,
@@ -25,7 +25,7 @@ export {
   OfferServiceResponse
 } from './offerService';
 
-// UPS types
+
 export {
   BillingPeriod as UPSBillingPeriod,
   DurationUnit as UPSDurationUnit,

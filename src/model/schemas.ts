@@ -1,4 +1,4 @@
-// schemas.ts (or wherever you keep your Zod schemas)
+
 import { z } from 'zod';
 import {
   ENTITY_TYPE_VALUES,
@@ -30,7 +30,7 @@ export const UserQueryExtractionSchema = z.object({
     .describe(
       "The agent's initial acknowledgment or plan, following the category, which will be the first message to the user.",
     ),
-  // Add other fields you might want to extract from the query
+
 });
 
 export type UserQueryExtraction = z.infer<typeof UserQueryExtractionSchema>;
@@ -141,7 +141,7 @@ export type AnalyzeEntityHistoryToolInputSchemaInput = z.infer<
   typeof AnalyzeEntityHistoryToolInputSchema
 >;
 
-// Input schema for the tool
+
 export const GetUPSOfferPriceToolSchema = z.object({
   offerId: z.string().describe('The unique identifier of the offer.'),
   environment: z.enum(['production', 'staging', 'development']).describe('The environment.'),
@@ -149,30 +149,30 @@ export const GetUPSOfferPriceToolSchema = z.object({
 
 export type GetUPSOfferPriceToolSchemaInput = z.infer<typeof GetUPSOfferPriceToolSchema>;
 
-// Output schema for the tool (this is where it *might* be causing a circular issue)
+
 export const OfferPriceOutputSchema = z.object({
   offerId: z.string(),
   price: z.object({
     amount: z.number(),
     currency: z.string(),
   }),
-  // ... potentially other fields ...
-  // Is there anything here that directly or indirectly references GetUPSOfferPriceToolSchema?
-  // Or is OfferPriceResponse (from general.ts) causing a loop?
+
+
+
 });
 export type OfferPriceOutput = z.infer<typeof OfferPriceOutputSchema>;
 
 export const AnalyzeUPSOfferPriceToolInputSchema = z.object({
-  offerPriceDetails: z.array(z.any()), // Use z.any() if OfferPriceResponse isn't fully defined as a Zod schema.
-  // Ideally, it would be z.array(OfferPriceResponseSchema)
-  // if you have a Zod schema for OfferPriceResponse.
-  // For now, if it's an interface, z.any() is a pragmatic choice.
+  offerPriceDetails: z.array(z.any()),
+
+
+
 });
 
 export type AnalyzeUPSOfferPriceToolInput = z.infer<typeof AnalyzeUPSOfferPriceToolInputSchema>;
 
-// Genie Schemas
-// This schema describes the parameters the tool expects.
+
+
 export const GetGenieOfferToolSchema = z.object({
   offerId: z.string().describe('The unique identifier of the offer to retrieve.'),
   environment: z
@@ -182,7 +182,7 @@ export const GetGenieOfferToolSchema = z.object({
     ),
 });
 
-// Infer the input type from the schema for type safety
+
 export type GetGenieOfferToolSchemaInput = z.infer<typeof GetGenieOfferToolSchema>;
 
 export const GetOfferServiceOfferToolSchema = z.object({

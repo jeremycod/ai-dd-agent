@@ -1,6 +1,6 @@
-// src/model/types/offerService.ts
 
-// Offer service client types
+
+
 
 export type OfferType = 'STANDARD_TIER' | 'PROMOTIONAL_OFFER' | 'TRIAL_OFFER' | 'MIGRATION_OFFER';
 export type OfferProductType = 'MONTHLY' | 'ANNUAL' | 'ONE_TIME' | 'WEEKLY' | 'DAILY';

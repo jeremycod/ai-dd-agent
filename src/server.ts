@@ -1,23 +1,23 @@
-import 'dotenv/config'; // Keep this at the very top to load environment variables first
+import 'dotenv/config';
 import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import { SystemMessage } from '@langchain/core/messages';
-import { app } from './workflow'; // Assuming 'app' is your Langchain agent graph
+import { app } from './workflow';
 import { AgentStateData } from './model';
 import { PROMPT } from './constants';
 import path from 'path';
 import { logger, generateNewHumanMessage } from './utils';
-// Conditional auth import based on capture mode
+
 let TokenService: any;
 let loadSymmetricKey: any;
 
 if (process.env.CAPTURE_API_RESPONSES === 'true') {
-  // Use crypto auth for API capture mode
+
   const cryptoAuth = require('./utils/auth/cryptoAuth');
   TokenService = cryptoAuth.TokenService;
   loadSymmetricKey = cryptoAuth.loadSymmetricKey;
 } else {
-  // Use original TokenService for production
+
   const originalAuth = require('./utils/auth/TokenService');
   const jwtSecret = require('./utils/auth/jwtSecret');
   TokenService = originalAuth.TokenService;
@@ -30,7 +30,7 @@ import {MemoryService} from "./storage/memoryService";
 
 import {MongoStorage} from "./storage/mongodb";
 
-// Initialize TokenService immediately when module loads
+
 TokenService.initializeInstance();
 
 const server = express();
@@ -53,7 +53,7 @@ server.get('/health', (req, res) => {
   });
 });
 
-// Test endpoint to manually update a case
+
 server.post('/test-update/:caseId', async (req: Request, res: Response) => {
   const { caseId } = req.params;
   
@@ -86,7 +86,7 @@ server.post('/test-update/:caseId', async (req: Request, res: Response) => {
   }
 });
 
-// Simple feedback endpoint (thumbs up/down)
+
 server.post('/feedback', async (req: Request, res: Response) => {
   console.log('[FEEDBACK ENDPOINT] Simple feedback endpoint called');
   console.log('[FEEDBACK ENDPOINT] Request body:', req.body);
@@ -98,9 +98,9 @@ server.post('/feedback', async (req: Request, res: Response) => {
   
   logger.info(`[Feedback] Simple feedback received: ${type} for case ${caseId}`);
   
-  // Store feedback in conversation state
-  const sessionId = 'default_session'; // Keep using session for conversation state
-  // But use the actual caseId for MongoDB updates
+
+  const sessionId = 'default_session';
+
   if (conversationStates.has(sessionId)) {
     const state = conversationStates.get(sessionId)!;
     const feedbackId = `feedback_${Date.now()}`;
@@ -111,19 +111,19 @@ server.post('/feedback', async (req: Request, res: Response) => {
       feedbackSource: 'simple_thumbs'
     };
     
-    // Update RL reward based on feedback
+
     state.overallRlReward = (state.overallRlReward || 0) + (type === 'positive' ? 1 : -1);
     
     conversationStates.set(sessionId, state);
     
-    // Also update the stored case in MongoDB
+
     try {
       console.log('[Server] Simple feedback - Attempting to update MongoDB case:', caseId);
 
       const mongoStorage = new MongoStorage(process.env.MONGODB_CONNECTION_STRING || 'mongodb://localhost:27017');
       await mongoStorage.connect();
       const memoryService = new MemoryService(mongoStorage);
-      // Create feedback object for this specific case
+
       const feedbackForCase = {
         [`feedback_${Date.now()}`]: {
           type: type === 'positive' ? 'positive' : 'negative',
@@ -149,7 +149,7 @@ server.post('/feedback', async (req: Request, res: Response) => {
   res.json({ success: true, message: 'Feedback received' });
 });
 
-// Detailed feedback endpoint (modal form)
+
 server.post('/feedback/detailed', async (req: Request, res: Response) => {
   console.log('[FEEDBACK ENDPOINT] Detailed feedback endpoint called');
   console.log('[FEEDBACK ENDPOINT] Request body:', req.body);
@@ -161,7 +161,7 @@ server.post('/feedback/detailed', async (req: Request, res: Response) => {
   
   logger.info(`[Feedback] Detailed feedback received for case ${caseId}`);
   
-  // Update the stored case in MongoDB directly
+
   try {
     console.log('[Server] Detailed feedback - Attempting to update MongoDB case:', caseId);
 
@@ -170,7 +170,7 @@ server.post('/feedback/detailed', async (req: Request, res: Response) => {
     await mongoStorage.connect();
     const memoryService = new MemoryService(mongoStorage);
     
-    // Create feedback object for this specific case
+
     const feedbackForCase = {
       [`feedback_${Date.now()}`]: {
         type: rating && parseInt(rating) >= 3 ? 'positive' : 'negative',
@@ -182,11 +182,11 @@ server.post('/feedback/detailed', async (req: Request, res: Response) => {
       }
     };
     
-    // Calculate RL reward based on rating
+
     let rewardForCase = 0;
     if (rating) {
       const ratingValue = parseInt(rating);
-      rewardForCase = ratingValue - 3; // -2 to +2 based on 1-5 scale
+      rewardForCase = ratingValue - 3;
     }
     
     console.log('[Server] Detailed feedback - About to call updateCaseWithFeedback with:', {
@@ -205,7 +205,7 @@ server.post('/feedback/detailed', async (req: Request, res: Response) => {
 });
 
 const conversationStates = new Map<string, AgentStateData>();
-const feedbackStore = new Map<string, any[]>(); // Simple in-memory feedback storage
+const feedbackStore = new Map<string, any[]>();
 
 server.post('/chat', async (req: Request, res: Response) => {
   const sessionId: string = req.body.sessionId || 'default_session';
@@ -241,8 +241,8 @@ server.post('/chat', async (req: Request, res: Response) => {
     currentAgentState.analysisResults = {};
     currentAgentState.runParallelAnalysis = false;
     currentAgentState.queryCategory = 'UNKNOWN_CATEGORY';
-    currentAgentState.messageFeedbacks = {}; // Clear previous feedback for new query
-    currentAgentState.overallRlReward = undefined; // Clear previous reward for new query
+    currentAgentState.messageFeedbacks = {};
+    currentAgentState.overallRlReward = undefined;
     
 
   } else {
@@ -338,7 +338,7 @@ server.post('/chat', async (req: Request, res: Response) => {
       console.warn('WARN: Final state had no finalSummary and no messages.');
     }
 
-    // Check if this is a clarification response (no case stored yet)
+
     const isClairificationResponse = !finalState.generatedCaseId;
     
     if (isClairificationResponse) {
@@ -366,44 +366,79 @@ server.post('/chat', async (req: Request, res: Response) => {
 
     if (error instanceof Error) {
       errorDetails.message = error.message;
-      errorDetails.type = error.name; // e.g., 'Error', 'TypeError', 'ZodError'
-      errorDetails.stack = error.stack; // Capture stack trace for server logs
+      errorDetails.type = error.name;
+      errorDetails.stack = error.stack;
 
       if (error instanceof ZodError) {
         errorDetails.type = 'SchemaValidationError';
-        errorDetails.zodIssues = error.issues; // Array of validation issues
-        errorDetails.toolInput = (error as any).cause?.toolInput; // If available, some LangChain errors wrap this
-        errorDetails.parsedInput = (error as any).cause?.parsedInput; // Or the parsed input that failed
-        logger.error(`[Session: ${sessionId}] ZodError details:`, safeJsonStringify(error.issues, 2));
+        errorDetails.zodIssues = error.issues;
+        errorDetails.toolInput = (error as any).cause?.toolInput;
+        errorDetails.parsedInput = (error as any).cause?.parsedInput;
+        try {
+          const issuesString = safeJsonStringify(error.issues, 2);
+          logger.error(`[Session: ${sessionId}] ZodError details: ${issuesString}`);
+        } catch (stringifyError) {
+          logger.error(`[Session: ${sessionId}] Failed to stringify ZodError issues:`, stringifyError instanceof Error ? stringifyError.message : String(stringifyError));
+        }
       } else if (typeof (error as any).toolInput !== 'undefined') {
-        // Catch other LangChain-specific errors that might include toolInput
+
         errorDetails.toolInput = (error as any).toolInput;
-        logger.error(`[Session: ${sessionId}] Tool invocation error with input:`, safeJsonStringify((error as any).toolInput, 2));
+        try {
+          const toolInputString = safeJsonStringify((error as any).toolInput, 2);
+          logger.error(`[Session: ${sessionId}] Tool invocation error with input: ${toolInputString}`);
+        } catch (stringifyError) {
+          logger.error(`[Session: ${sessionId}] Failed to stringify tool input:`, stringifyError instanceof Error ? stringifyError.message : String(stringifyError));
+        }
       }
 
-      // If the error object itself is large or complex, log it fully for debugging
-      // but only send specific details to the user.
-      logger.error(`[Session: ${sessionId}] Full error object:`, safeJsonStringify(error, 2));
+
+      logger.error(`[Session: ${sessionId}] Full error object - Type: ${typeof error}, Constructor: ${error?.constructor?.name}`);
+      if (typeof error === 'string') {
+        const errorStr = error as string;
+        const truncated = errorStr.length > 1000 ? errorStr.substring(0, 1000) + '... [truncated]' : errorStr;
+        logger.error(`[Session: ${sessionId}] Error string: ${truncated}`);
+      } else {
+        try {
+          const errorString = safeJsonStringify(error, 2);
+          const maxLogSize = 5000;
+          const truncatedError = errorString.length > maxLogSize 
+            ? errorString.substring(0, maxLogSize) + '... [truncated]'
+            : errorString;
+          logger.error(`[Session: ${sessionId}] Error details: ${truncatedError}`);
+        } catch (stringifyError) {
+          logger.error(`[Session: ${sessionId}] Failed to stringify error - using fallback`);
+        }
+      }
 
     } else if (typeof error === 'object' && error !== null) {
-      // If error is an object but not an Error instance
+
       errorDetails.message = (error as any).message || JSON.stringify(error);
       errorDetails.type = (error as any).name || 'NonStandardErrorObject';
-      logger.error(`[Session: ${sessionId}] Non-standard error object:`, safeJsonStringify(error, 2));
+      logger.error(`[Session: ${sessionId}] Non-standard error - Type: ${typeof error}`);
+      try {
+        const errorString = safeJsonStringify(error, 2);
+        const maxLogSize = 5000;
+        const truncatedError = errorString.length > maxLogSize 
+          ? errorString.substring(0, maxLogSize) + '... [truncated]'
+          : errorString;
+        logger.error(`[Session: ${sessionId}] Error details: ${truncatedError}`);
+      } catch (stringifyError) {
+        logger.error(`[Session: ${sessionId}] Failed to stringify non-standard error - using fallback`);
+      }
     } else {
-      // Primitive error types (string, number, etc.)
+
       errorDetails.message = String(error);
       errorDetails.type = 'PrimitiveError';
       logger.error(`[Session: ${sessionId}] Primitive error value:`, error);
     }
 
-    // Prepare a user-friendly error response
+
     const userFacingError = {
       error: 'An internal server error occurred while processing your request.',
-      details: errorDetails.message, // Provide the main error message to the user
-      // Optionally, expose more details to the user for specific error types,
-      // but be cautious about sensitive info.
-      // For ZodErrors, you might tell the user about invalid parameters.
+      details: errorDetails.message,
+
+
+
       validationErrors: errorDetails.zodIssues ? errorDetails.zodIssues.map((issue: any) => ({
         path: issue.path.join('.'),
         message: issue.message,
@@ -416,14 +451,14 @@ server.post('/chat', async (req: Request, res: Response) => {
   }
 });
 
-// --- Server Startup Logic with Token Initialization ---
+
 async function startServer() {
   try {
-    // Load the symmetric key from the JWK string
+
     await loadSymmetricKey();
     logger.info('JWT symmetric key loaded and ready for signing.');
 
-    // Get the initial token immediately upon startup.
+
     if (process.env.CAPTURE_API_RESPONSES === 'true') {
       await TokenService.getInstance().getValidToken();
     } else {
@@ -433,7 +468,7 @@ async function startServer() {
     }
     logger.info('Initial JWT token generated for Genie services.');
 
-    // Start listening for HTTP requests only after token is successfully obtained
+
     server.listen(PORT, () => {
       logger.info(`Server running on http://localhost:${PORT}`);
       logger.info(`Chat endpoint: POST http://localhost:${PORT}/chat`);
@@ -443,9 +478,9 @@ async function startServer() {
     });
   } catch (error) {
     logger.error('CRITICAL ERROR: Failed to start server due to JWT setup failure:', error);
-    process.exit(1); // Exit the process if we can't get a token, as the app won't function
+    process.exit(1);
   }
 }
 
-// Call the function to start the server
+
 startServer();

@@ -99,7 +99,7 @@ export type AgentStateData = {
     similarCaseCount?: number;
   };
   
-  // Long-term memory components
+
   currentCase?: DiagnosticCase;
   similarCases?: DiagnosticCase[];
   relevantPatterns?: DiagnosticPattern[];
